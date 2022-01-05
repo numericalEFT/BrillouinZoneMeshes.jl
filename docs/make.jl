@@ -19,6 +19,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/fsxbhyy/SpaceGrid.jl",
+    repo="github.com/numericalEFT/SpaceGrid.jl",
     devbranch="master",
 )
