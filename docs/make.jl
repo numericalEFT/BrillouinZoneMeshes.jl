@@ -20,5 +20,5 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/fsxbhyy/SpaceGrid.jl",
-    devbranch="main",
+    devbranch="master",
 )
