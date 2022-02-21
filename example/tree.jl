@@ -10,6 +10,10 @@ struct SquareNod
     sons::Vector{SquareNod}
 end
 
+function minarea(sn::SquareNod)
+    return (isempty(sn.sons)) ? area(sn) : min([minarea(ssn) for ssn in sn.sons]...)
+end
+
 function SquareNod!(gridpoints, weightcap::Float64, gpcontainer; treelevelcap = 5)
 
     K00, K01, K10, K11 = Matrix(gridpoints[1,:]'), Matrix(gridpoints[2,:]'), Matrix(gridpoints[3,:]'), Matrix(gridpoints[4,:]')
@@ -90,7 +94,7 @@ end
 
 area(sn::SquareNod) = area(sn.gridpoints)
 
-function weight(gridpoints; N=100)
+function weight(gridpoints; N=400)
     result = 0.0
     a = area(gridpoints)
 
@@ -109,7 +113,7 @@ gridpoints = Matrix([-1.0 -1.0 ; -1 1 ; 1 -1 ; 1 1])
 K00, K01, K10, K11 = Matrix(gridpoints[1,:]'), Matrix(gridpoints[2,:]'), Matrix(gridpoints[3,:]'), Matrix(gridpoints[4,:]')
 gpcontainer = [K00,]
 
-sn = SquareNod!(gridpoints, weight(gridpoints)/500, gpcontainer; treelevelcap = 10)
+sn = SquareNod!(gridpoints, weight(gridpoints)/128^2, gpcontainer; treelevelcap = 12)
 
 println(area(sn))
 println(weight(sn))
@@ -128,18 +132,22 @@ function Base.print(sn::SquareNod; treelevel = 1)
     end
 end
 
-print(sn)
+# print(sn)
+
+println("minarea = $(minarea(sn))")
 # print(gpcontainer)
 println("length:",length(gpcontainer))
+
+println("compress:", minarea(sn)*length(gpcontainer)/4)
 
 X, Y = zeros(Float64, length(gpcontainer)), zeros(Float64, length(gpcontainer))
 for (Ki, K) in enumerate(gpcontainer)
     X[Ki], Y[Ki] = K[1], K[2]
 end
 
-p = plot(legend = false, size = (1024, 1024))
-scatter!(p, X, Y, marker = :cross, markersize = 2)
-savefig(p, "run/grid.pdf")
+# p = plot(legend = false, size = (1024, 1024))
+# scatter!(p, X, Y, marker = :cross, markersize = 2)
+# savefig(p, "run/grid.pdf")
 # display(p)
-readline()
+# readline()
 
