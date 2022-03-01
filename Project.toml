@@ -3,6 +3,10 @@ uuid = "3d4565c3-192b-4227-89f7-5476f913ab49"
 authors = ["Tao Wang", "Xiansheng Cai"]
 version = "0.1.0"
 
+[deps]
+AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+
 [compat]
 julia = "1.6"
 

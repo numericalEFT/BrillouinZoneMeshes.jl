@@ -74,14 +74,14 @@ end
     me = 0.5
     T = 0.01
 
-    μ = 1.0
-    k = norm(K)
-    ϵ = k^2 / (2me)
-    dϵdk = k / me
+    # μ = 1.0
+    # k = norm(K)
+    # ϵ = k^2 / (2me)
+    # dϵdk = k / me
 
-    # μ = 0.5
-    # ϵ = -(cos(π*K[1]) + cos(π*K[2])) / (2me)
-    # dϵdk = sqrt(sin(π*K[1])^2 + sin(π*K[2])^2) / (2me)
+    μ = 0.5
+    ϵ = -(cos(π*K[1]) + cos(π*K[2])) / (2me)
+    dϵdk = sqrt(sin(π*K[1])^2 + sin(π*K[2])^2) / (2me)
 
     return (exp((ϵ - μ) / T) / T)/(exp((ϵ - μ) / T) + 1.0)^2 * dϵdk
 end
