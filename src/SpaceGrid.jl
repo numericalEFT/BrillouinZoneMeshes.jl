@@ -5,7 +5,10 @@ using StaticArrays
 
 # Write your package code here.
 
-include("tree/node.jl")
+include("basemesh.jl")
+using .BaseMesh
+
+include("tree.jl")
 using .GridTree
 
 end

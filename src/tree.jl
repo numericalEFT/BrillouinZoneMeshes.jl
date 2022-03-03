@@ -28,5 +28,11 @@ function GridNode{DIM}(isfine; depth = 0, pos = SVector{DIM, Int64}(zeros(Int64,
     end
 end
 
+struct TreeGrid{DIM}
+    root::GridNode{DIM}
+    latvec::SMatrix{DIM, DIM, Float64}
+end
+
+
 end
 
