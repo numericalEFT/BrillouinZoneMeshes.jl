@@ -26,7 +26,7 @@ end
 function Base.getindex(mesh::UniformMesh{DIM, N}, inds...) where {DIM, N}
     pos = Vector(mesh.origin)
     for (ni, n) in enumerate(inds)
-        pos = pos .+ mesh.latvec[ni, :] .* n ./ (length(mesh) + 1)
+        pos = pos .+ mesh.latvec[ni, :] .* (n - 1) ./ (length(mesh))
     end
     return pos
 end
@@ -34,7 +34,7 @@ function Base.getindex(mesh::UniformMesh{DIM, N}, i::Int) where {DIM, N}
     inds = digits(i-1, base = N)
     pos = Vector(mesh.origin)
     for (ni, n) in enumerate(inds)
-        pos = pos .+ mesh.latvec[ni, :] .* n ./ (N + 1)
+        pos = pos .+ mesh.latvec[ni, :] .* n ./ (N)
     end
     return pos
 end
