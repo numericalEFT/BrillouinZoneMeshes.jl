@@ -15,3 +15,6 @@ for node in PostOrderDFS(tree)
     end
 end
 
+tg = uniformtreegrid(naiveisfine, [0 1; 1 0])
+
+println(tg.subgrids)
