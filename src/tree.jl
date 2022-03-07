@@ -3,14 +3,16 @@ module GridTree
 using ..AbstractTrees
 using ..StaticArrays
 using ..BaseMesh
+using ..Statistics
 
-export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity
+export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency
 
 struct GridNode{DIM}
     depth::Int
     pos::SVector{DIM, Int64}
     children::Vector{GridNode{DIM}}
 end
+
 function GridNode{DIM}(isfine; depth = 0, pos = SVector{DIM, Int64}(zeros(Int64, DIM)), maxdepth = 10) where {DIM}
     if isfine(depth, pos) || depth == maxdepth
         return GridNode{DIM}(depth, pos, Vector{GridNode{DIM}}([]))
@@ -26,14 +28,28 @@ function GridNode{DIM}(isfine; depth = 0, pos = SVector{DIM, Int64}(zeros(Int64,
     end
 end
 
-
 AbstractTrees.children(node::GridNode) = node.children
+
+function efficiency(root::GridNode{DIM}) where {DIM}
+    np, depth = 0, 0
+    for node in PostOrderDFS(root)
+        if node.depth > depth
+            depth = node.depth
+        end
+        if isempty(node.children)
+            np = np + 1
+        end
+    end
+    return np / 2^(depth*DIM)
+end
 
 struct TreeGrid{DIM, SG}
     root::GridNode{DIM}
     latvec::SMatrix{DIM, DIM, Float64}
     subgrids::Vector{SG}
 end
+
+efficiency(tg::TreeGrid) = efficiency(tg.root)
 
 function _calc_point(depth, pos, latvec)
     DIM = length(pos)
@@ -94,7 +110,9 @@ Base.iterate(tg::TreeGrid, state) = (state>=size(tg)) ? nothing : (tg[state+1],s
 function densityisfine(density, latvec, depth, pos, rtol)
     cornerpoints = _calc_cornerpoints(depth, pos, latvec)
     cpval = [density(p) for p in cornerpoints]
-    return abs(sum(cpval) / length(cpval) - density(_calc_point(depth, pos .+ 0.5, latvec))) < rtol
+    push!(cpval, density(_calc_point(depth, pos .+ 0.5, latvec)))
+    # return abs(sum(cpval) / length(cpval) - density(_calc_point(depth, pos .+ 0.5, latvec))) < rtol
+    return std(cpval) < rtol
 end
 
 function treegridfromdensity(density, latvec; rtol = 1e-4, maxdepth = 10, DIM = 2, N = 2)

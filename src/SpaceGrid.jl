@@ -2,6 +2,7 @@ module SpaceGrid
 
 using AbstractTrees
 using StaticArrays
+using Statistics
 
 # Write your package code here.
 

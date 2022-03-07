@@ -17,12 +17,20 @@ naiveisfine(depth, pos) = depth >= 2
 #     end
 # end
 
+function dispersion(k)
+    me = 0.5
+    μ = 1.0
+    return norm(k)^2/(2me)-μ
+
+    # t = 0.5
+    # μ = 0.0
+    # return sum([t * cos(π*p) for p in k]) + μ
+ end
+
 function density(K, latvec)
     DIM = length(K)
 
-    me = 0.5
     T = 0.001
-    μ = 1.0
 
     kpoints = [K, ]
     for i in 1:DIM
@@ -30,18 +38,17 @@ function density(K, latvec)
         push!(kpoints, K .- latvec[i, :])
     end
 
-    # k = norm(K)
-    # ϵ = k^2 / (2me) - μ
-    ϵ = minimum([norm(k)^2/(2me)-μ for k in kpoints])
+    ϵ = minimum([dispersion(k) for k in kpoints])
 
     return 1 / (exp((ϵ) / T) + 1.0)
     # return 1 / ((π * T)^2 + ϵ^2)
 end
 
 latvec = [2 0; 1 sqrt(3)]
+# latvec = [2 0; 0 2]
 # tg = uniformtreegrid(naiveisfine, latvec; N = 3)
 # tg = treegridfromdensity(density, latvec; rtol = 1e-4, maxdepth = 5)
-tg = treegridfromdensity(k->density(k, latvec), latvec; rtol = 2e-2, maxdepth = 5)
+tg = treegridfromdensity(k->density(k, latvec), latvec; rtol = 1e-1, maxdepth = 6)
 
 X, Y = zeros(Float64, size(tg)), zeros(Float64, size(tg))
 for (pi, p) in enumerate(tg)
@@ -51,6 +58,7 @@ end
 
 println("size:$(size(tg))")
 println("length:$(length(tg))")
+println("efficiency:$(efficiency(tg))")
 
 # p = plot(legend = false, size = (1024, 1024), xlim = (-1, 1), ylim = (-1, 1))
 p = plot(legend = false, size = (1024, 1024), xlim = (-1.5, 1.5), ylim = (-1.5, 1.5))
