@@ -41,7 +41,7 @@ function _calc_point(depth, pos, latvec)
     origin = zeros(size(ratio))
 
     for i in 1:DIM
-        origin .+= ratio .* latvec[i, :]
+        origin .+= ratio[i] .* latvec[i, :]
     end
 
     return origin
