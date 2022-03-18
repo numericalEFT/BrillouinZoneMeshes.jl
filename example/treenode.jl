@@ -19,7 +19,7 @@ naiveisfine(depth, pos) = depth >= 2
 
 function dispersion(k)
     me = 0.5
-    μ = 1.0
+    μ = 0.2
     return norm(k)^2/(2me)-μ
 
     # t = 0.5
@@ -30,25 +30,32 @@ function dispersion(k)
 function density(K, latvec)
     DIM = length(K)
 
-    T = 0.001
+    T = 0.01
 
     kpoints = [K, ]
-    for i in 1:DIM
-        push!(kpoints, K .+ latvec[i, :])
-        push!(kpoints, K .- latvec[i, :])
+    for i in 0:3^DIM-1
+        ii = digits(i, base = 3, pad = DIM)
+        Knew = copy(K)
+        for j in 1:DIM
+            Knew = Knew .+ (ii[j] - 1) .* latvec[j, :]
+        end
+        push!(kpoints, Knew)
     end
 
-    ϵ = minimum([dispersion(k) for k in kpoints])
+    Kmin = kpoints[findmin([norm(k) for k in kpoints])[2]]
+
+    # ϵ = minimum([dispersion(k) for k in kpoints])
+    ϵ = dispersion(Kmin)
 
     return 1 / (exp((ϵ) / T) + 1.0)
-    # return 1 / ((π * T)^2 + ϵ^2)
+    # return (π * T)^2 / ((π * T)^2 + ϵ^2)
 end
 
 latvec = [2 0; 1 sqrt(3)]
 # latvec = [2 0; 0 2]
 # tg = uniformtreegrid(naiveisfine, latvec; N = 3)
 # tg = treegridfromdensity(density, latvec; rtol = 1e-4, maxdepth = 5)
-tg = treegridfromdensity(k->density(k, latvec), latvec; rtol = 1e-1, maxdepth = 6)
+tg = treegridfromdensity(k->density(k, latvec), latvec; rtol = 1e-3, maxdepth = 7, mindepth = 2, N = 2)
 
 X, Y = zeros(Float64, size(tg)), zeros(Float64, size(tg))
 for (pi, p) in enumerate(tg)
@@ -61,6 +68,6 @@ println("length:$(length(tg))")
 println("efficiency:$(efficiency(tg))")
 
 # p = plot(legend = false, size = (1024, 1024), xlim = (-1, 1), ylim = (-1, 1))
-p = plot(legend = false, size = (1024, 1024), xlim = (-1.5, 1.5), ylim = (-1.5, 1.5))
+p = plot(legend = false, size = (1024, 1024), xlim = (-2.0, 2.0), ylim = (-2.0, 2.0))
 scatter!(p, X, Y, marker = :cross, markersize = 2)
 savefig(p, "run/tg.pdf")

@@ -13,8 +13,10 @@ struct GridNode{DIM}
     children::Vector{GridNode{DIM}}
 end
 
-function GridNode{DIM}(isfine; depth = 0, pos = SVector{DIM, Int64}(zeros(Int64, DIM)), maxdepth = 10) where {DIM}
-    if isfine(depth, pos) || depth == maxdepth
+function GridNode{DIM}(
+    isfine;
+    depth = 0, pos = SVector{DIM, Int64}(zeros(Int64, DIM)), maxdepth = 10, mindepth = 0) where {DIM}
+    if (isfine(depth, pos) && depth >= mindepth) || depth >= maxdepth
         return GridNode{DIM}(depth, pos, Vector{GridNode{DIM}}([]))
     else
         children = Vector{GridNode{DIM}}([])
@@ -22,7 +24,7 @@ function GridNode{DIM}(isfine; depth = 0, pos = SVector{DIM, Int64}(zeros(Int64,
             bin = digits(i, base = 2, pad = DIM) |> reverse
             childdepth = depth + 1
             childpos = pos .* 2 .+ bin
-            push!(children, GridNode{DIM}(isfine; depth = childdepth, pos = childpos, maxdepth = 10))
+            push!(children, GridNode{DIM}(isfine; depth = childdepth, pos = childpos, maxdepth = maxdepth, mindepth = mindepth))
         end
         return GridNode{DIM}(depth, pos, children)
     end
@@ -77,8 +79,8 @@ function _calc_cornerpoints(depth, pos, latvec)
     return points
 end
 
-function uniformtreegrid(isfine, latvec; maxdepth = 10, DIM = 2, N = 2) 
-    root = GridNode{DIM}(isfine; maxdepth = maxdepth)
+function uniformtreegrid(isfine, latvec; maxdepth = 10, mindepth = 0, DIM = 2, N = 2)
+    root = GridNode{DIM}(isfine; maxdepth = maxdepth, mindepth = mindepth)
     subgrids = Vector{UniformMesh{DIM, N}}([])
     for node in PostOrderDFS(root)
         if isempty(node.children)
@@ -111,13 +113,13 @@ function densityisfine(density, latvec, depth, pos, rtol)
     cornerpoints = _calc_cornerpoints(depth, pos, latvec)
     cpval = [density(p) for p in cornerpoints]
     push!(cpval, density(_calc_point(depth, pos .+ 0.5, latvec)))
-    # return abs(sum(cpval) / length(cpval) - density(_calc_point(depth, pos .+ 0.5, latvec))) < rtol
-    return std(cpval) < rtol
+    return abs(sum(cpval) / length(cpval) - density(_calc_point(depth, pos .+ 0.5, latvec))) < rtol
+    # return std(cpval) < rtol
 end
 
-function treegridfromdensity(density, latvec; rtol = 1e-4, maxdepth = 10, DIM = 2, N = 2)
+function treegridfromdensity(density, latvec; rtol = 1e-4, maxdepth = 10, mindepth = 0, DIM = 2, N = 2)
     isfine(depth, pos) = densityisfine(density, latvec, depth, pos, rtol)
-    return uniformtreegrid(isfine, latvec; maxdepth = maxdepth, DIM = DIM, N = N)
+    return uniformtreegrid(isfine, latvec; maxdepth = maxdepth, mindepth = mindepth, DIM = DIM, N = N)
 end
 
 end
