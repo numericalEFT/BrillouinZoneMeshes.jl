@@ -69,14 +69,25 @@ function _calc_origin(node::GridNode{DIM}, latvec) where {DIM}
     return _calc_point(node.depth, node.pos, latvec)
 end
 
-function _calc_cornerpoints(depth, pos, latvec)
+function _calc_subpoints(depth, pos, latvec, N)
     DIM = length(pos)
     points = []
-    for i in 0:2^DIM-1
-        ii = digits(i, base = 2, pad = DIM)
+    for i in 0:N^DIM-1
+        ii = digits(i, base = N, pad = DIM)
         push!(points, _calc_point(depth, pos .+ ii, latvec))
     end
     return points
+end
+
+function _calc_cornerpoints(depth, pos, latvec)
+    # DIM = length(pos)
+    # points = []
+    # for i in 0:2^DIM-1
+    #     ii = digits(i, base = 2, pad = DIM)
+    #     push!(points, _calc_point(depth, pos .+ ii, latvec))
+    # end
+    # return points
+    return _calc_subpoints(depth, pos, latvec, 2)
 end
 
 function uniformtreegrid(isfine, latvec; maxdepth = 10, mindepth = 0, DIM = 2, N = 2)
@@ -109,16 +120,18 @@ Base.lastindex(tg::TreeGrid) = size(tg)
 Base.iterate(tg::TreeGrid) = (tg[1],1)
 Base.iterate(tg::TreeGrid, state) = (state>=size(tg)) ? nothing : (tg[state+1],state+1)
 
-function densityisfine(density, latvec, depth, pos, rtol)
-    cornerpoints = _calc_cornerpoints(depth, pos, latvec)
-    cpval = [density(p) for p in cornerpoints]
-    push!(cpval, density(_calc_point(depth, pos .+ 0.5, latvec)))
-    return abs(sum(cpval) / length(cpval) - density(_calc_point(depth, pos .+ 0.5, latvec))) < rtol
+function densityisfine(density, latvec, depth, pos, rtol; N = 3)
+    # compare results from subgrid of N+1 and N+3
+    cornerpoints1 = _calc_subpoints(depth, pos, latvec, N)
+    cornerpoints2 = _calc_subpoints(depth, pos, latvec, N+3)
+    val1 = [density(p) for p in cornerpoints1]
+    val2 = [density(p) for p in cornerpoints2]
+    return abs(sum(val1) / length(val1) - sum(val2) / length(val2)) < rtol
     # return std(cpval) < rtol
 end
 
 function treegridfromdensity(density, latvec; rtol = 1e-4, maxdepth = 10, mindepth = 0, DIM = 2, N = 2)
-    isfine(depth, pos) = densityisfine(density, latvec, depth, pos, rtol)
+    isfine(depth, pos) = densityisfine(density, latvec, depth, pos, rtol; N = N)
     return uniformtreegrid(isfine, latvec; maxdepth = maxdepth, mindepth = mindepth, DIM = DIM, N = N)
 end
 

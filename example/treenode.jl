@@ -19,7 +19,7 @@ naiveisfine(depth, pos) = depth >= 2
 
 function dispersion(k)
     me = 0.5
-    μ = 0.2
+    μ = 0.8
     return norm(k)^2/(2me)-μ
 
     # t = 0.5
@@ -55,7 +55,7 @@ latvec = [2 0; 1 sqrt(3)]
 # latvec = [2 0; 0 2]
 # tg = uniformtreegrid(naiveisfine, latvec; N = 3)
 # tg = treegridfromdensity(density, latvec; rtol = 1e-4, maxdepth = 5)
-tg = treegridfromdensity(k->density(k, latvec), latvec; rtol = 1e-3, maxdepth = 7, mindepth = 2, N = 2)
+tg = treegridfromdensity(k->density(k, latvec), latvec; rtol = 1e-2, maxdepth = 7, mindepth = 1, N = 2)
 
 X, Y = zeros(Float64, size(tg)), zeros(Float64, size(tg))
 for (pi, p) in enumerate(tg)
