@@ -5,7 +5,7 @@ using ..StaticArrays
 using ..BaseMesh
 using ..Statistics
 using ..LinearAlgebra
-export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency
+export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency, SymMap
 
 struct GridNode{DIM}
     depth::Int
@@ -118,6 +118,9 @@ function Base.getindex(tg::TreeGrid{DIM, SG}, i) where {DIM, SG}
 
     return getindex(tg.subgrids[tgi], sgi)
 end
+function Base.getindex(tg::TreeGrid{DIM, SG}, i, j) where {DIM, SG}
+    return getindex(tg.subgrids[i], j)
+end
 Base.firstindex(tg::TreeGrid) = 1
 Base.lastindex(tg::TreeGrid) = size(tg)
 
@@ -144,6 +147,39 @@ end
 function treegridfromdensity(density, latvec; rtol = 1e-4, maxdepth = 10, mindepth = 0, DIM = 2, N = 2)
     isfine(depth, pos) = densityisfine(density, latvec, depth, pos, rtol, DIM; N = N)
     return uniformtreegrid(isfine, latvec; maxdepth = maxdepth, mindepth = mindepth, DIM = DIM, N = N)
+end
+
+function _find_in(x, arr::AbstractArray; rtol = 1e-6)
+    # return index if in, return 0 otherwise
+    for (yi, y) in arr
+        if isapprox(x, y, rtol)
+            return yi
+        end
+    end
+
+    return 0
+end
+
+struct SymMap
+    map::Vector{Int}
+    reduced_length::Int
+
+    function SymMap(tg::TreeGrid, density; rtol = 1e-6)
+        map = zeros(Int, size(tg))
+        reduced_vals = []
+        for (pi, p) in tg
+            val = density(p)
+            pos = _find_in(val, reduced_vals; rtol = rtol)
+            if pos == 0
+                push!(reduced_vals, val)
+                map[pi] = length(reduced_vals)
+            else
+                map[pi] = pos
+            end
+        end
+
+        return new{}(map, length(reduced_vals))
+    end
 end
 
 end
