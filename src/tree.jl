@@ -127,7 +127,7 @@ Base.lastindex(tg::TreeGrid) = size(tg)
 Base.iterate(tg::TreeGrid) = (tg[1],1)
 Base.iterate(tg::TreeGrid, state) = (state>=size(tg)) ? nothing : (tg[state+1],state+1)
 
-function densityisfine(density, latvec, depth, pos, rtol, DIM; N = 3)
+function densityisfine(density, latvec, depth, pos, atol, DIM; N = 3)
     # compare results from subgrid of N+1 and N+3
     # area = _calc_area(latvec) / 2^(depth*DIM)
     area = 1.0 / 2^(depth*DIM)
@@ -135,24 +135,25 @@ function densityisfine(density, latvec, depth, pos, rtol, DIM; N = 3)
     cornerpoints2 = _calc_subpoints(depth, pos, latvec, 16)
     val1 = [density(p) for p in cornerpoints1]
     val2 = [density(p) for p in cornerpoints2]
-    # return abs(sum(val1) / length(val1) - sum(val2) / length(val2)) * area < rtol
-    # return abs(sum(val2) / length(val2)) * area < rtol
+    # return abs(sum(val1) / length(val1) - sum(val2) / length(val2)) * area < atol
+    # return abs(sum(val2) / length(val2)) * area < atol
     # println("max:$(abs(maximum(val2)))")
     # println("area:$(area)")
-    # println("rtol:$(rtol)")
-    return abs(maximum(val2)) * area < rtol
-    # return std(val2) * area < rtol
+    # println("atol:$(atol)")
+    return abs(maximum(val2)) * area < atol
+    # return std(val2) * area < atol
 end
 
-function treegridfromdensity(density, latvec; rtol = 1e-4, maxdepth = 10, mindepth = 0, DIM = 2, N = 2)
-    isfine(depth, pos) = densityisfine(density, latvec, depth, pos, rtol, DIM; N = N)
+function treegridfromdensity(density, latvec; atol = 1e-4, maxdepth = 10, mindepth = 0, DIM = 2, N = 2)
+    isfine(depth, pos) = densityisfine(density, latvec, depth, pos, atol, DIM; N = N)
     return uniformtreegrid(isfine, latvec; maxdepth = maxdepth, mindepth = mindepth, DIM = DIM, N = N)
 end
 
-function _find_in(x, arr::AbstractArray; rtol = 1e-6)
+function _find_in(x, arr::AbstractArray; atol = 1e-6)
     # return index if in, return 0 otherwise
-    for (yi, y) in arr
-        if isapprox(x, y, rtol)
+    for yi in 1:length(arr)
+        y = arr[yi]
+        if isapprox(x, y, atol = atol)
             return yi
         end
     end
@@ -160,25 +161,33 @@ function _find_in(x, arr::AbstractArray; rtol = 1e-6)
     return 0
 end
 
-struct SymMap
+struct SymMap{T}
     map::Vector{Int}
     reduced_length::Int
+    _vals::Vector{T}
+    inv_map::Vector{Vector{Int}}
 
-    function SymMap(tg::TreeGrid, density; rtol = 1e-6)
+    function SymMap(tg::TreeGrid, density; atol = 1e-6)
         map = zeros(Int, size(tg))
         reduced_vals = []
-        for (pi, p) in tg
+        inv_map = []
+        for pi in 1:size(tg)
+            # println(pi, " ", p)
+            p = tg[pi]
             val = density(p)
-            pos = _find_in(val, reduced_vals; rtol = rtol)
+            # println(val)
+            pos = _find_in(val, reduced_vals; atol = atol)
             if pos == 0
                 push!(reduced_vals, val)
+                push!(inv_map, [pi, ])
                 map[pi] = length(reduced_vals)
             else
+                push!(inv_map[pos], pi)
                 map[pi] = pos
             end
         end
 
-        return new{}(map, length(reduced_vals))
+        return new{eltype(reduced_vals)}(map, length(reduced_vals), reduced_vals, inv_map)
     end
 end
 
