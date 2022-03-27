@@ -1,6 +1,12 @@
 using SpaceGrid
+using SpaceGrid.AbstractTrees, SpaceGrid.GridTree, SpaceGrid.BaseMesh
+using LinearAlgebra
 using Test
 
 @testset "SpaceGrid.jl" begin
-    # Write your tests here.
+    if isempty(ARGS)
+        include("tree.jl")
+    else
+        include(ARGS[1])
+    end
 end

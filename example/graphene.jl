@@ -80,9 +80,9 @@ if abspath(PROGRAM_FILE) == @__FILE__
 
         end
     end
-    #pls = heatmap(kx, ky, energies[1,:,:])
-    pls = surface(kx, ky, energies[1,:,:], legend=false, fillalpha=0.5)
-    pls = surface!(kx, ky, energies[2,:,:], legend=false, fillalpha=0.5)
+    pls = heatmap(kx, ky, energies[1,:,:])
+    #pls = surface(kx, ky, energies[1,:,:], legend=false, fillalpha=0.5)
+    #pls = surface!(kx, ky, energies[2,:,:], legend=false, fillalpha=0.5)
     #pls = plot_fermisurface_2D(la, Eshift = -0.2, nk = 1000)
-    savefig("graphene_band.png")
+    savefig("run/graphene_band.png")
 end
