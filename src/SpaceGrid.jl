@@ -3,6 +3,7 @@ module SpaceGrid
 using AbstractTrees
 using StaticArrays
 using Statistics
+using LinearAlgebra
 
 # Write your package code here.
 
