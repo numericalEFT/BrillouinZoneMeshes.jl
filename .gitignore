@@ -31,3 +31,5 @@ Manifest.toml
 
 .ipynb_checkpoints
 *.png
+*.pdf
+run
