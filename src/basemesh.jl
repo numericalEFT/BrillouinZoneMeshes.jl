@@ -9,6 +9,11 @@ abstract type AbstractMesh end
 struct UniformMesh{DIM, N} <: AbstractMesh
     origin::SVector{DIM, Float64}
     latvec::SMatrix{DIM, DIM, Float64}
+    invlatvec::SMatrix{DIM, DIM, Float64}
+
+    function UniformMesh{DIM, N}(origin, latvec) where {DIM, N}
+        return new{DIM, N}(origin, latvec, inv(latvec))
+    end
 end
 
 Base.length(mesh::UniformMesh{DIM, N}) where {DIM, N} = N
@@ -43,5 +48,24 @@ Base.lastindex(mesh::UniformMesh) = size(mesh)
 # # iterator
 Base.iterate(mesh::UniformMesh) = (mesh[1],1)
 Base.iterate(mesh::UniformMesh, state) = (state>=size(mesh)) ? nothing : (mesh[state+1],state+1)
+
+function Base.floor(mesh::UniformMesh{DIM, N}, x) where {DIM, N}
+    # find index of nearest grid point down-left to the point
+    displacement = x .- mesh.origin
+    inds = mesh.invlatvec * displacement .+ 1
+    indexall = 0
+    for i in 1:DIM
+        if inds[i] < 1
+            indexi = 1
+        elseif inds[i] >= N
+            indexi = N-1
+        else
+            indexi = floor(Int, inds[i])
+        end
+        indexall += indexi * N ^ (DIM - i)
+    end
+
+    return indexall
+end
 
 end
