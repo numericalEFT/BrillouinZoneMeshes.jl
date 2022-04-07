@@ -15,7 +15,7 @@
         # return (exp((ϵ) / T) / T)/(exp((ϵ) / T) + 1.0)^2
     end
 
-    latvec = [2 0; 1 sqrt(3)] .* (2π)
+    latvec = [2 0; 1 sqrt(3)]' .* (2π)
     tg = treegridfromdensity(k->density(k), latvec; atol = 1/2^12, maxdepth = 6, mindepth = 1, N = 2)
 
     println("size:$(size(tg)),\t length:$(length(tg)),\t efficiency:$(efficiency(tg))")
