@@ -31,15 +31,15 @@ end
 function Base.getindex(mesh::UniformMesh{DIM, N}, inds...) where {DIM, N}
     pos = Vector(mesh.origin)
     for (ni, n) in enumerate(inds)
-        pos = pos .+ mesh.latvec[:, ni] .* (n - 1) ./ (length(mesh))
+        pos = pos .+ mesh.latvec[:, ni] .* (n - 1 + 0.5) ./ (length(mesh))
     end
     return pos
 end
 function Base.getindex(mesh::UniformMesh{DIM, N}, i::Int) where {DIM, N}
-    inds = digits(i-1, base = N)
+    inds = digits(i-1, base = N, pad = DIM)
     pos = Vector(mesh.origin)
     for (ni, n) in enumerate(inds)
-        pos = pos .+ mesh.latvec[:, ni] .* n ./ (N)
+        pos = pos .+ mesh.latvec[:, ni] .* (n + 0.5) ./ (N)
     end
     return pos
 end
@@ -50,7 +50,7 @@ Base.iterate(mesh::UniformMesh) = (mesh[1],1)
 Base.iterate(mesh::UniformMesh, state) = (state>=size(mesh)) ? nothing : (mesh[state+1],state+1)
 
 function Base.floor(mesh::UniformMesh{DIM, N}, x) where {DIM, N}
-    # find index of nearest grid point down-left to the point
+    # find index of nearest grid point to the point
     displacement = SVector{DIM, Float64}(x) - mesh.origin
     println(displacement)
     inds = (mesh.invlatvec * displacement) .* (N) .+ 1
