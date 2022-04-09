@@ -52,21 +52,21 @@ Base.iterate(mesh::UniformMesh, state) = (state>=size(mesh)) ? nothing : (mesh[s
 function Base.floor(mesh::UniformMesh{DIM, N}, x) where {DIM, N}
     # find index of nearest grid point to the point
     displacement = SVector{DIM, Float64}(x) - mesh.origin
-    println(displacement)
+    # println(displacement)
     inds = (mesh.invlatvec * displacement) .* (N) .+ 1
     indexall = 1
-    println((mesh.invlatvec * displacement))
-    println(inds)
+    # println((mesh.invlatvec * displacement))
+    # println(inds)
     for i in 1:DIM
         if inds[i] < 1
             indexi = 1
         elseif inds[i] >= N
-            indexi = N-1
+            indexi = N
         else
             indexi = floor(Int, inds[i])
         end
-        println("$(i):$(indexi)")
-        indexall += (indexi - 1) * N ^ (DIM - i)
+        # println("$(i):$(indexi)")
+        indexall += (indexi - 1) * N ^ (i-1)
     end
 
     return indexall
