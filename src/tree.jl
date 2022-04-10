@@ -8,6 +8,7 @@ using ..LinearAlgebra
 export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency, SymMap
 
 struct GridNode{DIM}
+    index::Vector{Int} # index in treegrid.subgrids, 0 if has children
     depth::Int
     pos::SVector{DIM,Int64}
     children::Vector{GridNode{DIM}}
@@ -17,7 +18,7 @@ function GridNode{DIM}(
     isfine;
     depth=0, pos=SVector{DIM,Int64}(zeros(Int64, DIM)), maxdepth=10, mindepth=0) where {DIM}
     if (isfine(depth, pos) && depth >= mindepth) || depth >= maxdepth
-        return GridNode{DIM}(depth, pos, Vector{GridNode{DIM}}([]))
+        return GridNode{DIM}([0, ], depth, pos, Vector{GridNode{DIM}}([]))
     else
         children = Vector{GridNode{DIM}}([])
         for i in 0:2^DIM-1
@@ -26,11 +27,29 @@ function GridNode{DIM}(
             childpos = pos .* 2 .+ bin
             push!(children, GridNode{DIM}(isfine; depth=childdepth, pos=childpos, maxdepth=maxdepth, mindepth=mindepth))
         end
-        return GridNode{DIM}(depth, pos, children)
+        return GridNode{DIM}([0, ], depth, pos, children)
     end
 end
 
 AbstractTrees.children(node::GridNode) = node.children
+
+function Base.floor(node::GridNode{DIM}, x) where {DIM}
+    # x is dimensionless pos that matches pos ./ 2^depth
+    if isempty(node.children)
+        return node.index[1]
+    else
+        midpos = (node.pos .* 2.0 .+ 1.0) ./ 2^(node.depth + 1)
+
+        index = 1
+        for i in 1:DIM
+            if x[i] > midpos[i]
+                index = index + 2^(DIM-i)
+            end
+        end
+
+        return floor(node.children[index], x)
+    end
+end
 
 function efficiency(root::GridNode{DIM}) where {DIM}
     np, depth = 0, 0
@@ -48,10 +67,24 @@ end
 struct TreeGrid{DIM,SG}
     root::GridNode{DIM}
     latvec::SMatrix{DIM,DIM,Float64}
+    invlatvec::SMatrix{DIM, DIM, Float64}
     subgrids::Vector{SG}
 end
 
 efficiency(tg::TreeGrid) = efficiency(tg.root)
+
+function Base.floor(tg::TreeGrid{DIM, SG}, x) where {DIM, SG}
+    dimlessx = tg.invlatvec * SVector{DIM, Float64}(x) .+ 0.5
+
+    tgi = floor(tg.root, dimlessx)
+    mesh = tg.subgrids[tgi]
+
+    sgi = floor(mesh, x)
+
+    sgsize = size(tg.subgrids[1])
+
+    return (tgi - 1) * sgsize + sgi
+end
 
 function _calc_area(latvec)
     return abs(det(latvec))
@@ -97,19 +130,24 @@ end
 function uniformtreegrid(isfine, latvec; maxdepth=10, mindepth=0, DIM=2, N=2)
     root = GridNode{DIM}(isfine; maxdepth=maxdepth, mindepth=mindepth)
     subgrids = Vector{UniformMesh{DIM,N}}([])
+
+    i = 1
     for node in PostOrderDFS(root)
         if isempty(node.children)
             depth = node.depth
             origin = _calc_origin(node, latvec)
             mesh = UniformMesh{DIM,N}(origin, latvec ./ 2^depth)
             push!(subgrids, mesh)
+            node.index[1] = i
+            i = i+1
         end
     end
-    return TreeGrid{DIM,UniformMesh{DIM,N}}(root, latvec, subgrids)
+
+    return TreeGrid{DIM,UniformMesh{DIM,N}}(root, latvec, inv(latvec), subgrids)
 end
 
-Base.length(tg::TreeGrid{DIM,SG}) where {DIM,SG} = length(tg.subgrids)
-Base.size(tg::TreeGrid{DIM,SG}) where {DIM,SG} = length(tg) * size(tg.subgrids[1])
+Base.length(tg::TreeGrid{DIM,SG}) where {DIM,SG} = length(tg.subgrids) * size(tg.subgrids[1])
+Base.size(tg::TreeGrid{DIM,SG}) where {DIM,SG} = (length(tg.subgrids), size(tg.subgrids[1]))
 # index and iterator
 function Base.getindex(tg::TreeGrid{DIM,SG}, i) where {DIM,SG}
     sgsize = size(tg.subgrids[1])
@@ -122,10 +160,10 @@ function Base.getindex(tg::TreeGrid{DIM,SG}, i, j) where {DIM,SG}
     return getindex(tg.subgrids[i], j)
 end
 Base.firstindex(tg::TreeGrid) = 1
-Base.lastindex(tg::TreeGrid) = size(tg)
+Base.lastindex(tg::TreeGrid) = length(tg)
 
 Base.iterate(tg::TreeGrid) = (tg[1], 1)
-Base.iterate(tg::TreeGrid, state) = (state >= size(tg)) ? nothing : (tg[state+1], state + 1)
+Base.iterate(tg::TreeGrid, state) = (state >= length(tg)) ? nothing : (tg[state+1], state + 1)
 
 function densityisfine(density, latvec, depth, pos, atol, DIM; N=3)
     # compare results from subgrid of N+1 and N+3
@@ -168,10 +206,10 @@ struct SymMap{T}
     inv_map::Vector{Vector{Int}}
 
     function SymMap(tg::TreeGrid, density; atol=1e-6)
-        map = zeros(Int, size(tg))
+        map = zeros(Int, length(tg))
         reduced_vals = []
         inv_map = []
-        for pi in 1:size(tg)
+        for pi in 1:length(tg)
             # println(pi, " ", p)
             p = tg[pi]
             val = density(p)
