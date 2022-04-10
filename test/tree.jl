@@ -15,10 +15,38 @@
         # return (exp((ϵ) / T) / T)/(exp((ϵ) / T) + 1.0)^2
     end
 
-    latvec = [2 0; 1 sqrt(3)] .* (2π)
-    tg = treegridfromdensity(k->density(k), latvec; atol = 1/2^12, maxdepth = 6, mindepth = 1, N = 2)
+    latvec = [2 0; 1 sqrt(3)]' .* (2π)
+    tg = treegridfromdensity(k->density(k), latvec; atol = 1/2^10, maxdepth = 5, mindepth = 1, N = 2)
 
     println("size:$(size(tg)),\t length:$(length(tg)),\t efficiency:$(efficiency(tg))")
+
+    @testset "TreeGrid" begin
+
+        # test node.index
+        for node in PostOrderDFS(tg.root)
+            if node.index[1] != 0
+                origin1 = GridTree._calc_origin(node, tg.latvec)
+                origin2 = tg.subgrids[node.index[1]].origin
+                @test origin1 == origin2
+            end
+        end
+
+        # test floor of GridNode
+        for node in PostOrderDFS(tg.root)
+            if node.index[1] != 0
+                x = (node.pos .* 2.0 .+ 1.0) ./ 2^(node.depth + 1)
+                index = floor(tg.root, x)
+                @test index == node.index[1]
+            end
+        end
+
+        # test floor of TreeGrid
+        for i in 1:length(tg)
+            p = tg[i]
+            @test i == floor(tg, p)
+        end
+
+    end
 
     @testset "SymMap" begin
         atol = 1e-6
@@ -29,7 +57,7 @@
         vals = smap._vals
 
         # test map
-        for i in 1:size(tg)
+        for i in 1:length(tg)
             @test isapprox(density(tg[i]), vals[smap.map[i]], atol = 2atol)
         end
 

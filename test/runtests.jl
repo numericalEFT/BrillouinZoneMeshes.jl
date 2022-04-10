@@ -6,6 +6,7 @@ using Test
 @testset "SpaceGrid.jl" begin
     if isempty(ARGS)
         include("tree.jl")
+        include("basemesh.jl")
     else
         include(ARGS[1])
     end

@@ -18,19 +18,19 @@ function density(k; band=1)
     # return (exp((ϵ) / T) / T)/(exp((ϵ) / T) + 1.0)^2
 end
 
-latvec = [2 0; 1 sqrt(3)] .* (2π)
+latvec = [2 0; 1 sqrt(3)]' .* (2π)
 # println(SpaceGrid.GridTree._calc_subpoints(3, [3,3], latvec, 2))
-tg = treegridfromdensity(k -> density(k), latvec; atol=1 / 2^18, maxdepth=9, mindepth=1, N=2)
+tg = treegridfromdensity(k -> density(k), latvec; atol=1 / 2^14, maxdepth=7, mindepth=1, N=2)
 
-X, Y = zeros(Float64, size(tg)), zeros(Float64, size(tg))
+X, Y = zeros(Float64, length(tg)), zeros(Float64, length(tg))
 for (pi, p) in enumerate(tg)
     X[pi], Y[pi] = p[1], p[2]
     # println(p)
 end
 
-println("size:$(size(tg)),\t length:$(length(tg)),\t efficiency:$(efficiency(tg))")
+println("size:$(length(tg)),\t length:$(size(tg)),\t efficiency:$(efficiency(tg))")
 
-smap = SymMap(tg, k -> density(k); atol=1e-6)
+smap = SymMap(tg, k -> density(k); atol=1e-4)
 # println(smap.map)
 # println(smap.inv_map)
 println("compress:$(smap.reduced_length/length(smap.map))")
