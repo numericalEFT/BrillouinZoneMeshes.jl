@@ -81,7 +81,7 @@ function Base.floor(tg::TreeGrid{DIM, SG}, x) where {DIM, SG}
 
     sgi = floor(mesh, x)
 
-    sgsize = size(tg.subgrids[1])
+    sgsize = length(tg.subgrids[1])
 
     return (tgi - 1) * sgsize + sgi
 end
@@ -146,11 +146,11 @@ function uniformtreegrid(isfine, latvec; maxdepth=10, mindepth=0, DIM=2, N=2)
     return TreeGrid{DIM,UniformMesh{DIM,N}}(root, latvec, inv(latvec), subgrids)
 end
 
-Base.length(tg::TreeGrid{DIM,SG}) where {DIM,SG} = length(tg.subgrids) * size(tg.subgrids[1])
-Base.size(tg::TreeGrid{DIM,SG}) where {DIM,SG} = (length(tg.subgrids), size(tg.subgrids[1]))
+Base.length(tg::TreeGrid{DIM,SG}) where {DIM,SG} = length(tg.subgrids) * length(tg.subgrids[1])
+Base.size(tg::TreeGrid{DIM,SG}) where {DIM,SG} = (length(tg.subgrids), length(tg.subgrids[1]))
 # index and iterator
 function Base.getindex(tg::TreeGrid{DIM,SG}, i) where {DIM,SG}
-    sgsize = size(tg.subgrids[1])
+    sgsize = length(tg.subgrids[1])
 
     tgi, sgi = (i - 1) ÷ sgsize + 1, (i - 1) % sgsize + 1
 

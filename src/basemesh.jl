@@ -2,7 +2,7 @@ module BaseMesh
 
 using ..StaticArrays
 
-export UniformMesh
+export UniformMesh, interp
 
 abstract type AbstractMesh end
 
@@ -16,8 +16,9 @@ struct UniformMesh{DIM, N} <: AbstractMesh
     end
 end
 
-Base.length(mesh::UniformMesh{DIM, N}) where {DIM, N} = N
-Base.size(mesh::UniformMesh{DIM, N}) where {DIM, N} = N^DIM
+Base.length(mesh::UniformMesh{DIM, N}) where {DIM, N} = N^DIM
+Base.size(mesh::UniformMesh{DIM, N}) where {DIM, N} = NTuple{DIM, Int}(ones(Int, DIM) .* N)
+
 function Base.show(io::IO, mesh::UniformMesh)
     println("UniformMesh Grid:")
     for (pi, p) in enumerate(mesh)
@@ -44,16 +45,25 @@ function Base.getindex(mesh::UniformMesh{DIM, N}, i::Int) where {DIM, N}
     return pos
 end
 Base.firstindex(mesh::UniformMesh) = 1
-Base.lastindex(mesh::UniformMesh) = size(mesh)
+Base.lastindex(mesh::UniformMesh) = length(mesh)
 # # iterator
 Base.iterate(mesh::UniformMesh) = (mesh[1],1)
-Base.iterate(mesh::UniformMesh, state) = (state>=size(mesh)) ? nothing : (mesh[state+1],state+1)
+Base.iterate(mesh::UniformMesh, state) = (state>=length(mesh)) ? nothing : (mesh[state+1],state+1)
+
+_ind2inds(i::Int, N::Int, DIM::Int) = digits(i-1, base = N, pad = DIM) .+ 1
+function _inds2ind(inds, N::Int)
+    indexall = 1
+    for i in 1:length(inds)
+        indexall += (inds[i] - 1) * N ^ (i - 1)
+    end
+    return indexall
+end
 
 function Base.floor(mesh::UniformMesh{DIM, N}, x) where {DIM, N}
     # find index of nearest grid point to the point
     displacement = SVector{DIM, Float64}(x) - mesh.origin
     # println(displacement)
-    inds = (mesh.invlatvec * displacement) .* (N) .+ 1
+    inds = (mesh.invlatvec * displacement) .* (N) .+ 0.5 .+ 4*eps(1.0)
     indexall = 1
     # println((mesh.invlatvec * displacement))
     # println(inds)
@@ -61,7 +71,7 @@ function Base.floor(mesh::UniformMesh{DIM, N}, x) where {DIM, N}
         if inds[i] < 1
             indexi = 1
         elseif inds[i] >= N
-            indexi = N
+            indexi = N-1
         else
             indexi = floor(Int, inds[i])
         end
@@ -70,6 +80,21 @@ function Base.floor(mesh::UniformMesh{DIM, N}, x) where {DIM, N}
     end
 
     return indexall
+end
+
+function interp(data, mesh::UniformMesh{DIM, N}, x) where {DIM, N}
+    inds = _ind2inds(floor(mesh, x), N, DIM)
+    direction = ones(Int, DIM)
+    for i in 1:DIM
+        
+    end
+
+end
+
+function integrate(data, mesh::UniformMesh{DIM, N}) where {DIM, N}
+    area = abs(det(mesh.latvec))
+    avg = sum(data) / length(data)
+    return avg * area
 end
 
 end
