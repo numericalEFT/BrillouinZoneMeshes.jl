@@ -5,7 +5,7 @@ using ..StaticArrays
 using ..BaseMesh
 using ..Statistics
 using ..LinearAlgebra
-export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency, SymMap
+export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency, SymMap, interp, integrate
 
 struct GridNode{DIM}
     index::Vector{Int} # index in treegrid.subgrids, 0 if has children
@@ -84,6 +84,30 @@ function Base.floor(tg::TreeGrid{DIM, SG}, x) where {DIM, SG}
     sgsize = length(tg.subgrids[1])
 
     return (tgi - 1) * sgsize + sgi
+end
+
+function interp(data, tg::TreeGrid{DIM, SG}, x) where {DIM, SG}
+    dimlessx = tg.invlatvec * SVector{DIM, Float64}(x) .+ 0.5
+    sgsize = length(tg.subgrids[1])
+
+    tgi = floor(tg.root, dimlessx)
+    mesh = tg.subgrids[tgi]
+
+    data_slice = view(data, (tgi-1)*sgsize+1:tgi*sgsize)
+
+    return BaseMesh.interp(data_slice, mesh, x)
+end
+
+function integrate(data, tg::TreeGrid{DIM, SG}) where {DIM, SG}
+    sgsize = length(tg.subgrids[1])
+    result = 0.0
+
+    for tgi in 1:size(tg)[1]
+        mesh = tg.subgrids[tgi]
+        data_slice = view(data, (tgi-1)*sgsize+1:tgi*sgsize)
+        result += BaseMesh.integrate(data_slice, mesh)
+    end
+    return result
 end
 
 function _calc_area(latvec)

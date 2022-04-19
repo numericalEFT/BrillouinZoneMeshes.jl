@@ -3,7 +3,7 @@ module BaseMesh
 using ..StaticArrays
 using ..LinearAlgebra
 
-export UniformMesh, interp, integrate
+export UniformMesh
 
 abstract type AbstractMesh end
 
@@ -84,46 +84,46 @@ function Base.floor(mesh::UniformMesh{DIM, N}, x) where {DIM, N}
     return indexall
 end
 
-function interp(data, mesh::UniformMesh, x)
+function interp(data, mesh::UniformMesh{DIM, N}, x) where {DIM, N}
     error("Not implemented!")
 end
 
-function interp(data::Matrix, mesh::UniformMesh{2, N}, x) where {N}
+function interp(data, mesh::UniformMesh{2, N}, x) where {N}
     # find floor index and normalized x y
     displacement = SVector{2, Float64}(x) - mesh.origin
     xy = (mesh.invlatvec * displacement) .* N .+ 0.5 .+ 2*eps(N*1.0)
     xi, yi = _indfloor(xy[1], N), _indfloor(xy[2], N)
 
-    return linear2D(data, xi, yi, xy...)
+    return linear2D(data, xi, yi, xy..., N)
 end
 
-@inline function linear2D(data::Matrix, xi, yi, x, y)
+@inline function linear2D(data, xi, yi, x, y, N)
     # accept data, floored index, normalized x and y, return linear interp
     # (xi, yi) should be [(1, 1) - size(data)], x and y normalized to the same scale as xi and yi
     xd, yd= x-xi, y-yi
 
-    c0 = data[xi, yi] * (1-xd) + data[xi+1, yi] * xd
-    c1 = data[xi, yi+1] * (1-xd) + data[xi+1, yi+1] * xd
+    c0 = data[xi + (yi-1) * N] * (1-xd) + data[xi+1 + (yi-1) * N] * xd
+    c1 = data[xi + (yi) * N] * (1-xd) + data[xi+1 + (yi) * N] * xd
 
     return c0 * (1-yd) + c1 * yd
 end
 
-function interp(data::Array{T, 3}, mesh::UniformMesh{3, N}, x) where {T, N}
+function interp(data, mesh::UniformMesh{3, N}, x) where {T, N}
     # find floor index and normalized x y z
     displacement = SVector{3, Float64}(x) - mesh.origin
     xyz = (mesh.invlatvec * displacement) .* N .+ 0.5 .+ 2*eps(N*1.0)
     xi, yi, zi = _indfloor(xyz[1], N), _indfloor(xyz[2], N), _indfloor(xyz[3], N)
 
-    return linear3D(data, xi, yi, zi, xyz...)
+    return linear3D(data, xi, yi, zi, xyz..., N)
 end
 
-@inline function linear3D(data::Array{T, 3}, xi, yi, zi, x, y, z) where {T}
+@inline function linear3D(data, xi, yi, zi, x, y, z, N) where {T}
     xd, yd, zd = x-xi, y-yi, z-zi
 
-    c00 = data[xi, yi, zi] * (1-xd) + data[xi+1, yi, zi] * xd
-    c01 = data[xi, yi, zi+1] * (1-xd) + data[xi+1, yi, zi+1] * xd
-    c10 = data[xi, yi+1, zi] * (1-xd) + data[xi+1, yi+1, zi] * xd
-    c11 = data[xi, yi+1, zi+1] * (1-xd) + data[xi+1, yi+1, zi+1] * xd
+    c00 = data[xi + (yi-1)*N + (zi-1)*N^2] * (1-xd) + data[xi + (yi-1)*N + (zi-1)*N^2] * xd
+    c01 = data[xi + (yi-1)*N + (zi)*N^2] * (1-xd) + data[xi + (yi-1)*N + (zi)*N^2] * xd
+    c10 = data[xi + (yi)*N + (zi-1)*N^2] * (1-xd) + data[xi + (yi)*N + (zi-1)*N^2] * xd
+    c11 = data[xi + (yi)*N + (zi)*N^2] * (1-xd) + data[xi + (yi)*N + (zi)*N^2] * xd
 
     c0 = c00 * (1-yd) + c10 * yd
     c1 = c01 * (1-yd) + c11 * yd

@@ -144,17 +144,17 @@
         end
 
         ## interpolate
-        testN = 10
+        testN = 3
         xlist = rand(testN) * π
         ylist = rand(testN) * π
         for x in xlist
             for y in ylist
-                @test isapprox(f([x, y]), interp(data, umesh, [x, y]), rtol = 4e-2)
+                @test isapprox(f([x, y]), BaseMesh.interp(data, umesh, [x, y]), rtol = 4e-2)
             end
         end
 
         ## integrate
-        integral = integrate(data, umesh)
+        integral = BaseMesh.integrate(data, umesh)
         # println("integral=$(integral)")
         @test isapprox(integral, 2π, rtol = 1e-3)
 
@@ -172,14 +172,14 @@
             data[i] = f(umesh[i])
         end
         ## interpolate
-        testN = 5
+        testN = 3
         xlist = rand(testN)
         ylist = rand(testN)
         zlist = rand(testN)
         for x in xlist
             for y in ylist
                 for z in zlist
-                    @test isapprox(f([x, y, z]), interp(data, umesh, [x, y, z]), rtol = 4e-2)
+                    @test isapprox(f([x, y, z]), BaseMesh.interp(data, umesh, [x, y, z]), rtol = 4e-2)
                 end
             end
         end
