@@ -128,7 +128,8 @@
     end
 
     @testset "Interp and Integral" begin
-        N, DIM = 200, 2
+        # 2d
+        N, DIM = 100, 2
         origin = [0.0 0.0]
         latvec = [π 0; 0 π]'
         umesh = UniformMesh{DIM, N}(origin, latvec)
@@ -142,20 +143,47 @@
             data[i] = f(umesh[i])
         end
 
-        # interpolate
+        ## interpolate
         testN = 10
         xlist = rand(testN) * π
         ylist = rand(testN) * π
         for x in xlist
             for y in ylist
-                @test isapprox(f([x, y]), interp(data, umesh, [x, y]), rtol = 2e-2)
+                @test isapprox(f([x, y]), interp(data, umesh, [x, y]), rtol = 4e-2)
             end
         end
 
-        # integrate
+        ## integrate
         integral = integrate(data, umesh)
         # println("integral=$(integral)")
         @test isapprox(integral, 2π, rtol = 1e-3)
+
+        # 3d
+        N, DIM = 100, 3
+        origin = [0.0 0.0 0.0]
+        latvec = [1 0 0; 0 1 0; 0 0 1]'
+        umesh = UniformMesh{DIM, N}(origin, latvec)
+
+        g(x) = x[1] * x[2] * x[3]
+
+        data = zeros(Float64, size(umesh))
+
+        for i in 1:length(umesh)
+            data[i] = f(umesh[i])
+        end
+        ## interpolate
+        testN = 5
+        xlist = rand(testN)
+        ylist = rand(testN)
+        zlist = rand(testN)
+        for x in xlist
+            for y in ylist
+                for z in zlist
+                    @test isapprox(f([x, y, z]), interp(data, umesh, [x, y, z]), rtol = 4e-2)
+                end
+            end
+        end
+
     end
 
 end
