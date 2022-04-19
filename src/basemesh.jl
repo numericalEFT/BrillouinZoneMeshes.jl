@@ -1,8 +1,9 @@
 module BaseMesh
 
 using ..StaticArrays
+using ..LinearAlgebra
 
-export UniformMesh, interp
+export UniformMesh, interp, integrate
 
 abstract type AbstractMesh end
 
@@ -58,37 +59,61 @@ function _inds2ind(inds, N::Int)
     end
     return indexall
 end
+function _indfloor(x, N)
+    if x < 1
+        return 1
+    elseif x >= N
+        return N-1
+    else
+        return floor(Int, x)
+    end
+end
 
 function Base.floor(mesh::UniformMesh{DIM, N}, x) where {DIM, N}
     # find index of nearest grid point to the point
     displacement = SVector{DIM, Float64}(x) - mesh.origin
     # println(displacement)
-    inds = (mesh.invlatvec * displacement) .* (N) .+ 0.5 .+ 4*eps(1.0)
+    inds = (mesh.invlatvec * displacement) .* (N) .+ 0.5 .+ 2*eps(1.0*N)
     indexall = 1
     # println((mesh.invlatvec * displacement))
     # println(inds)
     for i in 1:DIM
-        if inds[i] < 1
-            indexi = 1
-        elseif inds[i] >= N
-            indexi = N-1
-        else
-            indexi = floor(Int, inds[i])
-        end
-        # println("$(i):$(indexi)")
-        indexall += (indexi - 1) * N ^ (i-1)
+        indexall += (_indfloor(inds[i], N) - 1) * N ^ (i-1)
     end
 
     return indexall
 end
 
-function interp(data, mesh::UniformMesh{DIM, N}, x) where {DIM, N}
-    inds = _ind2inds(floor(mesh, x), N, DIM)
-    direction = ones(Int, DIM)
-    for i in 1:DIM
-        
-    end
+function interp(data, mesh::UniformMesh, x)
+    error("Not implemented!")
+end
 
+function interp(data::Matrix, mesh::UniformMesh{DIM, N}, x) where {DIM, N}
+    @assert DIM == 2 "DIM should match dimension of data!"
+
+    # find floor index and normalized x y
+    ## find index of nearest grid point to the point
+    displacement = SVector{DIM, Float64}(x) - mesh.origin
+    xy = (mesh.invlatvec * displacement) .* N .+ 0.5 .+ 2*eps(N*1.0)
+    xi, yi = _indfloor(xy[1], N), _indfloor(xy[2], N)
+
+    return linear2D(data, xi, yi, xy[1], xy[2])
+end
+
+@inline function linear2D(data::Matrix, xi, yi, x, y)
+    # accept data, floored index, normalized x and y, return linear interp
+    # (xi, yi) should be [(1, 1) - size(data)], x and y normalized to the same scale as xi and yi
+    dx0, dx1 = x - xi, xi - x + 1
+    dy0, dy1 = y - yi, yi - y + 1
+
+    d00, d01 = data[xi, yi], data[xi, yi+1]
+    d10, d11 = data[xi+1, yi], data[xi+1, yi+1]
+
+    g0 = d00 * dx1 + d10 * dx0
+    g1 = d01 * dx1 + d11 * dx0
+
+    gx = (g0 * dy1 + g1 * dy0) / (dx0 + dx1) / (dy0 + dy1)
+    return gx
 end
 
 function integrate(data, mesh::UniformMesh{DIM, N}) where {DIM, N}

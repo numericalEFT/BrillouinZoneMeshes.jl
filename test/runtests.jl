@@ -1,6 +1,6 @@
 using SpaceGrid
 using SpaceGrid.AbstractTrees, SpaceGrid.GridTree, SpaceGrid.BaseMesh
-using LinearAlgebra
+using LinearAlgebra, Random
 using Test
 
 @testset "SpaceGrid.jl" begin
