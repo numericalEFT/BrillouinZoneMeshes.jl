@@ -5,7 +5,7 @@ using ..StaticArrays
 using ..BaseMesh
 using ..Statistics
 using ..LinearAlgebra
-export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency, SymMap, interp, integrate
+export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency, SymMap, interp, integrate, MappedData
 
 struct GridNode{DIM}
     index::Vector{Int} # index in treegrid.subgrids, 0 if has children
@@ -223,13 +223,13 @@ function _find_in(x, arr::AbstractArray; atol=1e-6)
     return 0
 end
 
-struct SymMap{T}
+struct SymMap{T, N}
     map::Vector{Int}
     reduced_length::Int
     _vals::Vector{T}
     inv_map::Vector{Vector{Int}}
 
-    function SymMap(tg::TreeGrid, density; atol=1e-6)
+    function SymMap{T}(tg::TreeGrid, density; atol=1e-6) where {T}
         map = zeros(Int, length(tg))
         reduced_vals = []
         inv_map = []
@@ -249,9 +249,32 @@ struct SymMap{T}
             end
         end
 
-        return new{eltype(reduced_vals)}(map, length(reduced_vals), reduced_vals, inv_map)
+        return new{T, length(tg)}(map, length(reduced_vals), reduced_vals, inv_map)
     end
 end
+
+struct MappedData{T, N} <: AbstractArray{T, N}
+    smap::SymMap{T, N}
+    data::Vector{T}
+
+    function MappedData(smap::SymMap{T, N}) where {T, N}
+        data = zeros(T, smap.reduced_length)
+        return new{T, N}(smap, data)
+    end
+end
+
+Base.length(md::MappedData) = length(md.smap.map)
+Base.size(md::MappedData) = (length(md),)
+# index and iterator
+Base.getindex(md::MappedData, i) = md.data[md.smap.map[i]]
+function Base.setindex!(md::MappedData, x, i)
+    md.data[md.smap.map[i]] = x
+end
+Base.firstindex(md::MappedData) = 1
+Base.lastindex(md::MappedData) = length(tg)
+
+Base.iterate(md::MappedData) = (md[1], 1)
+Base.iterate(md::MappedData, state) = (state >= length(md)) ? nothing : (md[state+1], state + 1)
 
 end
 

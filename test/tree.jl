@@ -51,7 +51,7 @@
 
     @testset "SymMap" begin
         atol = 1e-6
-        smap = SymMap(tg, k->density(k); atol = atol)
+        smap = SymMap{Float64}(tg, k->density(k); atol = atol)
         println(smap.map)
         println("compress:$(smap.reduced_length/length(smap.map))")
 
