@@ -211,11 +211,11 @@ function treegridfromdensity(density, latvec; atol=1e-4, maxdepth=10, mindepth=0
     return uniformtreegrid(isfine, latvec; maxdepth=maxdepth, mindepth=mindepth, DIM=DIM, N=N)
 end
 
-function _find_in(x, arr::AbstractArray; atol=1e-6)
+function _find_in(x, arr::AbstractArray; atol=1e-6, rtol=1e-6)
     # return index if in, return 0 otherwise
     for yi in 1:length(arr)
         y = arr[yi]
-        if isapprox(x, y, atol=atol)
+        if isapprox(x, y, atol=atol, rtol=rtol)
             return yi
         end
     end
@@ -229,7 +229,7 @@ struct SymMap{T, N}
     _vals::Vector{T}
     inv_map::Vector{Vector{Int}}
 
-    function SymMap{T}(tg::TreeGrid, density; atol=1e-6) where {T}
+    function SymMap{T}(tg::TreeGrid, density; atol=1e-6, rtol=1e-6) where {T}
         map = zeros(Int, length(tg))
         reduced_vals = []
         inv_map = []
@@ -238,7 +238,7 @@ struct SymMap{T, N}
             p = tg[pi]
             val = density(p)
             # println(val)
-            pos = _find_in(val, reduced_vals; atol=atol)
+            pos = _find_in(val, reduced_vals; atol=atol, rtol=rtol)
             if pos == 0
                 push!(reduced_vals, val)
                 push!(inv_map, [pi,])
