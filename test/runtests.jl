@@ -1,5 +1,5 @@
 using SpaceGrid
-using SpaceGrid.AbstractTrees, SpaceGrid.GridTree, SpaceGrid.BaseMesh
+using SpaceGrid.AbstractTrees, SpaceGrid.GridTree, SpaceGrid.BaseMesh, SpaceGrid.BaryCheb
 using LinearAlgebra, Random
 using Test
 
@@ -7,6 +7,7 @@ using Test
     if isempty(ARGS)
         include("tree.jl")
         include("basemesh.jl")
+        include("barycheb.jl")
     else
         include(ARGS[1])
     end

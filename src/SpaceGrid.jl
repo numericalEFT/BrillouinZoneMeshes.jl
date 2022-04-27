@@ -13,4 +13,7 @@ using .BaseMesh
 include("tree.jl")
 using .GridTree
 
+include("barycheb.jl")
+using .BaryCheb
+
 end
