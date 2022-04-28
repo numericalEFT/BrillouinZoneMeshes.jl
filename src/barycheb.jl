@@ -1,5 +1,7 @@
 module BaryCheb
 
+using ..StaticArrays
+
 ######################################################
 #---------------- 1D barycheb ------------------------
 ######################################################
@@ -99,6 +101,47 @@ function barycheb(n, x, f, wc, xc)
     return num / den
 end
 
+function barychebND(n, xs, f, wc, xc, DIM)
+    haseq = false
+    eqinds = zeros(Int, DIM)
+    for i in 1:DIM
+        for j in 1:n
+            if xs[i] == xc[j]
+                eqinds[i] = j
+                haseq = true
+            end
+        end
+    end
+
+    if haseq
+        newxs = [xs[i] for i in 1:DIM if eqinds[i]==0]
+        newDIM = length(newxs)
+        if newDIM == 0
+            return f[CartesianIndex(eqinds...)]
+        else
+            newf = view(f, [(i==0) ? (1:n) : (i) for i in eqinds]...)
+            return _barychebND_noneq(n, newxs, newf, wc, xc, newDIM)
+        end
+    else
+        return _barychebND_noneq(n, xs, f, wc, xc, DIM)
+    end
+end
+
+function _barychebND_noneq(n, xs, f, wc, xc, DIM)
+    # deal with the case when there's no xs[i] = xc[j]
+    inds = CartesianIndices(NTuple{DIM, Int}(ones(Int, DIM) .* n))
+    num, den = 0.0, 0.0
+    for ind in inds
+        q = 1.0
+        for i in 1:DIM
+            q *= wc[ind[i]] / (xs[i] - xc[ind[i]])
+        end
+        num += q * f[ind]
+        den += q
+    end
+    return num / den
+end
+
 function barycheb2(n, x, f, wc, xc)
     for j in 1:n
         if x == xc[j]
@@ -126,6 +169,36 @@ function chebdiff(n, x, f, invmat)
     wc = weightcoef(x, -1, n)
     intw = calcweight(invmat, wc)
     return sum(intw .* f)
+end
+
+struct BaryCheb1D{N}
+    # wrapped barycheb 1d grid, x in [-1, 1]
+    x::SVector{N, Float64}
+    w::SVector{N, Float64}
+    invmat::SMatrix{N, N, Float64}
+
+    function BaryCheb1D(N::Int)
+        x, w = barychebinit(N)
+        invmat = invvandermonde(N)
+
+        return new{N}(x, w, invmat)
+    end
+end
+
+function interp1D(data, xgrid::BaryCheb1D{N}, x) where {N}
+    return barycheb(N, x, data, xgrid.w, xgrid.x)
+end
+
+function integrate1D(data, xgrid::BaryCheb1D{N}, x1, x2) where {N}
+    return chebint(N, x1, x2, data, xgrid.invmat)
+end
+
+function integrate1D(data, xgrid::BaryCheb1D{N}) where {N}
+    return integrate1D(data, xgrid, -1, 1)
+end
+
+function interpND(data, xgrid::BaryCheb1D{N}, xs) where {N}
+    
 end
 
 end
