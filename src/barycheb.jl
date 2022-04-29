@@ -58,7 +58,8 @@ function weightcoef(a, i::Int, n)
     b = zeros(Float64, n)
     for j in 1:n
         if j+i-1 > 0
-            b[j] = a^(j+i-1)/(j+i-1)
+            # b[j] = a^(j+i-1)/(j+i-1)
+            b[j] = a^(j+i-1) * factorial(j-1) / factorial(j+i-1)
         elseif j+i-1 == 0
             b[j] = 1
         else
@@ -189,16 +190,35 @@ function interp1D(data, xgrid::BaryCheb1D{N}, x) where {N}
     return barycheb(N, x, data, xgrid.w, xgrid.x)
 end
 
-function integrate1D(data, xgrid::BaryCheb1D{N}, x1, x2) where {N}
+function integrate1D(data, xgrid::BaryCheb1D{N}; x1=-1, x2=1) where {N}
     return chebint(N, x1, x2, data, xgrid.invmat)
 end
 
-function integrate1D(data, xgrid::BaryCheb1D{N}) where {N}
-    return integrate1D(data, xgrid, -1, 1)
+function interpND(data, xgrid::BaryCheb1D{N}, xs) where {N}
+    return barychebND(N, xs, data, xgrid.w, xgrid.x, length(xs))
 end
 
-function interpND(data, xgrid::BaryCheb1D{N}, xs) where {N}
-    
+function integrateND(data, xgrid::BaryCheb1D{N}, x1s, x2s) where {N}
+    DIM = length(x1s)
+    @assert DIM == length(x2s)
+
+    intws = zeros(Float64, (DIM, N))
+    for i in 1:DIM
+        wc = weightcoef(x2s[i], 1, N) .- weightcoef(x1s[i], 1, N)
+        intws[i, :] = calcweight(xgrid.invmat, wc)
+    end
+
+    result = 0.0
+    inds = CartesianIndices(NTuple{DIM, Int}(ones(Int, DIM) .* N))
+    for ind in inds
+        w = 1.0
+        for i in 1:DIM
+            w *= intws[i, ind[i]]
+        end
+        result += data[ind] * w
+    end
+
+    return result
 end
 
 end
