@@ -5,7 +5,7 @@ using ..LinearAlgebra
 
 using ..BaryCheb
 
-export UniformMesh, BaryChebMesh, interp, integrate
+export UniformMesh, BaryChebMesh
 
 abstract type AbstractMesh end
 

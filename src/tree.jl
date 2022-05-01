@@ -5,6 +5,8 @@ using ..StaticArrays
 using ..BaseMesh
 using ..Statistics
 using ..LinearAlgebra
+using ..BaryCheb
+
 export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency, SymMap, interp, integrate, MappedData
 
 struct GridNode{DIM}
@@ -170,6 +172,26 @@ function uniformtreegrid(isfine, latvec; maxdepth=10, mindepth=0, DIM=2, N=2)
     return TreeGrid{DIM,UniformMesh{DIM,N}}(root, latvec, inv(latvec), subgrids)
 end
 
+function barychebtreegrid(isfine, latvec; maxdepth=10, mindepth=0, DIM=2, N=2)
+    root = GridNode{DIM}(isfine; maxdepth=maxdepth, mindepth=mindepth)
+    subgrids = Vector{BaryChebMesh{DIM,N}}([])
+
+    i = 1
+    barycheb = BaryCheb1D(N)
+    for node in PostOrderDFS(root)
+        if isempty(node.children)
+            depth = node.depth
+            origin = _calc_origin(node, latvec)
+            mesh = BaryChebMesh{DIM,N}(origin, latvec ./ 2^depth, barycheb)
+            push!(subgrids, mesh)
+            node.index[1] = i
+            i = i+1
+        end
+    end
+
+    return TreeGrid{DIM,BaryChebMesh{DIM,N}}(root, latvec, inv(latvec), subgrids)
+end
+
 Base.length(tg::TreeGrid{DIM,SG}) where {DIM,SG} = length(tg.subgrids) * length(tg.subgrids[1])
 Base.size(tg::TreeGrid{DIM,SG}) where {DIM,SG} = (length(tg.subgrids), length(tg.subgrids[1]))
 # index and iterator
@@ -206,9 +228,15 @@ function densityisfine(density, latvec, depth, pos, atol, DIM; N=3)
     # return std(val2) * area < atol
 end
 
-function treegridfromdensity(density, latvec; atol=1e-4, maxdepth=10, mindepth=0, DIM=2, N=2)
+function treegridfromdensity(density, latvec; atol=1e-4, maxdepth=10, mindepth=0, DIM=2, N=2, type=:uniform)
     isfine(depth, pos) = densityisfine(density, latvec, depth, pos, atol, DIM; N=N)
-    return uniformtreegrid(isfine, latvec; maxdepth=maxdepth, mindepth=mindepth, DIM=DIM, N=N)
+    if type == :uniform
+        return uniformtreegrid(isfine, latvec; maxdepth=maxdepth, mindepth=mindepth, DIM=DIM, N=N)
+    elseif type == :barycheb
+        return barychebtreegrid(isfine, latvec; maxdepth=maxdepth, mindepth=mindepth, DIM=DIM, N=N)
+    else
+        error("not implemented!")
+    end
 end
 
 function _find_in(x, arr::AbstractArray; atol=1e-6, rtol=1e-6)

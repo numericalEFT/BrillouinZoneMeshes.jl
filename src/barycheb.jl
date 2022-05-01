@@ -133,12 +133,12 @@ function _barychebND_noneq(n, xs, f, wc, xc, DIM)
     # deal with the case when there's no xs[i] = xc[j]
     inds = CartesianIndices(NTuple{DIM, Int}(ones(Int, DIM) .* n))
     num, den = 0.0, 0.0
-    for ind in inds
+    for (indi, ind) in enumerate(inds)
         q = 1.0
         for i in 1:DIM
             q *= wc[ind[i]] / (xs[i] - xc[ind[i]])
         end
-        num += q * f[ind]
+        num += q * f[indi]
         den += q
     end
     return num / den
@@ -213,12 +213,12 @@ function integrateND(data, xgrid::BaryCheb1D{N}, x1s, x2s) where {N}
 
     result = 0.0
     inds = CartesianIndices(NTuple{DIM, Int}(ones(Int, DIM) .* N))
-    for ind in inds
+    for (indi, ind) in enumerate(inds)
         w = 1.0
         for i in 1:DIM
             w *= intws[i, ind[i]]
         end
-        result += data[ind] * w
+        result += data[indi] * w
     end
 
     return result
@@ -233,12 +233,12 @@ function integrateND(data, xgrid::BaryCheb1D{N}, DIM) where {N}
 
     result = 0.0
     inds = CartesianIndices(NTuple{DIM, Int}(ones(Int, DIM) .* N))
-    for ind in inds
+    for (indi, ind) in enumerate(inds)
         w = 1.0
         for i in 1:DIM
             w *= intw[ind[i]]
         end
-        result += data[ind] * w
+        result += data[indi] * w
     end
 
     return result
