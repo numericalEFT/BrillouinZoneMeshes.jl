@@ -3,7 +3,9 @@ module BaseMesh
 using ..StaticArrays
 using ..LinearAlgebra
 
-export UniformMesh
+using ..BaryCheb
+
+export UniformMesh, BaryChebMesh, interp, integrate
 
 abstract type AbstractMesh end
 
@@ -137,4 +139,62 @@ function integrate(data, mesh::UniformMesh{DIM, N}) where {DIM, N}
     return avg * area
 end
 
+struct BaryChebMesh{DIM, N} <: AbstractMesh
+    origin::SVector{DIM, Float64}
+    latvec::SMatrix{DIM, DIM, Float64}
+    invlatvec::SMatrix{DIM, DIM, Float64}
+    barycheb::BaryCheb1D{N} # grid in barycheb is [-1, 1]
+
+    function BaryChebMesh{DIM, N}(origin, latvec, barycheb::BaryCheb1D{N}) where {DIM, N}
+        return new{DIM, N}(origin, latvec, inv(latvec), barycheb)
+    end
 end
+
+function BaryChebMesh(origin, latvec, DIM, N)
+    barycheb = BaryCheb1D(N)
+    return BaryChebMesh{DIM, N}(origin, latvec, barycheb)
+end
+
+Base.length(mesh::BaryChebMesh{DIM, N}) where {DIM, N} = N^DIM
+Base.size(mesh::BaryChebMesh{DIM, N}) where {DIM, N} = NTuple{DIM, Int}(ones(Int, DIM) .* N)
+function Base.show(io::IO, mesh::BaryChebMesh)
+    println("BaryChebMesh Grid:")
+    for (pi, p) in enumerate(mesh)
+        println(p)
+    end
+end
+function Base.getindex(mesh::BaryChebMesh{DIM, N}, inds...) where {DIM, N}
+    pos = Vector(mesh.origin)
+    for (ni, n) in enumerate(inds)
+        pos = pos .+ mesh.latvec[:, ni] .* (mesh.barycheb[n] + 1.0) ./ 2.0
+    end
+    return pos
+end
+function Base.getindex(mesh::BaryChebMesh{DIM, N}, i::Int) where {DIM, N}
+    inds = digits(i-1, base = N, pad = DIM)
+    pos = Vector(mesh.origin)
+    for (ni, n) in enumerate(inds)
+        pos = pos .+ mesh.latvec[:, ni] .* (mesh.barycheb[n+1] + 1.0) ./ 2.0
+    end
+    return pos
+end
+Base.firstindex(mesh::BaryChebMesh) = 1
+Base.lastindex(mesh::BaryChebMesh) = length(mesh)
+# # iterator
+Base.iterate(mesh::BaryChebMesh) = (mesh[1],1)
+Base.iterate(mesh::BaryChebMesh, state) = (state>=length(mesh)) ? nothing : (mesh[state+1],state+1)
+
+function interp(data, mesh::BaryChebMesh{DIM, N}, x) where {DIM, N}
+    # translate into dimensionless
+    displacement = SVector{DIM, Float64}(x) - mesh.origin
+    xs = (mesh.invlatvec * displacement) .* 2.0 .- 1.0
+    return interpND(data, mesh.barycheb, xs)
+end
+
+function integrate(data, mesh::BaryChebMesh{DIM, N}) where {DIM, N}
+    area = abs(det(mesh.latvec))
+    return integrateND(data, mesh.barycheb, DIM) * area / 2^DIM
+end
+
+end
+  

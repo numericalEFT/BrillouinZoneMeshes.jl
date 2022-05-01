@@ -7,13 +7,13 @@ using LinearAlgebra
 
 # Write your package code here.
 
+include("barycheb.jl")
+using .BaryCheb
+
 include("basemesh.jl")
 using .BaseMesh
 
 include("tree.jl")
 using .GridTree
-
-include("barycheb.jl")
-using .BaryCheb
 
 end

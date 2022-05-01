@@ -2,6 +2,7 @@ module BaryCheb
 
 using ..StaticArrays
 
+export BaryCheb1D, interp1D, interpND, integrate1D, integrateND
 ######################################################
 #---------------- 1D barycheb ------------------------
 ######################################################
@@ -186,6 +187,8 @@ struct BaryCheb1D{N}
     end
 end
 
+Base.getindex(bc::BaryCheb1D, i) = bc.x[i]
+
 function interp1D(data, xgrid::BaryCheb1D{N}, x) where {N}
     return barycheb(N, x, data, xgrid.w, xgrid.x)
 end
@@ -214,6 +217,26 @@ function integrateND(data, xgrid::BaryCheb1D{N}, x1s, x2s) where {N}
         w = 1.0
         for i in 1:DIM
             w *= intws[i, ind[i]]
+        end
+        result += data[ind] * w
+    end
+
+    return result
+end
+
+function integrateND(data, xgrid::BaryCheb1D{N}, DIM) where {N}
+    @assert N ^ DIM == length(data)
+
+    intws = zeros(Float64, (DIM, N))
+    wc = weightcoef(1.0, 1, N) .- weightcoef(-1.0, 1, N)
+    intw = calcweight(xgrid.invmat, wc)
+
+    result = 0.0
+    inds = CartesianIndices(NTuple{DIM, Int}(ones(Int, DIM) .* N))
+    for ind in inds
+        w = 1.0
+        for i in 1:DIM
+            w *= intw[ind[i]]
         end
         result += data[ind] * w
     end
