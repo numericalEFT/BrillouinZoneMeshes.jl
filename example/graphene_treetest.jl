@@ -21,7 +21,7 @@ end
 
 latvec = [2 0; 1 sqrt(3)]' .* (2π)
 # println(SpaceGrid.GridTree._calc_subpoints(3, [3,3], latvec, 2))
-tg = treegridfromdensity(k -> density(k), latvec; atol=1 / 2^14, maxdepth=9, mindepth=1, N=3)
+tg = treegridfromdensity(k -> density(k), latvec; atol=1 / 2^12, maxdepth=9, mindepth=1, N=4, type=:barycheb)
 
 X, Y = zeros(Float64, length(tg)), zeros(Float64, length(tg))
 for (pi, p) in enumerate(tg)
