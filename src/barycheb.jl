@@ -54,13 +54,26 @@ function invvandermonde(order)
     return inv(transpose(vmat))
 end
 
+@inline function divfactorial(j, i)
+    if i == 0
+        return 1
+    elseif i == 1
+        return 1/j
+    elseif i == -1
+        return j-1
+    else
+        return factorial(j-1) / factorial(j+i-1)
+    end
+end
+
+
 function weightcoef(a, i::Int, n)
     # integrate when i=1; differentiate when i=-1
     b = zeros(Float64, n)
     for j in 1:n
         if j+i-1 > 0
             # b[j] = a^(j+i-1)/(j+i-1)
-            b[j] = a^(j+i-1) * factorial(j-1) / factorial(j+i-1)
+            b[j] = a^(j+i-1) * divfactorial(j, i)
         elseif j+i-1 == 0
             b[j] = 1
         else
