@@ -6,8 +6,8 @@ using LinearAlgebra
 include("graphene.jl")
 
 function density(k; band=1)
-    T = 0.1
-    μ = -2.5
+    T = 0.01
+    μ = -1.0
 
     dim = la.dim
     n = la.numatoms
