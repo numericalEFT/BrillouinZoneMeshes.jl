@@ -5,7 +5,9 @@ using ..StaticArrays
 using ..BaseMesh
 using ..Statistics
 using ..LinearAlgebra
-export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency, SymMap
+using ..BaryCheb
+
+export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency, SymMap, interp, integrate, MappedData
 
 struct GridNode{DIM}
     index::Vector{Int} # index in treegrid.subgrids, 0 if has children
@@ -81,9 +83,33 @@ function Base.floor(tg::TreeGrid{DIM, SG}, x) where {DIM, SG}
 
     sgi = floor(mesh, x)
 
-    sgsize = size(tg.subgrids[1])
+    sgsize = length(tg.subgrids[1])
 
     return (tgi - 1) * sgsize + sgi
+end
+
+function interp(data, tg::TreeGrid{DIM, SG}, x) where {DIM, SG}
+    dimlessx = tg.invlatvec * SVector{DIM, Float64}(x) .+ 0.5
+    sgsize = length(tg.subgrids[1])
+
+    tgi = floor(tg.root, dimlessx)
+    mesh = tg.subgrids[tgi]
+
+    data_slice = view(data, (tgi-1)*sgsize+1:tgi*sgsize)
+
+    return BaseMesh.interp(data_slice, mesh, x)
+end
+
+function integrate(data, tg::TreeGrid{DIM, SG}) where {DIM, SG}
+    sgsize = length(tg.subgrids[1])
+    result = 0.0
+
+    for tgi in 1:size(tg)[1]
+        mesh = tg.subgrids[tgi]
+        data_slice = view(data, (tgi-1)*sgsize+1:tgi*sgsize)
+        result += BaseMesh.integrate(data_slice, mesh)
+    end
+    return result
 end
 
 function _calc_area(latvec)
@@ -146,11 +172,31 @@ function uniformtreegrid(isfine, latvec; maxdepth=10, mindepth=0, DIM=2, N=2)
     return TreeGrid{DIM,UniformMesh{DIM,N}}(root, latvec, inv(latvec), subgrids)
 end
 
-Base.length(tg::TreeGrid{DIM,SG}) where {DIM,SG} = length(tg.subgrids) * size(tg.subgrids[1])
-Base.size(tg::TreeGrid{DIM,SG}) where {DIM,SG} = (length(tg.subgrids), size(tg.subgrids[1]))
+function barychebtreegrid(isfine, latvec; maxdepth=10, mindepth=0, DIM=2, N=2)
+    root = GridNode{DIM}(isfine; maxdepth=maxdepth, mindepth=mindepth)
+    subgrids = Vector{BaryChebMesh{DIM,N}}([])
+
+    i = 1
+    barycheb = BaryCheb1D(N)
+    for node in PostOrderDFS(root)
+        if isempty(node.children)
+            depth = node.depth
+            origin = _calc_origin(node, latvec)
+            mesh = BaryChebMesh{DIM,N}(origin, latvec ./ 2^depth, barycheb)
+            push!(subgrids, mesh)
+            node.index[1] = i
+            i = i+1
+        end
+    end
+
+    return TreeGrid{DIM,BaryChebMesh{DIM,N}}(root, latvec, inv(latvec), subgrids)
+end
+
+Base.length(tg::TreeGrid{DIM,SG}) where {DIM,SG} = length(tg.subgrids) * length(tg.subgrids[1])
+Base.size(tg::TreeGrid{DIM,SG}) where {DIM,SG} = (length(tg.subgrids), length(tg.subgrids[1]))
 # index and iterator
 function Base.getindex(tg::TreeGrid{DIM,SG}, i) where {DIM,SG}
-    sgsize = size(tg.subgrids[1])
+    sgsize = length(tg.subgrids[1])
 
     tgi, sgi = (i - 1) ÷ sgsize + 1, (i - 1) % sgsize + 1
 
@@ -182,16 +228,22 @@ function densityisfine(density, latvec, depth, pos, atol, DIM; N=3)
     # return std(val2) * area < atol
 end
 
-function treegridfromdensity(density, latvec; atol=1e-4, maxdepth=10, mindepth=0, DIM=2, N=2)
+function treegridfromdensity(density, latvec; atol=1e-4, maxdepth=10, mindepth=0, DIM=2, N=2, type=:uniform)
     isfine(depth, pos) = densityisfine(density, latvec, depth, pos, atol, DIM; N=N)
-    return uniformtreegrid(isfine, latvec; maxdepth=maxdepth, mindepth=mindepth, DIM=DIM, N=N)
+    if type == :uniform
+        return uniformtreegrid(isfine, latvec; maxdepth=maxdepth, mindepth=mindepth, DIM=DIM, N=N)
+    elseif type == :barycheb
+        return barychebtreegrid(isfine, latvec; maxdepth=maxdepth, mindepth=mindepth, DIM=DIM, N=N)
+    else
+        error("not implemented!")
+    end
 end
 
-function _find_in(x, arr::AbstractArray; atol=1e-6)
+function _find_in(x, arr::AbstractArray; atol=1e-6, rtol=1e-6)
     # return index if in, return 0 otherwise
     for yi in 1:length(arr)
         y = arr[yi]
-        if isapprox(x, y, atol=atol)
+        if isapprox(x, y, atol=atol, rtol=rtol)
             return yi
         end
     end
@@ -199,13 +251,13 @@ function _find_in(x, arr::AbstractArray; atol=1e-6)
     return 0
 end
 
-struct SymMap{T}
+struct SymMap{T, N}
     map::Vector{Int}
     reduced_length::Int
     _vals::Vector{T}
     inv_map::Vector{Vector{Int}}
 
-    function SymMap(tg::TreeGrid, density; atol=1e-6)
+    function SymMap{T}(tg::TreeGrid, density; atol=1e-6, rtol=1e-6) where {T}
         map = zeros(Int, length(tg))
         reduced_vals = []
         inv_map = []
@@ -214,7 +266,7 @@ struct SymMap{T}
             p = tg[pi]
             val = density(p)
             # println(val)
-            pos = _find_in(val, reduced_vals; atol=atol)
+            pos = _find_in(val, reduced_vals; atol=atol, rtol=rtol)
             if pos == 0
                 push!(reduced_vals, val)
                 push!(inv_map, [pi,])
@@ -225,9 +277,32 @@ struct SymMap{T}
             end
         end
 
-        return new{eltype(reduced_vals)}(map, length(reduced_vals), reduced_vals, inv_map)
+        return new{T, length(tg)}(map, length(reduced_vals), reduced_vals, inv_map)
     end
 end
+
+struct MappedData{T, N} <: AbstractArray{T, N}
+    smap::SymMap{T, N}
+    data::Vector{T}
+
+    function MappedData(smap::SymMap{T, N}) where {T, N}
+        data = zeros(T, smap.reduced_length)
+        return new{T, N}(smap, data)
+    end
+end
+
+Base.length(md::MappedData) = length(md.smap.map)
+Base.size(md::MappedData) = (length(md),)
+# index and iterator
+Base.getindex(md::MappedData, i) = md.data[md.smap.map[i]]
+function Base.setindex!(md::MappedData, x, i)
+    md.data[md.smap.map[i]] = x
+end
+Base.firstindex(md::MappedData) = 1
+Base.lastindex(md::MappedData) = length(tg)
+
+Base.iterate(md::MappedData) = (md[1], 1)
+Base.iterate(md::MappedData, state) = (state >= length(md)) ? nothing : (md[state+1], state + 1)
 
 end
 

@@ -7,6 +7,9 @@ using LinearAlgebra
 
 # Write your package code here.
 
+include("barycheb.jl")
+using .BaryCheb
+
 include("basemesh.jl")
 using .BaseMesh
 
