@@ -228,8 +228,24 @@ function densityisfine(density, latvec, depth, pos, atol, DIM; N=3)
     # return std(val2) * area < atol
 end
 
+function barychebdensityisfine(density, latvec, depth, pos, atol, DIM; N=4)
+    area = _calc_area(latvec) / 2^(depth*DIM)
+
+    origin = _calc_point(depth, pos, latvec)
+    mesh1 = BaryChebMesh(origin, latvec ./ 2^depth, DIM, N)
+    mesh2 = BaryChebMesh(origin, latvec ./ 2^depth, DIM, N+2)
+
+    data1 = [density(p) for p in mesh1]
+    # data2 = [density(p) for p in mesh2]
+
+    # return abs(BaseMesh.integrate(data1, mesh1) - BaseMesh.integrate(data2, mesh2)) < atol
+    diff = [abs(density(p) - BaseMesh.interp(data1, mesh1, p)) for p in mesh2]
+    return sum(diff) / length(diff) * area < atol
+end
+
 function treegridfromdensity(density, latvec; atol=1e-4, maxdepth=10, mindepth=0, DIM=2, N=2, type=:uniform)
-    isfine(depth, pos) = densityisfine(density, latvec, depth, pos, atol, DIM; N=N)
+    isfine(depth, pos) = barychebdensityisfine(density, latvec, depth, pos, atol, DIM)
+    # isfine(depth, pos) = densityisfine(density, latvec, depth, pos, atol, DIM; N=N)
     if type == :uniform
         return uniformtreegrid(isfine, latvec; maxdepth=maxdepth, mindepth=mindepth, DIM=DIM, N=N)
     elseif type == :barycheb
