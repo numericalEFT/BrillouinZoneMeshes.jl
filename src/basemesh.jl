@@ -5,18 +5,27 @@ using ..LinearAlgebra
 
 using ..BaryCheb
 
-export UniformMesh, BaryChebMesh
+export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh
 
-abstract type AbstractMesh end
+abstract type AbstractMesh{N} <: AbstractArray{Float64, N} end
 
-struct UniformMesh{DIM, N} <: AbstractMesh
+abstract type MeshType end
+struct CenteredMesh <: MeshType end
+struct EdgedMesh <: MeshType end
+
+struct UniformMesh{DIM, N, MT} <: AbstractMesh{DIM}
     origin::SVector{DIM, Float64}
     latvec::SMatrix{DIM, DIM, Float64}
     invlatvec::SMatrix{DIM, DIM, Float64}
 
-    function UniformMesh{DIM, N}(origin, latvec) where {DIM, N}
-        return new{DIM, N}(origin, latvec, inv(latvec))
+    function UniformMesh{DIM, N, MT}(origin, latvec) where {DIM, N, MT<:MeshType}
+        return new{DIM, N, MT}(origin, latvec, inv(latvec))
     end
+end
+
+function UniformMesh{DIM, N}(origin, latvec) where {DIM, N}
+    # Centered Mesh is the default
+    return UniformMesh{DIM, N, CenteredMesh}(origin, latvec)
 end
 
 Base.length(mesh::UniformMesh{DIM, N}) where {DIM, N} = N^DIM
@@ -32,20 +41,20 @@ end
 # Base.view(mesh::UniformMesh, i::Int) = Base.view(mesh.mesh, :, i)
 
 # # set is not allowed for meshs
-function Base.getindex(mesh::UniformMesh{DIM, N}, inds...) where {DIM, N}
+meshshift(::Type) = error()
+meshshift(::Type{<:CenteredMesh}) = 0.5
+meshshift(::Type{<:EdgedMesh}) = 0.0
+
+function Base.getindex(mesh::UniformMesh{DIM, N, MT}, inds...) where {DIM, N, MT}
     pos = Vector(mesh.origin)
     for (ni, n) in enumerate(inds)
-        pos = pos .+ mesh.latvec[:, ni] .* (n - 1 + 0.5) ./ (length(mesh))
+        pos = pos .+ mesh.latvec[:, ni] .* (n - 1 + meshshift(MT)) ./ (N)
     end
     return pos
 end
-function Base.getindex(mesh::UniformMesh{DIM, N}, i::Int) where {DIM, N}
-    inds = digits(i-1, base = N, pad = DIM)
-    pos = Vector(mesh.origin)
-    for (ni, n) in enumerate(inds)
-        pos = pos .+ mesh.latvec[:, ni] .* (n + 0.5) ./ (N)
-    end
-    return pos
+
+function Base.getindex(mesh::UniformMesh{DIM, N, MT}, i::Int) where {DIM, N, MT}
+    return Base.getindex(mesh, _ind2inds(i, N, DIM)...)
 end
 Base.firstindex(mesh::UniformMesh) = 1
 Base.lastindex(mesh::UniformMesh) = length(mesh)
@@ -90,10 +99,10 @@ function interp(data, mesh::UniformMesh{DIM, N}, x) where {DIM, N}
     error("Not implemented!")
 end
 
-function interp(data, mesh::UniformMesh{2, N}, x) where {N}
+function interp(data, mesh::UniformMesh{2, N, MT}, x) where {N, MT}
     # find floor index and normalized x y
     displacement = SVector{2, Float64}(x) - mesh.origin
-    xy = (mesh.invlatvec * displacement) .* N .+ 0.5 .+ 2*eps(N*1.0)
+    xy = (mesh.invlatvec * displacement) .* N .+ (1-meshshift(MT)) .* (1 + 2*eps(N*1.0))
     xi, yi = _indfloor(xy[1], N), _indfloor(xy[2], N)
 
     return linear2D(data, xi, yi, xy..., N)
@@ -110,10 +119,10 @@ end
     return c0 * (1-yd) + c1 * yd
 end
 
-function interp(data, mesh::UniformMesh{3, N}, x) where {T, N}
+function interp(data, mesh::UniformMesh{3, N, MT}, x) where {T, N, MT}
     # find floor index and normalized x y z
     displacement = SVector{3, Float64}(x) - mesh.origin
-    xyz = (mesh.invlatvec * displacement) .* N .+ 0.5 .+ 2*eps(N*1.0)
+    xyz = (mesh.invlatvec * displacement) .* N .+ (1-meshshift(MT)) .* (1 + 4*eps(N*1.0))
     xi, yi, zi = _indfloor(xyz[1], N), _indfloor(xyz[2], N), _indfloor(xyz[3], N)
 
     return linear3D(data, xi, yi, zi, xyz..., N)
@@ -133,13 +142,25 @@ end
     return c0 * (1-zd) + c1 * zd
 end
 
-function integrate(data, mesh::UniformMesh{DIM, N}) where {DIM, N}
+function integrate(data, mesh::UniformMesh{DIM, N, CenteredMesh}) where {DIM, N}
     area = abs(det(mesh.latvec))
     avg = sum(data) / length(data)
     return avg * area
 end
 
-struct BaryChebMesh{DIM, N} <: AbstractMesh
+function integrate(data, mesh::UniformMesh{DIM, N, EdgedMesh}) where {DIM, N}
+    area = abs(det(mesh.latvec))
+    avg = 0.0
+    for i in 1:length(data)
+        inds = _ind2inds(i, N, DIM)
+        n1, nend = count(i->i==1, inds), count(i->i==N, inds)
+        avg += 2^(DIM-n1-nend)*3^nend/2^DIM * data[i]
+    end
+    avg = avg / length(data)
+    return avg * area
+end
+
+struct BaryChebMesh{DIM, N} <: AbstractMesh{DIM}
     origin::SVector{DIM, Float64}
     latvec::SMatrix{DIM, DIM, Float64}
     invlatvec::SMatrix{DIM, DIM, Float64}
