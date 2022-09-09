@@ -63,6 +63,7 @@ Base.iterate(mesh::UniformMesh) = (mesh[1],1)
 Base.iterate(mesh::UniformMesh, state) = (state>=length(mesh)) ? nothing : (mesh[state+1],state+1)
 
 _ind2inds(i::Int, N::Int, DIM::Int) = digits(i-1, base = N, pad = DIM) .+ 1
+
 function _inds2ind(inds, N::Int)
     indexall = 1
     for i in 1:length(inds)
@@ -70,6 +71,7 @@ function _inds2ind(inds, N::Int)
     end
     return indexall
 end
+
 function _indfloor(x, N)
     if x < 1
         return 1
@@ -191,14 +193,10 @@ function Base.getindex(mesh::BaryChebMesh{DIM, N}, inds...) where {DIM, N}
     end
     return pos
 end
-function Base.getindex(mesh::BaryChebMesh{DIM, N}, i::Int) where {DIM, N}
-    inds = digits(i-1, base = N, pad = DIM)
-    pos = Vector(mesh.origin)
-    for (ni, n) in enumerate(inds)
-        pos = pos .+ mesh.latvec[:, ni] .* (mesh.barycheb[n+1] + 1.0) ./ 2.0
-    end
-    return pos
+function Base.getindex(mesh::BaryChebMesh{DIM,N}, i::Int) where {DIM,N}
+    return Base.getindex(mesh, _ind2inds(i, N, DIM)...)
 end
+
 Base.firstindex(mesh::BaryChebMesh) = 1
 Base.lastindex(mesh::BaryChebMesh) = length(mesh)
 # # iterator
