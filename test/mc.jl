@@ -71,4 +71,28 @@
         test_mc_histogram(umesh)
     end
 
+    @testset "UniformMesh Edged" begin
+        # test 2d
+        δ = 1e-5
+        N, DIM = 4, 2
+        origin = [0.0 0.0]
+        latvec = [2 0; 1 sqrt(3)]'
+
+        umesh = BaryChebMesh(origin, latvec, DIM, N)
+
+        for i in 1:length(umesh)
+            p = umesh[i]
+            @test i == locate(umesh, p)
+            @test i == locate(umesh, [p[1], p[2] + δ])
+            @test i == locate(umesh, [p[1], p[2] - δ])
+            @test i == locate(umesh, [p[1] + δ, p[2]])
+            @test i == locate(umesh, [p[1] - δ, p[2]])
+        end
+
+        @test volume(umesh) ≈ sum(volume(umesh, i) for i in 1:length(umesh))
+
+        test_mc_histogram(umesh)
+    end
+
+
 end
