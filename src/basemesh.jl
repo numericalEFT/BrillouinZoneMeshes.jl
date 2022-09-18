@@ -43,7 +43,7 @@ end
 # Base.view(mesh::UniformMesh, i::Int) = Base.view(mesh.mesh, :, i)
 
 # # set is not allowed for meshs
-meshshift(::Type) = error()
+meshshift(::Type) = error("not implement!")
 meshshift(::Type{<:CenteredMesh}) = 0.5
 meshshift(::Type{<:EdgedMesh}) = 0.0
 
@@ -101,15 +101,11 @@ function Base.floor(mesh::UniformMesh{DIM,N}, x) where {DIM,N}
     return indexall
 end
 
-function locate(mesh::UniformMesh{DIM,N,MT}, x) where {DIM,N,MT}
-    locate(MT, mesh, x)
-end
-
-function locate(::Type{<:CenteredMesh}, mesh::UniformMesh{DIM, N, MT}, x) where {DIM,N,MT}
+function locate(mesh::UniformMesh{DIM, N, MT}, x) where {DIM,N,MT}
     # find index of nearest grid point to the point
     displacement = SVector{DIM,Float64}(x) - mesh.origin
     # println(displacement)
-    inds = (mesh.invlatvec * displacement) .* (N) .+ 1.0 .+ 2 * eps(1.0 * N)
+    inds = (mesh.invlatvec * displacement) .* (N) .+ 1.5 .- meshshift(MT) .+ 2 * eps(1.0 * N)
     indexall = 1
     # println((mesh.invlatvec * displacement))
     # println(inds)
@@ -124,9 +120,16 @@ function volume(mesh::UniformMesh{DIM,N,MT}, i) where {DIM,N,MT}
     volume(MT, mesh, i)
 end
 
-function volume(::Type{<:CenteredMesh}, mesh, x)
+function volume(::Type{<:CenteredMesh}, mesh, i)
     # for uniform centered mesh, all mesh points share the same volume
     return abs(det(mesh.latvec)) / length(mesh)
+end
+
+function volume(::Type{<:EdgedMesh}, mesh::UniformMesh{DIM,N,MT}, i) where {DIM,N,MT}
+    inds = _ind2inds(i, N, DIM)
+    n1, nend = count(i -> i == 1, inds), count(i -> i == N, inds)
+    cellarea = 2^(DIM - n1 - nend) * 3^nend / 2^DIM
+    return cellarea / length(mesh) * volume(mesh)
 end
 
 function interp(data, mesh::UniformMesh{DIM,N}, x) where {DIM,N}
