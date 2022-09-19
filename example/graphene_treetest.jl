@@ -6,7 +6,7 @@ using LinearAlgebra
 include("graphene.jl")
 
 T = 0.05
-μ = -2.0
+μ = -1.5
 
 function density(k; band=1)
 
@@ -21,7 +21,8 @@ end
 
 latvec = [2 0; 1 sqrt(3)]' .* (2π)
 # println(SpaceGrid.GridTree._calc_subpoints(3, [3,3], latvec, 2))
-tg = treegridfromdensity(k -> density(k), latvec; atol=1 / 2^12, maxdepth=9, mindepth=1, N=4, type=:barycheb)
+# tg = treegridfromdensity(k -> density(k), latvec; atol=1 / 2^16, maxdepth=12, mindepth=1, N=6)#, type=:barycheb)
+tg = treegridfromdensity(k -> density(k), latvec; atol=1 / 2^10, maxdepth=12, mindepth=1, N=6)#, type=:barycheb)
 
 X, Y = zeros(Float64, length(tg)), zeros(Float64, length(tg))
 for (pi, p) in enumerate(tg)
@@ -29,12 +30,12 @@ for (pi, p) in enumerate(tg)
     # println(p)
 end
 
-println("size:$(length(tg)),\t length:$(size(tg)),\t efficiency:$(efficiency(tg))")
+println("length:$(length(tg)),\t size:$(size(tg)),\t efficiency:$(efficiency(tg))")
 
-smap = SymMap{Float64}(tg, k -> density(k); atol=1e-14, rtol=1e-10)
-# println(smap.map)
-# println(smap.inv_map)
-println("compress:$(smap.reduced_length/length(smap.map))")
+# smap = SymMap{Float64}(tg, k -> density(k); atol=1e-14, rtol=1e-10)
+# compress_rate = smap.reduced_length/length(smap.map)
+# println("compress:$(smap.reduced_length/length(smap.map))")
+compress_rate = 1.0
 
 k = 4π
 # p = plot(legend = false, size = (1024, 1024), xlim = (-1, 1), ylim = (-1, 1))
@@ -49,16 +50,17 @@ function green_real(k, n; band=1)
     ln = la.numatoms
     ϵ = dispersion(dim, ln, ham, k)[band] - μ
 
-    # return - ϵ / ((π * T * (2*n + 1))^2 + ϵ^2)
-    return 1 / (exp((ϵ) / T) + 1.0)
+    return - ϵ / ((π * T * (2*n + 1))^2 + ϵ^2)
+    # return 1 / (exp((ϵ) / T) + 1.0)
 end
 
-# data = zeros(Float64, length(tg))
-data = MappedData(smap)
+data = zeros(Float64, length(tg))
+# data = MappedData(smap)
 for i in 1:length(tg)
-    data[i] = green_real(tg[i], 1)
+    data[i] = green_real(tg[i], 0)
 end
 
 n0 = integrate(data, tg)
 println("n0=$n0")
+println("|$(size(tg))|$(length(tg))|$(efficiency(tg))|$(compress_rate)|$n0|")
 

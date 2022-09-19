@@ -66,7 +66,8 @@ function efficiency(root::GridNode{DIM}) where {DIM}
     return np / 2^(depth * DIM)
 end
 
-struct TreeGrid{DIM,SG}
+struct TreeGrid{DIM,SG} <:AbstractMesh{DIM}
+    origin::SVector{DIM,Float64}
     root::GridNode{DIM}
     latvec::SMatrix{DIM,DIM,Float64}
     invlatvec::SMatrix{DIM, DIM, Float64}
@@ -86,6 +87,28 @@ function Base.floor(tg::TreeGrid{DIM, SG}, x) where {DIM, SG}
     sgsize = length(tg.subgrids[1])
 
     return (tgi - 1) * sgsize + sgi
+end
+
+function BaseMesh.locate(tg::TreeGrid{DIM,SG}, x) where {DIM,SG}
+    dimlessx = tg.invlatvec * SVector{DIM,Float64}(x) .+ 0.5
+
+    tgi = floor(tg.root, dimlessx)
+    mesh = tg.subgrids[tgi]
+
+    sgi = locate(mesh, x)
+
+    sgsize = length(tg.subgrids[1])
+
+    return (tgi - 1) * sgsize + sgi
+end
+
+BaseMesh.volume(tg::TreeGrid{DIM,SG}) where {DIM,SG} = _calc_area(tg.latvec)
+function BaseMesh.volume(tg::TreeGrid{DIM,SG}, i) where {DIM,SG}
+    sgsize = length(tg.subgrids[1])
+
+    tgi, sgi = (i - 1) ÷ sgsize + 1, (i - 1) % sgsize + 1
+
+    return volume(tg.subgrids[tgi], sgi)
 end
 
 function interp(data, tg::TreeGrid{DIM, SG}, x) where {DIM, SG}
@@ -168,8 +191,8 @@ function uniformtreegrid(isfine, latvec; maxdepth=10, mindepth=0, DIM=2, N=2)
             i = i+1
         end
     end
-
-    return TreeGrid{DIM,UniformMesh{DIM,N}}(root, latvec, inv(latvec), subgrids)
+    origin = _calc_origin(root, latvec)
+    return TreeGrid{DIM,UniformMesh{DIM,N}}(origin, root, latvec, inv(latvec), subgrids)
 end
 
 function barychebtreegrid(isfine, latvec; maxdepth=10, mindepth=0, DIM=2, N=2)
@@ -185,11 +208,12 @@ function barychebtreegrid(isfine, latvec; maxdepth=10, mindepth=0, DIM=2, N=2)
             mesh = BaryChebMesh{DIM,N}(origin, latvec ./ 2^depth, barycheb)
             push!(subgrids, mesh)
             node.index[1] = i
-            i = i+1
+            i = i + 1
         end
     end
 
-    return TreeGrid{DIM,BaryChebMesh{DIM,N}}(root, latvec, inv(latvec), subgrids)
+    origin = _calc_origin(root, latvec)
+    return TreeGrid{DIM,BaryChebMesh{DIM,N}}(origin, root, latvec, inv(latvec), subgrids)
 end
 
 Base.length(tg::TreeGrid{DIM,SG}) where {DIM,SG} = length(tg.subgrids) * length(tg.subgrids[1])
@@ -228,8 +252,24 @@ function densityisfine(density, latvec, depth, pos, atol, DIM; N=3)
     # return std(val2) * area < atol
 end
 
+function barychebdensityisfine(density, latvec, depth, pos, atol, DIM; N=4)
+    area = _calc_area(latvec) / 2^(depth*DIM)
+
+    origin = _calc_point(depth, pos, latvec)
+    mesh1 = BaryChebMesh(origin, latvec ./ 2^depth, DIM, N)
+    mesh2 = BaryChebMesh(origin, latvec ./ 2^depth, DIM, N+2)
+
+    data1 = [density(p) for p in mesh1]
+    # data2 = [density(p) for p in mesh2]
+
+    # return abs(BaseMesh.integrate(data1, mesh1) - BaseMesh.integrate(data2, mesh2)) < atol
+    diff = [abs(density(p) - BaseMesh.interp(data1, mesh1, p)) for p in mesh2]
+    return sum(diff) / length(diff) * area < atol
+end
+
 function treegridfromdensity(density, latvec; atol=1e-4, maxdepth=10, mindepth=0, DIM=2, N=2, type=:uniform)
-    isfine(depth, pos) = densityisfine(density, latvec, depth, pos, atol, DIM; N=N)
+    isfine(depth, pos) = barychebdensityisfine(density, latvec, depth, pos, atol, DIM)
+    # isfine(depth, pos) = densityisfine(density, latvec, depth, pos, atol, DIM; N=N)
     if type == :uniform
         return uniformtreegrid(isfine, latvec; maxdepth=maxdepth, mindepth=mindepth, DIM=DIM, N=N)
     elseif type == :barycheb

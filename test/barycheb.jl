@@ -46,6 +46,34 @@
         @test BaryCheb.integrate1D(data, bc, x1=x1, x2=x2) ≈ F(x2) - F(x1)
     end
 
+    @testset "Testing 1D BaryCheb Integral convergence" begin
+        f(t) = cos(t)
+        F(t) = sin(t)
+
+        x0 = 1.5
+        g(t) = log(t + x0)
+        G(t) = (t + x0) * log(t + x0) - t
+
+        Ni, Nf = 3, 12
+        for n in Ni:Nf
+            bc = BaryCheb.BaryCheb1D(n)
+
+            data1 = f.(bc.x)
+            analytic1 = F(1) - F(-1)
+            numeric1 = BaryCheb.integrate1D(data1, bc)
+
+            data2 = g.(bc.x)
+            analytic2 = G(1) - G(-1)
+            numeric2 = BaryCheb.integrate1D(data2, bc)
+
+            # println("n=$n")
+            # println("f(x)=cos(x), $analytic1 <-> $numeric1, diff:$(abs(analytic1-numeric1)); f(x)=ln(x+x0), $analytic2 <-> $numeric2, diff:$(abs(analytic2-numeric2))")
+            # println("f(x)=ln(x+1), $analytic2 <-> $numeric2, diff:$(abs(analytic2-numeric2))")
+            @test isapprox(analytic1, numeric1, rtol = 10^(- 0.5n))
+        end
+
+    end
+
     @testset "ND BaryCheb Tools" begin
         DIM = 2
         n = 4
