@@ -35,3 +35,4 @@ Manifest.toml
 run
 
 *.pb.gz
+.history
