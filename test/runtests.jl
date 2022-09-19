@@ -1,9 +1,9 @@
-using SpaceGrid
-using SpaceGrid.AbstractTrees, SpaceGrid.GridTree, SpaceGrid.BaseMesh, SpaceGrid.BaryCheb
+using BZMeshes
+using BZMeshes.AbstractTrees, BZMeshes.GridTree, BZMeshes.BaseMesh, BZMeshes.BaryCheb
 using LinearAlgebra, Random
 using Test
 
-@testset "SpaceGrid.jl" begin
+@testset "BZMeshes.jl" begin
 
 
     if isempty(ARGS)

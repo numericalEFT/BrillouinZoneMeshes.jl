@@ -1,24 +1,24 @@
-using SpaceGrid
+using BZMeshes
 using Documenter
 
-DocMeta.setdocmeta!(SpaceGrid, :DocTestSetup, :(using SpaceGrid); recursive=true)
+DocMeta.setdocmeta!(BZMeshes, :DocTestSetup, :(using BZMeshes); recursive=true)
 
 makedocs(;
-    modules=[SpaceGrid],
+    modules=[BZMeshes],
     authors="Tao Wang, Xiansheng Cai",
-    repo="https://github.com/fsxbhyy/SpaceGrid.jl/blob/{commit}{path}#{line}",
-    sitename="SpaceGrid.jl",
+    repo="https://github.com/fsxbhyy/BZMeshes.jl/blob/{commit}{path}#{line}",
+    sitename="BZMeshes.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://fsxbhyy.github.io/SpaceGrid.jl",
-        assets=String[],
+        canonical="https://fsxbhyy.github.io/BZMeshes.jl",
+        assets=String[]
     ),
     pages=[
         "Home" => "index.md",
-    ],
+    ]
 )
 
 deploydocs(;
-    repo="github.com/numericalEFT/SpaceGrid.jl",
-    devbranch="master",
+    repo="github.com/numericalEFT/BZMeshes.jl",
+    devbranch="master"
 )

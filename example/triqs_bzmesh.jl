@@ -1,5 +1,5 @@
 using PythonCall
-using SpaceGrid
+using BZMeshes
 
 gf = pyimport("triqs.gf")
 lat = pyimport("triqs.lattice")
@@ -19,7 +19,7 @@ println(BZ.units)
 latvec = pyconvert(Array, BZ.units)[1:2, 1:2]
 println(latvec)
 
-umesh = SpaceGrid.BaseMesh.UniformMesh{2, nk, SpaceGrid.BaseMesh.EdgedMesh}([0.0,0.0], latvec)
+umesh = BZMeshes.BaseMesh.UniformMesh{2,nk,BZMeshes.BaseMesh.EdgedMesh}([0.0, 0.0], latvec)
 
 for (ip, p) in enumerate(mk)
     println(p, umesh[ip])
@@ -46,12 +46,12 @@ for p in mk
     inds = pyconvert(Array, p.index)[1:2] .+ 1
     pval = pyconvert(Array, p.value)
     println(pval, umesh[inds...])
-    data1[inds...] = pyconvert(ComplexF64, G_k_w.data[p.linear_index,0,0,0])
+    data1[inds...] = pyconvert(ComplexF64, G_k_w.data[p.linear_index, 0, 0, 0])
 end
 
 println(data0[1:8])
 println(data1[1:8])
 
 for i in 1:nk^2
-    println(data0[i]≈data1[i])
+    println(data0[i] ≈ data1[i])
 end

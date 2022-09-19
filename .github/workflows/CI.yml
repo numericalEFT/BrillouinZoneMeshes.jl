@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - master
-    tags: '*'
+    tags: "*"
   pull_request:
 concurrency:
   # Skip intermediate builds: always.
@@ -18,8 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.6'
-          - 'nightly'
+          - "1.6"
+          - "nightly"
         os:
           - ubuntu-latest
         arch:
@@ -54,7 +54,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
-          version: '1'
+          version: "1"
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-docdeploy@v1
         env:
@@ -63,6 +63,6 @@ jobs:
       - run: |
           julia --project=docs -e '
             using Documenter: DocMeta, doctest
-            using SpaceGrid
-            DocMeta.setdocmeta!(SpaceGrid, :DocTestSetup, :(using SpaceGrid); recursive=true)
-            doctest(SpaceGrid)'
+            using BZMeshes
+            DocMeta.setdocmeta!(BZMeshes, :DocTestSetup, :(using BZMeshes); recursive=true)
+            doctest(BZMeshes)'

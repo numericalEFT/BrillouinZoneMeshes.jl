@@ -1,6 +1,6 @@
-name = "SpaceGrid"
-uuid = "3d4565c3-192b-4227-89f7-5476f913ab49"
-authors = ["Tao Wang", "Xiansheng Cai"]
+name = "BZMeshes"
+uuid = "d3690ab3-6367-44d6-ab08-b07ed981380e"
+authors = ["Xiansheng Cai", "Tao Wang", "Kun Chen"]
 version = "0.1.0"
 
 [deps]
