@@ -9,6 +9,11 @@ T = 0.05
 μ = -1.5
 
 function density(k; band=1)
+<<<<<<< HEAD
+    T = 0.01
+    μ = -1.0
+=======
+>>>>>>> master
 
     dim = la.dim
     n = la.numatoms
@@ -50,7 +55,7 @@ function green_real(k, n; band=1)
     ln = la.numatoms
     ϵ = dispersion(dim, ln, ham, k)[band] - μ
 
-    return -ϵ / ((π * T * (2 * n + 1))^2 + ϵ^2)
+    return - ϵ / ((π * T * (2*n + 1))^2 + ϵ^2)
     # return 1 / (exp((ϵ) / T) + 1.0)
 end
 
