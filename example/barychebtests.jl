@@ -1,7 +1,7 @@
 using CodeTracking
 
-using SpaceGrid
-using SpaceGrid.AbstractTrees, SpaceGrid.GridTree, SpaceGrid.BaseMesh, SpaceGrid.BaryCheb
+using BZMeshes
+using BZMeshes.AbstractTrees, BZMeshes.GridTree, BZMeshes.BaseMesh, BZMeshes.BaryCheb
 
 macro expr2fn(fname, expr, args...)
     fn = quote
@@ -15,7 +15,7 @@ macro expr2fn(fname, expr, args...)
     return fn
 end
 
-function test1D(f, F; Ni = 3, Nf = 12)
+function test1D(f, F; Ni=3, Nf=12)
 
     for n in Ni:Nf
         bc = BaryCheb.BaryCheb1D(n)
@@ -37,7 +37,7 @@ test1D(x -> (cos(x)), x -> (sin(x)))
 
 x0 = 1.5
 println("ln(x+x0) <-> (x+x0)ln(x+x0)-x")
-test1D(x -> (log(x+x0)), x -> ((x+x0)*log(x+x0)-x))
+test1D(x -> (log(x + x0)), x -> ((x + x0) * log(x + x0) - x))
 
 println("x^4 <-> x^5/5")
-test1D(x -> x^4, x -> x^5/5.0)
+test1D(x -> x^4, x -> x^5 / 5.0)

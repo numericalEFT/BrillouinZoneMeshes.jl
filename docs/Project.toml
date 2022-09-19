@@ -1,3 +1,3 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-SpaceGrid = "3d4565c3-192b-4227-89f7-5476f913ab49"
+BZMeshes = "3d4565c3-192b-4227-89f7-5476f913ab49"

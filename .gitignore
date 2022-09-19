@@ -33,3 +33,6 @@ Manifest.toml
 *.png
 *.pdf
 run
+
+*.pb.gz
+.history

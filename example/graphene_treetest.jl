@@ -1,5 +1,5 @@
-using SpaceGrid
-using SpaceGrid.AbstractTrees, SpaceGrid.GridTree, SpaceGrid.BaseMesh
+using BZMeshes
+using BZMeshes.AbstractTrees, BZMeshes.GridTree, BZMeshes.BaseMesh
 using Plots
 using LinearAlgebra
 
@@ -20,7 +20,7 @@ function density(k; band=1)
 end
 
 latvec = [2 0; 1 sqrt(3)]' .* (2π)
-# println(SpaceGrid.GridTree._calc_subpoints(3, [3,3], latvec, 2))
+# println(BZMeshes.GridTree._calc_subpoints(3, [3,3], latvec, 2))
 # tg = treegridfromdensity(k -> density(k), latvec; atol=1 / 2^16, maxdepth=12, mindepth=1, N=6)#, type=:barycheb)
 tg = treegridfromdensity(k -> density(k), latvec; atol=1 / 2^10, maxdepth=12, mindepth=1, N=6)#, type=:barycheb)
 
@@ -50,7 +50,7 @@ function green_real(k, n; band=1)
     ln = la.numatoms
     ϵ = dispersion(dim, ln, ham, k)[band] - μ
 
-    return - ϵ / ((π * T * (2*n + 1))^2 + ϵ^2)
+    return -ϵ / ((π * T * (2 * n + 1))^2 + ϵ^2)
     # return 1 / (exp((ϵ) / T) + 1.0)
 end
 

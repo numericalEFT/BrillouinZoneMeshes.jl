@@ -1,14 +1,14 @@
 ```@meta
-CurrentModule = SpaceGrid
+CurrentModule = BZMeshes
 ```
 
-# SpaceGrid
+# BZMeshes
 
-Documentation for [SpaceGrid](https://github.com/fsxbhyy/SpaceGrid.jl).
+Documentation for [BZMeshes](https://github.com/fsxbhyy/BZMeshes.jl).
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [SpaceGrid]
+Modules = [BZMeshes]
 ```

@@ -1,4 +1,4 @@
-module SpaceGrid
+module BZMeshes
 
 using AbstractTrees
 using StaticArrays
