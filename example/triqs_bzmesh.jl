@@ -8,7 +8,8 @@ np = pyimport("numpy")
 tpl = pyimport("triqs.plot.mpl_interface")
 plt = pyimport("matplotlib.pyplot")
 
-BL = lat.BravaisLattice(units=((1, 0, 0), (0, 1, 0))) #square lattice
+# BL = lat.BravaisLattice(units=((1, 0, 0), (0, 1, 0))) #square lattice
+BL = lat.BravaisLattice(units=((2, 0, 0), (1, np.sqrt(3), 0))) #square lattice
 BZ = lat.BrillouinZone(BL)
 nk = 8
 mk = gf.MeshBrillouinZone(BZ, nk)
@@ -16,7 +17,7 @@ miw = gf.MeshImFreq(beta=1.0, S="Fermion", n_max=100) #grid number : 201
 mprod = gf.MeshProduct(mk, miw)
 
 println(BZ.units)
-latvec = pyconvert(Array, BZ.units)[1:2, 1:2]
+latvec = pyconvert(Array, BZ.units)[1:2, 1:2]'
 println(latvec)
 
 umesh = BZMeshes.BaseMesh.UniformMesh{2,nk,BZMeshes.BaseMesh.EdgedMesh}([0.0, 0.0], latvec)
@@ -49,9 +50,9 @@ for p in mk
     data1[inds...] = pyconvert(ComplexF64, G_k_w.data[p.linear_index, 0, 0, 0])
 end
 
-println(data0[1:8])
-println(data1[1:8])
+# println(data0[1:8])
+# println(data1[1:8])
 
-for i in 1:nk^2
-    println(data0[i] ≈ data1[i])
-end
+# for i in 1:nk^2
+#     println(data0[i] ≈ data1[i])
+# end
