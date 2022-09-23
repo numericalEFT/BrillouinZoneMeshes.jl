@@ -1,5 +1,5 @@
 using PythonCall
-using BZMeshes
+using BrillouinZoneMeshes
 
 gf = pyimport("triqs.gf")
 lat = pyimport("triqs.lattice")
@@ -19,7 +19,7 @@ println(BZ.units)
 latvec = pyconvert(Array, BZ.units)[1:2, 1:2]
 println(latvec)
 
-umesh = BZMeshes.BaseMesh.UniformMesh{2,nk,BZMeshes.BaseMesh.EdgedMesh}([0.0, 0.0], latvec)
+umesh = BrillouinZoneMeshes.BaseMesh.UniformMesh{2,nk,BrillouinZoneMeshes.BaseMesh.EdgedMesh}([0.0, 0.0], latvec)
 
 for (ip, p) in enumerate(mk)
     println(p, umesh[ip])

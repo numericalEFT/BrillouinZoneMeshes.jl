@@ -63,6 +63,6 @@ jobs:
       - run: |
           julia --project=docs -e '
             using Documenter: DocMeta, doctest
-            using BZMeshes
-            DocMeta.setdocmeta!(BZMeshes, :DocTestSetup, :(using BZMeshes); recursive=true)
-            doctest(BZMeshes)'
+            using BrillouinZoneMeshes
+            DocMeta.setdocmeta!(BrillouinZoneMeshes, :DocTestSetup, :(using BrillouinZoneMeshes); recursive=true)
+            doctest(BrillouinZoneMeshes)'

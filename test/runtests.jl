@@ -1,9 +1,9 @@
-using BZMeshes
-using BZMeshes.AbstractTrees, BZMeshes.GridTree, BZMeshes.BaseMesh, BZMeshes.BaryCheb
+using BrillouinZoneMeshes
+using BrillouinZoneMeshes.AbstractTrees, BrillouinZoneMeshes.GridTree, BrillouinZoneMeshes.BaseMesh, BrillouinZoneMeshes.BaryCheb
 using LinearAlgebra, Random
 using Test
 
-@testset "BZMeshes.jl" begin
+@testset "BrillouinZoneMeshes.jl" begin
 
 
     if isempty(ARGS)

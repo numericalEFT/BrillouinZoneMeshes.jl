@@ -1,5 +1,5 @@
-using BZMeshes
-using BZMeshes.AbstractTrees, BZMeshes.GridTree, BZMeshes.BaseMesh
+using BrillouinZoneMeshes
+using BrillouinZoneMeshes.AbstractTrees, BrillouinZoneMeshes.GridTree, BrillouinZoneMeshes.BaseMesh
 using Plots
 using LinearAlgebra
 
@@ -20,7 +20,7 @@ function density(k; band=1)
 end
 
 latvec = [2 0; 1 sqrt(3)]' .* (2π)
-# println(BZMeshes.GridTree._calc_subpoints(3, [3,3], latvec, 2))
+# println(BrillouinZoneMeshes.GridTree._calc_subpoints(3, [3,3], latvec, 2))
 # tg = treegridfromdensity(k -> density(k), latvec; atol=1 / 2^16, maxdepth=12, mindepth=1, N=6)#, type=:barycheb)
 tg = treegridfromdensity(k -> density(k), latvec; atol=1 / 2^10, maxdepth=12, mindepth=1, N=6)#, type=:barycheb)
 

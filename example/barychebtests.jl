@@ -1,7 +1,7 @@
 using CodeTracking
 
-using BZMeshes
-using BZMeshes.AbstractTrees, BZMeshes.GridTree, BZMeshes.BaseMesh, BZMeshes.BaryCheb
+using BrillouinZoneMeshes
+using BrillouinZoneMeshes.AbstractTrees, BrillouinZoneMeshes.GridTree, BrillouinZoneMeshes.BaseMesh, BrillouinZoneMeshes.BaryCheb
 
 macro expr2fn(fname, expr, args...)
     fn = quote
