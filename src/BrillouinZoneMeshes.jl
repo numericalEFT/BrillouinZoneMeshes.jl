@@ -1,4 +1,4 @@
-module BZMeshes
+module BrillouinZoneMeshes
 
 using AbstractTrees
 using StaticArrays

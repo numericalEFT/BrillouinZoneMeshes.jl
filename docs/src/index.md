@@ -1,14 +1,14 @@
 ```@meta
-CurrentModule = BZMeshes
+CurrentModule = BrillouinZoneMeshes
 ```
 
-# BZMeshes
+# BrillouinZoneMeshes
 
-Documentation for [BZMeshes](https://github.com/fsxbhyy/BZMeshes.jl).
+Documentation for [BrillouinZoneMeshes](https://github.com/fsxbhyy/BrillouinZoneMeshes.jl).
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [BZMeshes]
+Modules = [BrillouinZoneMeshes]
 ```

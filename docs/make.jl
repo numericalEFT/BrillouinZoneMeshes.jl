@@ -1,16 +1,16 @@
-using BZMeshes
+using BrillouinZoneMeshes
 using Documenter
 
-DocMeta.setdocmeta!(BZMeshes, :DocTestSetup, :(using BZMeshes); recursive=true)
+DocMeta.setdocmeta!(BrillouinZoneMeshes, :DocTestSetup, :(using BrillouinZoneMeshes); recursive=true)
 
 makedocs(;
-    modules=[BZMeshes],
+    modules=[BrillouinZoneMeshes],
     authors="Xiansheng Cai, Tao Wang and Kun Chen",
-    repo="https://github.com/numericaleft/BZMeshes.jl/blob/{commit}{path}#{line}",
-    sitename="BZMeshes.jl",
+    repo="https://github.com/numericaleft/BrillouinZoneMeshes.jl/blob/{commit}{path}#{line}",
+    sitename="BrillouinZoneMeshes.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://numericaleft.github.io/BZMeshes.jl",
+        canonical="https://numericaleft.github.io/BrillouinZoneMeshes.jl",
         assets=String[]
     ),
     pages=[
@@ -19,6 +19,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/numericalEFT/BZMeshes.jl",
+    repo="github.com/numericalEFT/BrillouinZoneMeshes.jl",
     devbranch="master"
 )
