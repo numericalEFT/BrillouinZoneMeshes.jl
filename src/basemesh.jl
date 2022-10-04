@@ -7,7 +7,8 @@ using ..BaryCheb
 
 export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, AbstractMesh, locate, volume
 
-abstract type AbstractMesh{N} <: AbstractArray{Float64,N} end
+abstract type AbstractMesh{DIM} <: AbstractArray{SVector{Float64,DIM},DIM} end
+abstract type EqualLengthMesh{DIM,N} <: AbstractMesh{DIM} end
 locate(mesh::AbstractMesh, x) = error("implement for concrete type required!")
 volume(mesh::AbstractMesh, i) = error("implement for concrete type required!")
 
@@ -15,7 +16,7 @@ abstract type MeshType end
 struct CenteredMesh <: MeshType end
 struct EdgedMesh <: MeshType end
 
-struct UniformMesh{DIM,N,MT} <: AbstractMesh{DIM}
+struct UniformMesh{DIM,N,MT} <: EqualLengthMesh{DIM,N}
     origin::SVector{DIM,Float64}
     latvec::SMatrix{DIM,DIM,Float64}
     invlatvec::SMatrix{DIM,DIM,Float64}
@@ -48,15 +49,17 @@ meshshift(::Type{<:CenteredMesh}) = 0.5
 meshshift(::Type{<:EdgedMesh}) = 0.0
 
 function Base.getindex(mesh::UniformMesh{DIM,N,MT}, inds...) where {DIM,N,MT}
-    pos = Vector(mesh.origin)
-    for (ni, n) in enumerate(inds)
-        pos = pos .+ mesh.latvec[:, ni] .* (n - 1 + meshshift(MT)) ./ (N)
-    end
-    return pos
+    # pos = Vector(mesh.origin)
+    # for (ni, n) in enumerate(inds)
+    #     pos = pos .+ mesh.latvec[:, ni] .* (n - 1 + meshshift(MT)) ./ (N)
+    # end
+    # return pos
+    n = SVector{DIM,Int}(inds)
+    return mesh.origin + mesh.latvec * ((n .- 1 .+ meshshift(MT)) ./ N)
 end
 
 function Base.getindex(mesh::UniformMesh{DIM,N,MT}, i::Int) where {DIM,N,MT}
-    return Base.getindex(mesh, _ind2inds(i, N, DIM)...)
+    return Base.getindex(mesh, _ind2inds(mesh, i)...)
 end
 Base.firstindex(mesh::UniformMesh) = 1
 Base.lastindex(mesh::UniformMesh) = length(mesh)
@@ -64,17 +67,34 @@ Base.lastindex(mesh::UniformMesh) = length(mesh)
 Base.iterate(mesh::UniformMesh) = (mesh[1], 1)
 Base.iterate(mesh::UniformMesh, state) = (state >= length(mesh)) ? nothing : (mesh[state+1], state + 1)
 
-_ind2inds(i::Int, N::Int, DIM::Int) = digits(i - 1, base=N, pad=DIM) .+ 1
+# _ind2inds(i::Int, N::Int, DIM::Int) = digits(i - 1, base=N, pad=DIM) .+ 1
 
-function _inds2ind(inds, N::Int)
-    indexall = 1
-    for i in 1:length(inds)
-        indexall += (inds[i] - 1) * N^(i - 1)
+# function _inds2ind(inds, N::Int)
+#     indexall = 1
+#     for i in 1:length(inds)
+#         indexall += (inds[i] - 1) * N^(i - 1)
+#     end
+#     return indexall
+# end
+
+@generated function _inds2ind(umesh::EqualLengthMesh{DIM,N}, I) where {DIM,N}
+    ex = :(I[DIM] - 1)
+    for i = (DIM-1):-1:1
+        ex = :(I[$i] - 1 + N * $ex)
     end
-    return indexall
+    return :($ex + 1)
 end
 
-function _indfloor(x, N; edgeshift = 1)
+@generated function _ind2inds(umesh::EqualLengthMesh{DIM,N}, I::Int) where {DIM,N}
+    inds, quotient = :((I - 1) % N + 1), :((I - 1) ÷ N)
+    for i = 2:DIM-1
+        inds, quotient = :($inds..., $quotient % N + 1), :($quotient ÷ N)
+    end
+    inds = :($inds..., $quotient + 1)
+    return :(SVector{DIM,Int}($inds))
+end
+
+function _indfloor(x, N; edgeshift=1)
     # edgeshift = 1 by default in floor function so that end point return N-1
     # edgeshift = 0 in locate function
     if x < 1
@@ -101,7 +121,7 @@ function Base.floor(mesh::UniformMesh{DIM,N}, x) where {DIM,N}
     return indexall
 end
 
-function locate(mesh::UniformMesh{DIM, N, MT}, x) where {DIM,N,MT}
+function locate(mesh::UniformMesh{DIM,N,MT}, x) where {DIM,N,MT}
     # find index of nearest grid point to the point
     displacement = SVector{DIM,Float64}(x) - mesh.origin
     # println(displacement)
@@ -126,7 +146,7 @@ function volume(::Type{<:CenteredMesh}, mesh, i)
 end
 
 function volume(::Type{<:EdgedMesh}, mesh::UniformMesh{DIM,N,MT}, i) where {DIM,N,MT}
-    inds = _ind2inds(i, N, DIM)
+    inds = _ind2inds(mesh, i)
     n1, nend = count(i -> i == 1, inds), count(i -> i == N, inds)
     cellarea = 2^(DIM - n1 - nend) * 3^nend / 2^DIM
     return cellarea / length(mesh) * volume(mesh)
@@ -189,7 +209,7 @@ function integrate(data, mesh::UniformMesh{DIM,N,EdgedMesh}) where {DIM,N}
     area = abs(det(mesh.latvec))
     avg = 0.0
     for i in 1:length(data)
-        inds = _ind2inds(i, N, DIM)
+        inds = _ind2inds(mesh, i)
         n1, nend = count(i -> i == 1, inds), count(i -> i == N, inds)
         avg += 2^(DIM - n1 - nend) * 3^nend / 2^DIM * data[i]
     end
@@ -197,7 +217,7 @@ function integrate(data, mesh::UniformMesh{DIM,N,EdgedMesh}) where {DIM,N}
     return avg * area
 end
 
-struct BaryChebMesh{DIM,N} <: AbstractMesh{DIM}
+struct BaryChebMesh{DIM,N} <: EqualLengthMesh{DIM,N}
     origin::SVector{DIM,Float64}
     latvec::SMatrix{DIM,DIM,Float64}
     invlatvec::SMatrix{DIM,DIM,Float64}
@@ -222,14 +242,16 @@ function Base.show(io::IO, mesh::BaryChebMesh)
     end
 end
 function Base.getindex(mesh::BaryChebMesh{DIM,N}, inds...) where {DIM,N}
-    pos = Vector(mesh.origin)
-    for (ni, n) in enumerate(inds)
-        pos = pos .+ mesh.latvec[:, ni] .* (mesh.barycheb[n] + 1.0) ./ 2.0
-    end
-    return pos
+    # pos = Vector(mesh.origin)
+    # for (ni, n) in enumerate(inds)
+    #     pos = pos .+ mesh.latvec[:, ni] .* (mesh.barycheb[n] + 1.0) ./ 2.0
+    # end
+    # return pos
+    a = SVector{DIM,Int}(mesh.barycheb[n] for n in inds)
+    return mesh.origin + mesh.latvec * (a .+ 1.0) ./ 2.0
 end
 function Base.getindex(mesh::BaryChebMesh{DIM,N}, i::Int) where {DIM,N}
-    return Base.getindex(mesh, _ind2inds(i, N, DIM)...)
+    return Base.getindex(mesh, _ind2inds(mesh, i)...)
 end
 
 Base.firstindex(mesh::BaryChebMesh) = 1
@@ -255,24 +277,24 @@ function locate1d(g::BaryCheb1D, x)
     if x <= grid[1]
         return 1
     elseif x >= grid[end]
-        if length(grid)!=1
+        if length(grid) != 1
             return length(grid)
         end
     end
 
     i2 = searchsortedfirst(grid, x)
-    i1 = i2-1
-    return abs(grid[i1]-x)<abs(grid[i2]-x) ? i1 : i2
+    i1 = i2 - 1
+    return abs(grid[i1] - x) < abs(grid[i2] - x) ? i1 : i2
 end
 
 function volume1d(g::BaryCheb1D, i)
     grid = g.x
     if i != 1 && i != length(grid)
-        return (grid[i+1]-grid[i-1])/2
+        return (grid[i+1] - grid[i-1]) / 2
     elseif i == 1
-        return (grid[i+1]+grid[i])/2 - (-1)
+        return (grid[i+1] + grid[i]) / 2 - (-1)
     else
-        return 1 - (grid[i]+grid[i-1])/2
+        return 1 - (grid[i] + grid[i-1]) / 2
     end
 end
 
@@ -280,14 +302,14 @@ function locate(mesh::BaryChebMesh{DIM,N}, x) where {DIM,N}
     displacement = SVector{DIM,Float64}(x) - mesh.origin
     xs = (mesh.invlatvec * displacement) .* 2.0 .- 1.0
     inds = [locate1d(mesh.barycheb, xs[i]) for i in 1:DIM]
-    return _inds2ind(inds,N)
+    return _inds2ind(mesh, inds)
 end
 
 volume(mesh::BaryChebMesh) = abs(det(mesh.latvec))
 function volume(mesh::BaryChebMesh{DIM,N}, i) where {DIM,N}
-    inds = _ind2inds(i, N, DIM)
-    return reduce(*, volume1d(mesh.barycheb, inds[j]) for j in 1:DIM) *volume(mesh)/2^DIM
+    inds = _ind2inds(mesh, i)
+    return reduce(*, volume1d(mesh.barycheb, inds[j]) for j in 1:DIM) * volume(mesh) / 2^DIM
 end
 
 end
-  
+

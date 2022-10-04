@@ -21,11 +21,6 @@
         δ = 1e-3
 
         # index convert
-        N, DIM = 4, 2
-        for i in 1:N^(DIM)
-            # println("$i -> $(BaseMesh._ind2inds(i, N, DIM))")
-            @test i == BaseMesh._inds2ind(BaseMesh._ind2inds(i, N, DIM), N)
-        end
 
         # 2D
         N, DIM = 4, 2
@@ -34,9 +29,13 @@
         # latvec = [1 0; 0 1]'
 
         umesh = UniformMesh{DIM,N}(origin, latvec)
+        for i in 1:N^(DIM)
+            # println("$i -> $(BaseMesh._ind2inds(i, N, DIM))")
+            @test i == BaseMesh._inds2ind(umesh, BaseMesh._ind2inds(umesh, i))
+        end
 
         for i in 1:length(umesh)
-            @test umesh[i] == umesh[BaseMesh._ind2inds(i, N, DIM)...]
+            @test umesh[i] == umesh[BaseMesh._ind2inds(umesh, i)...]
         end
 
         for i in 1:length(umesh)
@@ -44,7 +43,8 @@
                 shift = zeros(Float64, DIM)
                 indshift = zeros(Int, DIM)
 
-                inds = BaseMesh._ind2inds(i, N, DIM)
+                inds = BaseMesh._ind2inds(umesh, i)
+                inds = Vector(inds)
                 # println(inds)
 
                 shift = δ .* latvec[:, j]
@@ -57,11 +57,12 @@
                         end
                     end
                 end
-                ind = BaseMesh._inds2ind(inds + indshift, N)
+                ind = BaseMesh._inds2ind(umesh, inds + indshift)
                 # @test ind == floor(umesh, umesh[i] + shift)
-                @test BaseMesh._ind2inds(ind, N, DIM) == BaseMesh._ind2inds(floor(umesh, umesh[i] + shift), N, DIM)
+                @test BaseMesh._ind2inds(umesh, ind) == BaseMesh._ind2inds(umesh, floor(umesh, umesh[i] + shift))
 
-                inds = BaseMesh._ind2inds(i, N, DIM)
+                inds = BaseMesh._ind2inds(umesh, i)
+                inds = Vector(inds)
                 shift = -δ .* latvec[:, j]
                 indshift[j] = -1
                 for k in 1:DIM
@@ -75,9 +76,9 @@
                 if inds[j] == 1
                     indshift[j] = 0
                 end
-                ind = BaseMesh._inds2ind(inds + indshift, N)
+                ind = BaseMesh._inds2ind(umesh, inds + indshift)
                 # @test ind == floor(umesh, umesh[i] + shift)
-                @test BaseMesh._ind2inds(ind, N, DIM) == BaseMesh._ind2inds(floor(umesh, umesh[i] + shift), N, DIM)
+                @test BaseMesh._ind2inds(umesh, ind) == BaseMesh._ind2inds(umesh, floor(umesh, umesh[i] + shift))
             end
         end
 
@@ -93,7 +94,8 @@
                 shift = zeros(Float64, DIM)
                 indshift = zeros(Int, DIM)
 
-                inds = BaseMesh._ind2inds(i, N, DIM)
+                inds = BaseMesh._ind2inds(umesh, i)
+                inds = Vector(inds)
                 # println(inds)
 
                 shift = δ .* latvec[:, j]
@@ -106,11 +108,12 @@
                         end
                     end
                 end
-                ind = BaseMesh._inds2ind(inds + indshift, N)
+                ind = BaseMesh._inds2ind(umesh, inds + indshift)
                 # @test ind == floor(umesh, umesh[i] + shift)
-                @test BaseMesh._ind2inds(ind, N, DIM) == BaseMesh._ind2inds(floor(umesh, umesh[i] + shift), N, DIM)
+                @test BaseMesh._ind2inds(umesh, ind) == BaseMesh._ind2inds(umesh, floor(umesh, umesh[i] + shift))
 
-                inds = BaseMesh._ind2inds(i, N, DIM)
+                inds = BaseMesh._ind2inds(umesh, i)
+                inds = Vector(inds)
                 shift = -δ .* latvec[:, j]
                 indshift[j] = -1
                 for k in 1:DIM
@@ -124,9 +127,9 @@
                 if inds[j] == 1
                     indshift[j] = 0
                 end
-                ind = BaseMesh._inds2ind(inds + indshift, N)
+                ind = BaseMesh._inds2ind(umesh, inds + indshift)
                 # @test ind == floor(umesh, umesh[i] + shift)
-                @test BaseMesh._ind2inds(ind, N, DIM) == BaseMesh._ind2inds(floor(umesh, umesh[i] + shift), N, DIM)
+                @test BaseMesh._ind2inds(umesh, ind) == BaseMesh._ind2inds(umesh, floor(umesh, umesh[i] + shift))
             end
         end
 
@@ -148,7 +151,8 @@
                 shift = zeros(Float64, DIM)
                 indshift = zeros(Int, DIM)
 
-                inds = BaseMesh._ind2inds(i, N, DIM)
+                inds = BaseMesh._ind2inds(umesh, i)
+                inds = Vector(inds)
                 # println(inds)
 
                 shift = δ .* latvec[:, j]
@@ -161,11 +165,12 @@
                         end
                     end
                 end
-                ind = BaseMesh._inds2ind(inds + indshift, N)
+                ind = BaseMesh._inds2ind(umesh, inds + indshift)
                 # @test ind == floor(umesh, umesh[i] + shift)
                 # @test BaseMesh._ind2inds(ind, N, DIM) == BaseMesh._ind2inds(floor(umesh, umesh[i] + shift), N, DIM)
 
-                inds = BaseMesh._ind2inds(i, N, DIM)
+                inds = BaseMesh._ind2inds(umesh, i)
+                inds = Vector(inds)
                 shift = -δ .* latvec[:, j]
                 indshift[j] = -1
                 for k in 1:DIM
@@ -179,7 +184,7 @@
                 if inds[j] == 1
                     indshift[j] = 0
                 end
-                ind = BaseMesh._inds2ind(inds + indshift, N)
+                ind = BaseMesh._inds2ind(umesh, inds + indshift)
                 # @test ind == floor(umesh, umesh[i] + shift)
                 # @test BaseMesh._ind2inds(ind, N, DIM) == BaseMesh._ind2inds(floor(umesh, umesh[i] + shift), N, DIM)
             end
