@@ -15,6 +15,7 @@ mk = gf.MeshBrillouinZone(BZ, nk)
 miw = gf.MeshImFreq(beta=1.0, S="Fermion", n_max=100) #grid number : 201
 mprod = gf.MeshProduct(mk, miw)
 
+println(pyisinstance(mk, gf.MeshBrZone))
 println(BZ.units)
 latvec = pyconvert(Array, BZ.units)[1:2, 1:2]
 println(latvec)

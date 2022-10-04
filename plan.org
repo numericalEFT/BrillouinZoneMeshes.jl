@@ -1,0 +1,37 @@
+
+* Goal of the package
+
+  The goal is to provide a unified solution to tabulate multi-dimensional momentum/space
+  with high-efficient mesh grid. Several implementations with a unified API should be provided.
+
+** TODO AbstractMesh [0/4]
+
+   An abstract type with unified interface is expected to be implemented by all
+   meshed define in this package:
+
+   - [ ] AbstractMesh{T} <: AbstractArray{T} so that all the indexing and iterator tools are available
+   - [ ] eltype(mesh) = Tuple/SVector so that no dynamic allocate happens(currently Vector is used)
+   - [ ] Monte Carlo support [0/2]
+     - [ ] locate function gives the grid point that histogram should accumulate on
+     - [ ] volume function gives the volume represented by the grid point
+   - [ ] Numerical calculation support [0/2]
+     - [ ] interp function gives interpolation
+     - [ ] integrate function gives integration
+     
+** BaseMesh
+
+   Basic mesh grids.
+
+*** UniformMesh
+
+*** BaryChebMesh
+
+** TreeMesh
+
+** PolarMesh
+   
+** other useful tools
+   
+*** Symmetry reduce
+
+
