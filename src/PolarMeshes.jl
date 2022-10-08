@@ -2,6 +2,7 @@ module PolarMeshes
 
 using ..StaticArrays
 using ..CompositeGrids
+using ..BaseMesh
 
 export PolarMesh, AngleMesh
 
@@ -15,10 +16,10 @@ end
 
 Base.length(mesh::AngleMesh) = prod(mesh.dims)
 Base.size(mesh::AngleMesh) = mesh.dims
-Base.size(mesh:AngleMesh, I::Int) = mesh.dims[I]
+Base.size(mesh::AngleMesh, I::Int) = mesh.dims[I]
 
-function Base.getindex(mesh::AngleMesh{DIM, AT}, inds...) where {DIM, AT}
-
+function Base.getindex(mesh::AngleMesh{DIM,AT}, inds...) where {DIM,AT}
+end
 
 struct PolarMesh{DIM,RG} <: AbstractMesh{DIM}
     radial_grids::Vector{RG}

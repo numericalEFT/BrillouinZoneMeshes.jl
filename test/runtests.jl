@@ -1,5 +1,5 @@
 using BrillouinZoneMeshes
-using BrillouinZoneMeshes.AbstractTrees, BrillouinZoneMeshes.GridTree, BrillouinZoneMeshes.BaseMesh, BrillouinZoneMeshes.BaryCheb
+using BrillouinZoneMeshes.AbstractTrees, BrillouinZoneMeshes.TreeMeshes, BrillouinZoneMeshes.BaseMesh, BrillouinZoneMeshes.BaryCheb
 using LinearAlgebra, Random
 using Test
 
@@ -7,9 +7,9 @@ using Test
 
 
     if isempty(ARGS)
-        include("tree.jl")
-        include("basemesh.jl")
         include("barycheb.jl")
+        include("BaseMesh.jl")
+        include("TreeMeshes.jl")
         include("mc.jl")
     else
         include(ARGS[1])

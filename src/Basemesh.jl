@@ -247,7 +247,7 @@ function Base.getindex(mesh::BaryChebMesh{DIM,N}, inds...) where {DIM,N}
     #     pos = pos .+ mesh.latvec[:, ni] .* (mesh.barycheb[n] + 1.0) ./ 2.0
     # end
     # return pos
-    a = SVector{DIM,Int}(mesh.barycheb[n] for n in inds)
+    a = SVector{DIM,Float64}(mesh.barycheb[n] for n in inds)
     return mesh.origin + mesh.latvec * (a .+ 1.0) ./ 2.0
 end
 function Base.getindex(mesh::BaryChebMesh{DIM,N}, i::Int) where {DIM,N}

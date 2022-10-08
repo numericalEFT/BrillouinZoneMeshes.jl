@@ -10,10 +10,16 @@ using CompositeGrids
 BaryCheb = CompositeGrids.BaryChebTools
 export BaryCheb
 
-include("basemesh.jl")
+include("Basemesh.jl")
 using .BaseMesh
 
-include("tree.jl")
-using .GridTree
+include("TreeMeshes.jl")
+using .TreeMeshes
+
+include("PolarMeshes.jl")
+using .PolarMeshes
+
+include("SymMaps.jl")
+using .SymMaps
 
 end

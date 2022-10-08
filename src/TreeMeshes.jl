@@ -1,4 +1,4 @@
-module GridTree
+module TreeMeshes
 
 using ..AbstractTrees
 using ..StaticArrays
@@ -20,7 +20,7 @@ function GridNode{DIM}(
     isfine;
     depth=0, pos=SVector{DIM,Int64}(zeros(Int64, DIM)), maxdepth=10, mindepth=0) where {DIM}
     if (isfine(depth, pos) && depth >= mindepth) || depth >= maxdepth
-        return GridNode{DIM}([0, ], depth, pos, Vector{GridNode{DIM}}([]))
+        return GridNode{DIM}([0,], depth, pos, Vector{GridNode{DIM}}([]))
     else
         children = Vector{GridNode{DIM}}([])
         for i in 0:2^DIM-1
@@ -29,7 +29,7 @@ function GridNode{DIM}(
             childpos = pos .* 2 .+ bin
             push!(children, GridNode{DIM}(isfine; depth=childdepth, pos=childpos, maxdepth=maxdepth, mindepth=mindepth))
         end
-        return GridNode{DIM}([0, ], depth, pos, children)
+        return GridNode{DIM}([0,], depth, pos, children)
     end
 end
 
@@ -45,7 +45,7 @@ function Base.floor(node::GridNode{DIM}, x) where {DIM}
         index = 1
         for i in 1:DIM
             if x[i] > midpos[i]
-                index = index + 2^(DIM-i)
+                index = index + 2^(DIM - i)
             end
         end
 
@@ -66,18 +66,18 @@ function efficiency(root::GridNode{DIM}) where {DIM}
     return np / 2^(depth * DIM)
 end
 
-struct TreeGrid{DIM,SG} <:AbstractMesh{DIM}
+struct TreeGrid{DIM,SG} <: AbstractMesh{DIM}
     origin::SVector{DIM,Float64}
     root::GridNode{DIM}
     latvec::SMatrix{DIM,DIM,Float64}
-    invlatvec::SMatrix{DIM, DIM, Float64}
+    invlatvec::SMatrix{DIM,DIM,Float64}
     subgrids::Vector{SG}
 end
 
 efficiency(tg::TreeGrid) = efficiency(tg.root)
 
-function Base.floor(tg::TreeGrid{DIM, SG}, x) where {DIM, SG}
-    dimlessx = tg.invlatvec * SVector{DIM, Float64}(x) .+ 0.5
+function Base.floor(tg::TreeGrid{DIM,SG}, x) where {DIM,SG}
+    dimlessx = tg.invlatvec * SVector{DIM,Float64}(x) .+ 0.5
 
     tgi = floor(tg.root, dimlessx)
     mesh = tg.subgrids[tgi]
@@ -111,8 +111,8 @@ function BaseMesh.volume(tg::TreeGrid{DIM,SG}, i) where {DIM,SG}
     return volume(tg.subgrids[tgi], sgi)
 end
 
-function interp(data, tg::TreeGrid{DIM, SG}, x) where {DIM, SG}
-    dimlessx = tg.invlatvec * SVector{DIM, Float64}(x) .+ 0.5
+function interp(data, tg::TreeGrid{DIM,SG}, x) where {DIM,SG}
+    dimlessx = tg.invlatvec * SVector{DIM,Float64}(x) .+ 0.5
     sgsize = length(tg.subgrids[1])
 
     tgi = floor(tg.root, dimlessx)
@@ -123,7 +123,7 @@ function interp(data, tg::TreeGrid{DIM, SG}, x) where {DIM, SG}
     return BaseMesh.interp(data_slice, mesh, x)
 end
 
-function integrate(data, tg::TreeGrid{DIM, SG}) where {DIM, SG}
+function integrate(data, tg::TreeGrid{DIM,SG}) where {DIM,SG}
     sgsize = length(tg.subgrids[1])
     result = 0.0
 
@@ -188,7 +188,7 @@ function uniformtreegrid(isfine, latvec; maxdepth=10, mindepth=0, DIM=2, N=2)
             mesh = UniformMesh{DIM,N}(origin, latvec ./ 2^depth)
             push!(subgrids, mesh)
             node.index[1] = i
-            i = i+1
+            i = i + 1
         end
     end
     origin = _calc_origin(root, latvec)
@@ -253,11 +253,11 @@ function densityisfine(density, latvec, depth, pos, atol, DIM; N=3)
 end
 
 function barychebdensityisfine(density, latvec, depth, pos, atol, DIM; N=4)
-    area = _calc_area(latvec) / 2^(depth*DIM)
+    area = _calc_area(latvec) / 2^(depth * DIM)
 
     origin = _calc_point(depth, pos, latvec)
     mesh1 = BaryChebMesh(origin, latvec ./ 2^depth, DIM, N)
-    mesh2 = BaryChebMesh(origin, latvec ./ 2^depth, DIM, N+2)
+    mesh2 = BaryChebMesh(origin, latvec ./ 2^depth, DIM, N + 2)
 
     data1 = [density(p) for p in mesh1]
     # data2 = [density(p) for p in mesh2]
@@ -291,7 +291,7 @@ function _find_in(x, arr::AbstractArray; atol=1e-6, rtol=1e-6)
     return 0
 end
 
-struct SymMap{T, N}
+struct SymMap{T,N}
     map::Vector{Int}
     reduced_length::Int
     _vals::Vector{T}
@@ -317,17 +317,17 @@ struct SymMap{T, N}
             end
         end
 
-        return new{T, length(tg)}(map, length(reduced_vals), reduced_vals, inv_map)
+        return new{T,length(tg)}(map, length(reduced_vals), reduced_vals, inv_map)
     end
 end
 
-struct MappedData{T, N} <: AbstractArray{T, N}
-    smap::SymMap{T, N}
+struct MappedData{T,N} <: AbstractArray{T,N}
+    smap::SymMap{T,N}
     data::Vector{T}
 
-    function MappedData(smap::SymMap{T, N}) where {T, N}
+    function MappedData(smap::SymMap{T,N}) where {T,N}
         data = zeros(T, smap.reduced_length)
-        return new{T, N}(smap, data)
+        return new{T,N}(smap, data)
     end
 end
 
