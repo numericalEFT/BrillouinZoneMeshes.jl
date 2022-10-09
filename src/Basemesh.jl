@@ -233,6 +233,12 @@ function BaryChebMesh(origin, latvec, DIM, N)
     return BaryChebMesh{DIM,N}(origin, latvec, barycheb)
 end
 
+function BaryChebMesh(origin, latvec, bcmesh::BaryChebMesh{DIM,N}) where {DIM,N}
+    # this constructor borrows barycheb from generated bcmesh
+    barycheb = bcmesh.barycheb
+    return BaryChebMesh{DIM,N}(origin, latvec, barycheb)
+end
+
 Base.length(mesh::BaryChebMesh{DIM,N}) where {DIM,N} = N^DIM
 Base.size(mesh::BaryChebMesh{DIM,N}) where {DIM,N} = NTuple{DIM,Int}(ones(Int, DIM) .* N)
 function Base.show(io::IO, mesh::BaryChebMesh)
