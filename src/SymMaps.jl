@@ -5,6 +5,8 @@ using ..TreeMeshes
 
 export SymMap, MappedData
 
+# TODO: add ReducedMesh: bare mesh + SymMap
+
 function _find_in(x, arr::AbstractArray; atol=1e-6, rtol=1e-6)
     # return index if in, return 0 otherwise
     for yi in 1:length(arr)
@@ -17,11 +19,13 @@ function _find_in(x, arr::AbstractArray; atol=1e-6, rtol=1e-6)
     return 0
 end
 
+# rename to MeshMap
 struct SymMap{T,N}
     map::Vector{Int}
     reduced_length::Int
     _vals::Vector{T}
     inv_map::Vector{Vector{Int}}
+    # TODO: store symmetry operation
 
     function SymMap{T}(tg::TreeGrid, density; atol=1e-6, rtol=1e-6) where {T}
         map = zeros(Int, length(tg))

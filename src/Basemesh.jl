@@ -13,13 +13,15 @@ locate(mesh::AbstractMesh, x) = error("implement for concrete type required!")
 volume(mesh::AbstractMesh, i) = error("implement for concrete type required!")
 
 abstract type MeshType end
-struct CenteredMesh <: MeshType end
-struct EdgedMesh <: MeshType end
+struct CenteredMesh <: MeshType end # Monkhorst-Pack mesh, take center points instead of left-bottom
+struct EdgedMesh <: MeshType end # Γ=(0,0) centered, take (0,0) as mesh point
 
+# TODO: support (N1, N2, N3)
 struct UniformMesh{DIM,N,MT} <: EqualLengthMesh{DIM,N}
     origin::SVector{DIM,Float64}
     latvec::SMatrix{DIM,DIM,Float64}
     invlatvec::SMatrix{DIM,DIM,Float64}
+    # dims could be here as field element
 
     function UniformMesh{DIM,N,MT}(origin, latvec) where {DIM,N,MT<:MeshType}
         return new{DIM,N,MT}(origin, latvec, inv(latvec))
