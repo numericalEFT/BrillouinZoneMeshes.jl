@@ -1,4 +1,7 @@
 @testset "Tree Grid" begin
+
+    interp, integrate = TreeMeshes.interp, TreeMeshes.integrate
+
     rng = MersenneTwister(1234)
 
     function dispersion(k)

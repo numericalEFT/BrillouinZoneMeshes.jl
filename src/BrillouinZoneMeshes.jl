@@ -13,12 +13,12 @@ export BaryCheb
 include("Basemesh.jl")
 using .BaseMesh
 export BaseMesh
-export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, AbstractMesh, locate, volume
+export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, AbstractMesh# , locate, volume
 
 include("TreeMeshes.jl")
 using .TreeMeshes
 export TreeMeshes
-export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency, interp, integrate
+export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency# , interp, integrate
 
 include("PolarMeshes.jl")
 using .PolarMeshes

@@ -2,8 +2,10 @@
     # testing locate and volume functions provided for monte carlo
     rng = MersenneTwister(1234)
 
+    locate, volume = BaseMesh.locate, BaseMesh.volume
+
     function test_mc_histogram(mesh::AbstractMesh{DIM};
-                               Npp=1e5, f = (x -> sum(x))) where {DIM}
+        Npp=1e5, f=(x -> sum(x))) where {DIM}
         Ng = length(mesh)
         Nmc = Npp * Ng
 
@@ -21,7 +23,7 @@
             vall = volume(mesh)
 
             @test isapprox(hist[pi] / Nmc, f(p),
-                          rtol = 5/sqrt(Nmc*vi/vall), atol=5*(vi/vall)^(1/DIM))
+                rtol=5 / sqrt(Nmc * vi / vall), atol=5 * (vi / vall)^(1 / DIM))
         end
     end
 
@@ -102,7 +104,7 @@
         latvec = [2 0; 1 sqrt(3)]'
 
         isfine(depth, pos) = false
-        umesh = uniformtreegrid(isfine, latvec;maxdepth=2,mindepth=2,DIM=DIM,N=N)
+        umesh = uniformtreegrid(isfine, latvec; maxdepth=2, mindepth=2, DIM=DIM, N=N)
 
         for i in 1:length(umesh)
             p = umesh[i]
