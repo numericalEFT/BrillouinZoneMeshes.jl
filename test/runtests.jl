@@ -1,3 +1,5 @@
+module _Test_BrillouinZoneMeshes
+
 using BrillouinZoneMeshes
 using BrillouinZoneMeshes.AbstractTrees
 # using BrillouinZoneMeshes.TreeMeshes
@@ -19,5 +21,7 @@ using Test
     else
         include(ARGS[1])
     end
+end
+
 end
 
