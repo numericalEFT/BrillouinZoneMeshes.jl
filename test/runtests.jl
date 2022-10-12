@@ -14,7 +14,7 @@ using Test
 
 
     if isempty(ARGS)
-        include("barycheb.jl")
+        # include("barycheb.jl")
         include("BaseMesh.jl")
         include("TreeMeshes.jl")
         include("mc.jl")

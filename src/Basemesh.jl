@@ -17,14 +17,16 @@ struct CenteredMesh <: MeshType end # Monkhorst-Pack mesh, take center points in
 struct EdgedMesh <: MeshType end # Γ=(0,0) centered, take (0,0) as mesh point
 
 # TODO: support (N1, N2, N3)
-struct UniformMesh{DIM,N,MT} <: EqualLengthMesh{DIM,N}
+struct UniformMesh{DIM,N,MT,DIMSQ} <: EqualLengthMesh{DIM,N}
+    # DIMSQ should be provided explicitly in SMatrix parameters
+    # otherwise it cause type instability
     origin::SVector{DIM,Float64}
-    latvec::SMatrix{DIM,DIM,Float64}
-    invlatvec::SMatrix{DIM,DIM,Float64}
+    latvec::SMatrix{DIM,DIM,Float64,DIMSQ}
+    invlatvec::SMatrix{DIM,DIM,Float64,DIMSQ}
     # dims could be here as field element
 
     function UniformMesh{DIM,N,MT}(origin, latvec) where {DIM,N,MT<:MeshType}
-        return new{DIM,N,MT}(origin, latvec, inv(latvec))
+        return new{DIM,N,MT,DIM^2}(origin, latvec, inv(latvec))
     end
 end
 
@@ -219,14 +221,14 @@ function integrate(data, mesh::UniformMesh{DIM,N,EdgedMesh}) where {DIM,N}
     return avg * area
 end
 
-struct BaryChebMesh{DIM,N} <: EqualLengthMesh{DIM,N}
+struct BaryChebMesh{DIM,N,DIMSQ} <: EqualLengthMesh{DIM,N}
     origin::SVector{DIM,Float64}
-    latvec::SMatrix{DIM,DIM,Float64}
-    invlatvec::SMatrix{DIM,DIM,Float64}
+    latvec::SMatrix{DIM,DIM,Float64,DIMSQ}
+    invlatvec::SMatrix{DIM,DIM,Float64,DIMSQ}
     barycheb::BaryCheb1D{N} # grid in barycheb is [-1, 1]
 
     function BaryChebMesh{DIM,N}(origin, latvec, barycheb::BaryCheb1D{N}) where {DIM,N}
-        return new{DIM,N}(origin, latvec, inv(latvec), barycheb)
+        return new{DIM,N,DIM^2}(origin, latvec, inv(latvec), barycheb)
     end
 end
 
