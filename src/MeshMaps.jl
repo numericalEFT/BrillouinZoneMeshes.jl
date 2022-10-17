@@ -1,7 +1,11 @@
-module SymMaps
+module MeshMaps
 # symmetry reduce map for meshes
 
 using ..TreeMeshes
+
+######################################################
+## LEGACY CODE BELOW
+####################################################
 
 export SymMap, MappedData
 

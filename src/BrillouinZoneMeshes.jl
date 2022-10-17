@@ -24,9 +24,9 @@ include("PolarMeshes.jl")
 using .PolarMeshes
 export PolarMeshes
 
-include("SymMaps.jl")
-using .SymMaps
-export SymMaps
+include("MeshMaps.jl")
+using .MeshMaps
+export MeshMaps
 export SymMap, MappedData
 
 end
