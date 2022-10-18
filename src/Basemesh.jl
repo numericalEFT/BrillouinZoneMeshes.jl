@@ -19,12 +19,23 @@ struct Brillouin{T,DIM}
     G_vector::Vector{NTuple{DIM,Int}}
 end
 
+function _compute_inverse_lattice(lattice)
+    return
+end
+
+function _compute_recip_lattice(lattice)
+    return
+end
+
+
 struct UniformBZMesh{T,DIM} <: AbstractMesh{T,DIM}
     br::Brillouin{T,DIM}
 
     size::NTuple{DIM,Int}
     shift::NTuple{DIM,Rational}
 end
+
+
 
 # c.f. DFTK.jl/src/Model.jl
 # UniformBZMesh iterate on 1st Brillouin Zone

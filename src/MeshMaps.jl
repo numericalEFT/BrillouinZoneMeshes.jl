@@ -14,24 +14,24 @@ Mapping from full mesh to irreducible mesh. The reduction is mainly available vi
 - `inv_map`: inverse of map. When i is the index of a point in the reduced mesh, inv_map[i] is a list of all points corresponding to this point in the full mesh
 """
 struct MeshMap
+    irreducible_indices::Vector{Int}
     map::Vector{Int}
-    reduced_length::Int
-    inv_map::Vector{Vector{Int}}
+    inv_map::Dict{Int,Vector{Int}}
 
-    function MeshMap(map::Vector{Int})
-        reduced_length = maximum(map)
-        inv_map = Vector{Vector{Int}}(undef, reduced_length)
-        for (i, ind) in enumerate(map)
-            # i is index of full mesh, ind is index of reduced mesh
-            if isassigned(inv_map, ind)
-                push!(inv_map[ind], i)
-            else
-                inv_map[ind] = Vector{Int}([i,])
-            end
-        end
+    # function MeshMap(map::Vector{Int})
+    #     reduced_length = maximum(map)
+    #     inv_map = Vector{Vector{Int}}(undef, reduced_length)
+    #     for (i, ind) in enumerate(map)
+    #         # i is index of full mesh, ind is index of reduced mesh
+    #         if isassigned(inv_map, ind)
+    #             push!(inv_map[ind], i)
+    #         else
+    #             inv_map[ind] = Vector{Int}([i,])
+    #         end
+    #     end
 
-        return new(map, reduced_length, inv_map)
-    end
+    #     return new(map, reduced_length, inv_map)
+    # end
 end
 
 # TODO: constructors that generate map for specific type of mesh and symmetry
@@ -49,7 +49,7 @@ Map-reduced mesh constructed from mesh::MT with symmetry reduction.
 - `mesh`: bare mesh from which the reduced mesh constructed
 - `meshmap`: map from mesh to the reduced mesh
 """
-struct ReducedMesh{MT,DIM} <: AbstractMesh{Float64,DIM}
+struct ReducedMesh{MT<:AbstractMesh{T,DIM},DIM} <: AbstractMesh{T,DIM}
     mesh::MT
     meshmap::MeshMap
 end
