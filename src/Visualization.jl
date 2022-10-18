@@ -5,6 +5,8 @@ module Visualization
 using ..BaseMesh
 using ..TreeMeshes
 using ..PolarMeshes
-using ..SymMaps
+using ..MeshMaps
+
+# plot mesh as interactive widget via Plotly
 
 end

@@ -2,6 +2,64 @@ module MeshMaps
 # symmetry reduce map for meshes
 
 using ..TreeMeshes
+using ..BaseMesh
+"""
+    struct MeshMap
+
+Mapping from full mesh to irreducible mesh. The reduction is mainly available via symmetry operations.
+
+# Parameters:
+- `map`: mapping from full mesh to irreducible mesh. When i is the index of a point in the full mesh, map[i] is the corresponding index in reduced mesh
+- `reduced_length`: the length of reduced mesh
+- `inv_map`: inverse of map. When i is the index of a point in the reduced mesh, inv_map[i] is a list of all points corresponding to this point in the full mesh
+"""
+struct MeshMap
+    map::Vector{Int}
+    reduced_length::Int
+    inv_map::Vector{Vector{Int}}
+
+    function MeshMap(map::Vector{Int})
+        reduced_length = maximum(map)
+        inv_map = Vector{Vector{Int}}(undef, reduced_length)
+        for (i, ind) in enumerate(map)
+            # i is index of full mesh, ind is index of reduced mesh
+            if isassigned(inv_map, ind)
+                push!(inv_map[ind], i)
+            else
+                inv_map[ind] = Vector{Int}([i,])
+            end
+        end
+
+        return new(map, reduced_length, inv_map)
+    end
+end
+
+# TODO: constructors that generate map for specific type of mesh and symmetry
+
+## TODO: 1st step: symmetry reduce for M-P mesh(centered uniform mesh)
+
+
+
+"""
+    struct ReducedMesh{MT}
+
+Map-reduced mesh constructed from mesh::MT with symmetry reduction.
+
+# Parameters:
+- `mesh`: bare mesh from which the reduced mesh constructed
+- `meshmap`: map from mesh to the reduced mesh
+"""
+struct ReducedMesh{MT,DIM} <: AbstractMesh{DIM}
+    mesh::MT
+    meshmap::MeshMap
+end
+
+# TODO: implement AbstractMesh interface
+# including AbstractArray interface and locate/volume functions
+
+
+
+
 
 ######################################################
 ## LEGACY CODE BELOW
