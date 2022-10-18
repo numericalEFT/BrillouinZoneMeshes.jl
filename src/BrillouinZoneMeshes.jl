@@ -8,7 +8,7 @@ using CompositeGrids
 
 # Write your package code here.
 BaryCheb = CompositeGrids.BaryChebTools
-export BaryCheb
+# export BaryCheb
 
 include("Basemesh.jl")
 using .BaseMesh
@@ -28,5 +28,9 @@ include("MeshMaps.jl")
 using .MeshMaps
 export MeshMaps
 export SymMap, MappedData
+
+include("Visualization.jl")
+using .Visualization
+
 
 end

@@ -7,8 +7,37 @@ using ..BaryCheb
 
 export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, AbstractMesh, locate, volume
 
-abstract type AbstractMesh{DIM} <: AbstractArray{SVector{Float64,DIM},DIM} end
-abstract type EqualLengthMesh{DIM,N} <: AbstractMesh{DIM} end
+abstract type AbstractMesh{T,DIM} <: AbstractArray{SVector{T,DIM},DIM} end
+
+struct Brillouin{T,DIM}
+    lattice::Matrix{T}
+    recip_lattice::Matrix{T}
+    inv_lattice::Matrix{T}
+    inv_recip_lattice::Matrix{T}
+    unit_cell_volume::T
+    recip_cell_volume::T
+    G_vector::Vector{NTuple{DIM,Int}}
+end
+
+struct UniformBZMesh{T,DIM} <: AbstractMesh{T,DIM}
+    br::Brillouin{T,DIM}
+
+    size::NTuple{DIM,Int}
+    shift::NTuple{DIM,Rational}
+end
+
+# c.f. DFTK.jl/src/Model.jl
+# UniformBZMesh iterate on 1st Brillouin Zone
+# TODO: implement AbstractArray interface
+# TODO: volume and locate
+
+
+
+#####################################
+# LEGACY CODE BELOW
+#####################################
+
+abstract type EqualLengthMesh{DIM,N} <: AbstractMesh{Float64,DIM} end
 locate(mesh::AbstractMesh, x) = error("implement for concrete type required!")
 volume(mesh::AbstractMesh, i) = error("implement for concrete type required!")
 

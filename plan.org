@@ -23,7 +23,7 @@
    Basic mesh grids.
 
 
-*** TODO UniformMesh [1/4]
+*** TODO UniformMesh [0/1]
 
    - [ ] visualization
    - [ ] symmetry reduce
@@ -34,7 +34,20 @@
      - [ ] bcc
      - [ ] fcc
    - [ ] documentation
+
+**** TODO Monkhorst-Pack grid [/]
+
+     UniformMesh needs to be reconstructed to be compatible with M-P mesh used conventionally
+     Terminology c.f. https://www.vasp.at/wiki/index.php/KPOINTS
+          
+     - support generalized size (N1, N2, N3) instead of (N,N,N)
+     - support optional shift between \Gamma-centered and M-P mesh
+     - support Cartesian coordinate and fraction coordinate
+
      
+     
+**** TODO 
+
 *** BaryChebMesh
 
 ** TreeMesh

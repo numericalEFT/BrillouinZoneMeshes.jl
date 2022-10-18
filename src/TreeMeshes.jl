@@ -66,7 +66,7 @@ function efficiency(root::GridNode{DIM}) where {DIM}
     return np / 2^(depth * DIM)
 end
 
-struct TreeGrid{DIM,SG} <: AbstractMesh{DIM}
+struct TreeGrid{DIM,SG} <: AbstractMesh{Float64,DIM}
     origin::SVector{DIM,Float64}
     root::GridNode{DIM}
     latvec::SMatrix{DIM,DIM,Float64}

@@ -4,8 +4,8 @@
 
     locate, volume = BaseMesh.locate, BaseMesh.volume
 
-    function test_mc_histogram(mesh::AbstractMesh{DIM};
-        Npp=1e5, f=(x -> sum(x))) where {DIM}
+    function test_mc_histogram(mesh::AbstractMesh{T,DIM};
+        Npp=1e5, f=(x -> sum(x))) where {T,DIM}
         Ng = length(mesh)
         Nmc = Npp * Ng
 
