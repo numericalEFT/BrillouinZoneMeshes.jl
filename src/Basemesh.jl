@@ -9,16 +9,6 @@ export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, AbstractMesh, locate,
 
 abstract type AbstractMesh{T,DIM} <: AbstractArray{SVector{T,DIM},DIM} end
 
-struct Brillouin{T,DIM}
-    lattice::Matrix{T}
-    recip_lattice::Matrix{T}
-    inv_lattice::Matrix{T}
-    inv_recip_lattice::Matrix{T}
-    unit_cell_volume::T
-    recip_cell_volume::T
-    G_vector::Vector{NTuple{DIM,Int}}
-end
-
 function _compute_inverse_lattice(lattice)
     return
 end
@@ -26,6 +16,33 @@ end
 function _compute_recip_lattice(lattice)
     return
 end
+
+struct Brillouin{T,DIM}
+    lattice::Matrix{T}
+    recip_lattice::Matrix{T}
+    inv_lattice::Matrix{T}
+    inv_recip_lattice::Matrix{T}
+    unit_cell_volume::T
+    recip_cell_volume::T
+    G_vector::Vector{SVector{DIM,Int}}
+
+    function Brillouin(; lattice::Matrix{T}, G_vector=nothing) where {T}
+        DIM = size(lattice, 1)
+        recip_lattice = _compute_recip_lattice(lattice)
+        inv_lattice = _compute_inverse_lattice(lattice)
+        inv_recip_lattice = _compute_inverse_lattice(recip_lattice)
+        unit_cell_volume = abs(det(lattice))
+        recip_cell_volume = abs(det(recip_lattice))
+        if isnothing(G_vector)
+            G_vector = [SVector{DIM,Int}(zeros(DIM)),]
+        end
+
+        return new{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, unit_cell_volume, recip_cell_volume, G_vector)
+    end
+end
+
+
+
 
 
 struct UniformBZMesh{T,DIM} <: AbstractMesh{T,DIM}
