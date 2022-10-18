@@ -10,11 +10,11 @@ export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, AbstractMesh, locate,
 abstract type AbstractMesh{T,DIM} <: AbstractArray{SVector{T,DIM},DIM} end
 
 function _compute_inverse_lattice(lattice)
-    return
+    return inv(lattice)
 end
 
 function _compute_recip_lattice(lattice)
-    return
+    return 2T(π) * _compute_inverse_lattice(lattice)
 end
 
 struct Brillouin{T,DIM}
@@ -42,16 +42,20 @@ struct Brillouin{T,DIM}
 end
 
 
-
-
-
 struct UniformBZMesh{T,DIM} <: AbstractMesh{T,DIM}
     br::Brillouin{T,DIM}
 
     size::NTuple{DIM,Int}
-    shift::NTuple{DIM,Rational}
+    shift::SVector{DIM,Rational}
 end
 
+Base.length(mesh::UniformBZMesh) = prod(mesh.size)
+Base.size(mesh::UniformBZMesh) = mesh.size
+Base.size(mesh::UniformBZMesh, I) = mesh.size[I]
+
+function Base.show(io::IO, mesh::UniformBZMesh)
+    println("UniformBZMesh with $(length(mesh)) mesh points")
+end
 
 
 # c.f. DFTK.jl/src/Model.jl

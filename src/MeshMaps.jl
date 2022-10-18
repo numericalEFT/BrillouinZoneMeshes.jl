@@ -49,7 +49,7 @@ Map-reduced mesh constructed from mesh::MT with symmetry reduction.
 - `mesh`: bare mesh from which the reduced mesh constructed
 - `meshmap`: map from mesh to the reduced mesh
 """
-struct ReducedMesh{MT<:AbstractMesh{T,DIM},DIM} <: AbstractMesh{T,DIM}
+struct ReducedMesh{T,DIM,MT<:AbstractMesh{T,DIM}} <: AbstractMesh{T,DIM}
     mesh::MT
     meshmap::MeshMap
 end
