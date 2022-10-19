@@ -56,6 +56,62 @@ function Base.show(io::IO, mesh::UniformBZMesh)
     println("UniformBZMesh with $(length(mesh)) mesh points")
 end
 
+@generated function _inds2ind(size::NTuple{DIM,Int}, I) where {DIM}
+    ex = :(I[DIM] - 1)
+    for i = (DIM-1):-1:1
+        ex = :(I[$i] - 1 + size[$i+1] * $ex)
+    end
+    return :($ex + 1)
+end
+
+@generated function _ind2inds(size::NTuple{DIM,Int}, I::Int) where {DIM}
+    inds, quotient = :((I - 1) % size[2] + 1), :((I - 1) ÷ size[2])
+    for i = 2:DIM-1
+        inds, quotient = :($inds..., $quotient % size[$i+1] + 1), :($quotient ÷ size[$i+1])
+    end
+    inds = :($inds..., $quotient + 1)
+    return :(SVector{DIM,Int}($inds))
+end
+
+function Base.getindex(mesh::UniformBZMesh, inds...)
+    n = SVector{DIM,Int}(inds)
+    return mesh.latvec * ((n .- 1 .+ mesh.shift ./ N))
+end
+
+function Base.getindex(mesh::UniformBZMesh, I::Int)
+    return Base.getindex(mesh, _ind2inds(mesh.size, I)...)
+end
+
+Base.firstindex(mesh::UniformBZMesh) = 1
+Base.lastindex(mesh::UniformBZMesh) = length(mesh)
+# # iterator
+Base.iterate(mesh::UniformBZMesh) = (mesh[1], 1)
+Base.iterate(mesh::UniformBZMesh, state) = (state >= length(mesh)) ? nothing : (mesh[state+1], state + 1)
+
+function _indfloor(x, N; edgeshift=1)
+    # edgeshift = 1 by default in floor function so that end point return N-1
+    # edgeshift = 0 in locate function
+    if x < 1
+        return 1
+    elseif x >= N
+        return N - edgeshift
+    else
+        return floor(Int, x)
+    end
+end
+
+function locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
+    # find index of nearest grid point to the point
+    displacement = SVector{DIM,T}(x)
+    inds = (mesh.inv_recip_lattice * displacement) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 * eps.(mesh.size)
+    indexall = 1
+    # println((mesh.invlatvec * displacement))
+    # println(inds)
+    for i in 1:DIM
+        indexall += (_indfloor(inds[i], N; edgeshift=0) - 1) * N^(i - 1)
+    end
+    return indexall
+end
 
 
 # c.f. DFTK.jl/src/Model.jl
@@ -157,18 +213,6 @@ end
     end
     inds = :($inds..., $quotient + 1)
     return :(SVector{DIM,Int}($inds))
-end
-
-function _indfloor(x, N; edgeshift=1)
-    # edgeshift = 1 by default in floor function so that end point return N-1
-    # edgeshift = 0 in locate function
-    if x < 1
-        return 1
-    elseif x >= N
-        return N - edgeshift
-    else
-        return floor(Int, x)
-    end
 end
 
 function Base.floor(mesh::UniformMesh{DIM,N}, x) where {DIM,N}

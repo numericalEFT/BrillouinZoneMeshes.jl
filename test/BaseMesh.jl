@@ -28,6 +28,15 @@
         @test br.recip_cell_volume ≈ 1 / abs(det(lattice)) * (2π)^DIM
     end
 
+    @testset "UniformBZMesh" begin
+        @testset "Indexing" begin
+            size = (3, 4, 5)
+            for i in 1:prod(size)
+                @test i == BaseMesh._inds2ind(size, BaseMesh._ind2inds(size, i))
+            end
+        end
+    end
+
 
     function dispersion(k)
         me = 0.5
