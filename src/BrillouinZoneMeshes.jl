@@ -31,7 +31,7 @@ using .MeshMaps
 export MeshMaps
 export SymMap, MappedData
 
-include("meshes/planewavebasis.jl")
+include("meshes/reduced_uiniform_map.jl")
 
 include("Visualization.jl")
 using .Visualization

@@ -18,3 +18,6 @@ kgrid = [4, 4, 4]     # k-point grid (Regular Monkhorst-Pack grid)
 Ecut = 7              # kinetic energy cutoff
 # Ecut = 190.5u"eV"  # Could also use eV or other energy-compatible units
 basis = BrillouinZoneMeshes.UniformKMeshSym.PlaneWaveBasis(model; Ecut, kgrid)
+
+meshmap = BrillouinZoneMeshes.reduced_uniform_meshmap(model, 3, kgrid_size=[4, 4, 4])
+println(meshmap.irreducible_indices)
