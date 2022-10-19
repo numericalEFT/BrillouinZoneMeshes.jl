@@ -31,6 +31,8 @@ using .MeshMaps
 export MeshMaps
 export SymMap, MappedData
 
+include("meshes/planewavebasis.jl")
+
 include("Visualization.jl")
 using .Visualization
 
