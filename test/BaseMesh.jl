@@ -35,6 +35,39 @@
                 @test i == BaseMesh._inds2ind(size, BaseMesh._ind2inds(size, i))
             end
         end
+
+        @testset "Array Interface" begin
+            N1, N2 = 3, 5
+            lattice = Matrix([1/N1/2 0; 0 1.0/N2/2]') .* 2π
+            # so that bzmesh[i,j] = (2i-1,2j-1)
+            br = BaseMesh.Brillouin(lattice=lattice)
+            bzmesh = BaseMesh.UniformBZMesh(br=br, size=(N1, N2))
+            for (pi, p) in enumerate(bzmesh)
+                @test bzmesh[pi] ≈ p # linear index
+                inds = BaseMesh._ind2inds(bzmesh.size, pi)
+                @test p ≈ inds .* 2.0 .- 1.0
+                @test bzmesh[inds...] ≈ p # cartesian index
+            end
+        end
+
+        @testset "locate and volume" begin
+            size = (3, 5, 7)
+            lattice = Matrix([2.0 0 0; 1 sqrt(3) 0; 7 11 19]')
+            # size = (3, 5)
+            # lattice = Matrix([2.3 0; 0 7.0]')
+            br = BaseMesh.Brillouin(lattice=lattice)
+            bzmesh = BaseMesh.UniformBZMesh(br=br, size=size)
+            vol = 0.0
+            for (pi, p) in enumerate(bzmesh)
+                @test bzmesh[pi] ≈ p # linear index
+                inds = BaseMesh._ind2inds(bzmesh.size, pi)
+                @test bzmesh[inds...] ≈ p # cartesian index
+
+                @test BaseMesh.locate(bzmesh, p) == pi
+                vol += BaseMesh.volume(bzmesh, pi)
+            end
+            @test vol ≈ BaseMesh.volume(bzmesh)
+        end
     end
 
 
