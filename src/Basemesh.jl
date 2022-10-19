@@ -13,7 +13,7 @@ function _compute_inverse_lattice(lattice)
     return inv(lattice)
 end
 
-function _compute_recip_lattice(lattice)
+function _compute_recip_lattice(lattice::Matrix{T}) where {T}
     return 2T(π) * _compute_inverse_lattice(lattice)
 end
 
@@ -25,22 +25,21 @@ struct Brillouin{T,DIM}
     unit_cell_volume::T
     recip_cell_volume::T
     G_vector::Vector{SVector{DIM,Int}}
-
-    function Brillouin(; lattice::Matrix{T}, G_vector=nothing) where {T}
-        DIM = size(lattice, 1)
-        recip_lattice = _compute_recip_lattice(lattice)
-        inv_lattice = _compute_inverse_lattice(lattice)
-        inv_recip_lattice = _compute_inverse_lattice(recip_lattice)
-        unit_cell_volume = abs(det(lattice))
-        recip_cell_volume = abs(det(recip_lattice))
-        if isnothing(G_vector)
-            G_vector = [SVector{DIM,Int}(zeros(DIM)),]
-        end
-
-        return new{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, unit_cell_volume, recip_cell_volume, G_vector)
-    end
 end
 
+function Brillouin(; lattice::Matrix{T}, G_vector=nothing) where {T}
+    DIM = size(lattice, 1)
+    recip_lattice = _compute_recip_lattice(lattice)
+    inv_lattice = _compute_inverse_lattice(lattice)
+    inv_recip_lattice = _compute_inverse_lattice(recip_lattice)
+    unit_cell_volume = abs(det(lattice))
+    recip_cell_volume = abs(det(recip_lattice))
+    if isnothing(G_vector)
+        G_vector = [SVector{DIM,Int}(zeros(DIM)),]
+    end
+
+    return Brillouin{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, unit_cell_volume, recip_cell_volume, G_vector)
+end
 
 struct UniformBZMesh{T,DIM} <: AbstractMesh{T,DIM}
     br::Brillouin{T,DIM}
@@ -56,6 +55,7 @@ Base.size(mesh::UniformBZMesh, I) = mesh.size[I]
 function Base.show(io::IO, mesh::UniformBZMesh)
     println("UniformBZMesh with $(length(mesh)) mesh points")
 end
+
 
 
 # c.f. DFTK.jl/src/Model.jl
