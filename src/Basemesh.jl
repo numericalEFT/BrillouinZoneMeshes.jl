@@ -9,10 +9,19 @@ export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, AbstractMesh, locate,
 
 abstract type AbstractMesh{T,DIM} <: AbstractArray{SVector{T,DIM},DIM} end
 
-function _compute_inverse_lattice(lattice)
+"""
+Compute the inverse of the lattice. Require lattice to be square matrix
+"""
+function _compute_inverse_lattice(lattice::Matrix{T}) where {T}
+    @assert size(lattice)[1] == size(lattice)[2]
     return inv(lattice)
 end
 
+"""
+Compute the reciprocal lattice.
+We use the convention that the reciprocal lattice is the set of G vectors such
+that G ⋅ R ∈ 2π ℤ for all R in the lattice.
+"""
 function _compute_recip_lattice(lattice::Matrix{T}) where {T}
     return 2T(π) * _compute_inverse_lattice(lattice)
 end
@@ -37,17 +46,24 @@ volume of unit cell and reciprocal unit cell; G vectors for extended Brillouin z
 - `G_vector`: a list of G vectors in extended Brillouin zone
 """
 struct Brillouin{T,DIM}
+    # Lattice and reciprocal lattice vectors in columns
     lattice::Matrix{T}
     recip_lattice::Matrix{T}
+    # Useful for conversions between cartesian and reduced coordinates
     inv_lattice::Matrix{T}
     inv_recip_lattice::Matrix{T}
+
     unit_cell_volume::T
     recip_cell_volume::T
+
+    # collection of all allowed G vectors
     G_vector::Vector{SVector{DIM,Int}}
 end
 
 
-function Brillouin(; lattice::Matrix{T}, G_vector=nothing) where {T}
+function Brillouin(;
+    lattice::Matrix{T},
+    G_vector=nothing) where {T}
     DIM = size(lattice, 1)
     recip_lattice = _compute_recip_lattice(lattice)
     inv_lattice = _compute_inverse_lattice(lattice)
