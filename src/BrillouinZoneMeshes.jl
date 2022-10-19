@@ -15,6 +15,8 @@ using .BaseMesh
 export BaseMesh
 export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, AbstractMesh# , locate, volume
 
+include("symmetry/UniformKMeshSym.jl")
+
 include("TreeMeshes.jl")
 using .TreeMeshes
 export TreeMeshes
