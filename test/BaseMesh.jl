@@ -41,7 +41,7 @@
             lattice = Matrix([1/N1/2 0; 0 1.0/N2/2]') .* 2π
             # so that bzmesh[i,j] = (2i-1,2j-1)
             br = BaseMesh.Brillouin(lattice=lattice)
-            bzmesh = BaseMesh.UniformBZMesh(br=br, size=(N1, N2))
+            bzmesh = BaseMesh.UniformBZMesh(br=br, size=(N1, N2), origin=0)
             for (pi, p) in enumerate(bzmesh)
                 @test bzmesh[pi] ≈ p # linear index
                 inds = BaseMesh._ind2inds(bzmesh.size, pi)

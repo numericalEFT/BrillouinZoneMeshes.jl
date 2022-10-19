@@ -17,6 +17,25 @@ function _compute_recip_lattice(lattice::Matrix{T}) where {T}
     return 2T(π) * _compute_inverse_lattice(lattice)
 end
 
+"""
+    struct Brillouin{T, DIM}
+
+Container storing information of Brillouin zone. Including lattice vector, reciprocal lattice vector and their inverse;
+volume of unit cell and reciprocal unit cell; G vectors for extended Brillouin zone.
+
+# Parameters:
+- `T`: type of data
+- `DIM`: dimension of the Brillouin zone
+
+# Members:
+- `lattice`: lattice vector
+- `recip_lattice`: reciprocal lattice vector
+- `inv_lattice`: inverse of lattice vector
+- `inv_recip_lattice`: inverse of reciprocal lattice vector
+- `unit_cell_volume`: volume of lattice unit cell
+- `recip_cell_volume`: volume of reciprocal lattice unit cell
+- `G_vector`: a list of G vectors in extended Brillouin zone
+"""
 struct Brillouin{T,DIM}
     lattice::Matrix{T}
     recip_lattice::Matrix{T}
@@ -26,6 +45,7 @@ struct Brillouin{T,DIM}
     recip_cell_volume::T
     G_vector::Vector{SVector{DIM,Int}}
 end
+
 
 function Brillouin(; lattice::Matrix{T}, G_vector=nothing) where {T}
     DIM = size(lattice, 1)
@@ -43,7 +63,7 @@ end
 
 struct UniformBZMesh{T,DIM} <: AbstractMesh{T,DIM}
     br::Brillouin{T,DIM}
-
+    origin::SVector{DIM,T}
     size::NTuple{DIM,Int}
     shift::SVector{DIM,Rational}
 end
@@ -51,7 +71,8 @@ end
 # default shift is 1/2, result in Monkhorst-Pack mesh
 # with shift = 0, result in Gamma-centered
 # can also customize with shift::SVector by calling default constructor
-UniformBZMesh(; br::Brillouin{T,DIM}, size, shift::Number=1 // 2) where {T,DIM} = UniformBZMesh{T,DIM}(br, size, SVector{DIM,Rational}(shift .* ones(Int, DIM)))
+# \Gamma=(0,0,0) is at center by default, can be set at corner by setting origin to it
+UniformBZMesh(; br::Brillouin{T,DIM}, origin::Real=-0.5, size, shift::Number=1 // 2) where {T,DIM} = UniformBZMesh{T,DIM}(br, SVector{DIM,T}(br.recip_lattice * ones(T, DIM) .* origin), size, SVector{DIM,Rational}(shift .* ones(Int, DIM)))
 
 Base.length(mesh::UniformBZMesh) = prod(mesh.size)
 Base.size(mesh::UniformBZMesh) = mesh.size
@@ -80,7 +101,7 @@ end
 
 function Base.getindex(mesh::UniformBZMesh{T,DIM}, inds...) where {T,DIM}
     n = SVector{DIM,Int}(inds)
-    return mesh.br.recip_lattice * ((n .- 1 .+ mesh.shift) ./ mesh.size)
+    return mesh.origin + mesh.br.recip_lattice * ((n .- 1 .+ mesh.shift) ./ mesh.size)
 end
 
 function Base.getindex(mesh::UniformBZMesh, I::Int)
@@ -107,7 +128,7 @@ end
 
 function locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
     # find index of nearest grid point to the point
-    displacement = SVector{DIM,T}(x)
+    displacement = SVector{DIM,T}(x) - mesh.origin
     inds = (mesh.br.inv_recip_lattice * displacement) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
     indexall = 1
     # println((mesh.invlatvec * displacement))
