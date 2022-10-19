@@ -39,7 +39,6 @@ end
 ## TODO: 1st step: symmetry reduce for M-P mesh(centered uniform mesh)
 
 
-
 """
     struct ReducedMesh{MT}
 
