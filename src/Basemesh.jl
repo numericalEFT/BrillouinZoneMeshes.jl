@@ -13,7 +13,7 @@ abstract type AbstractMesh{T,DIM} <: AbstractArray{SVector{T,DIM},DIM} end
 Compute the inverse of the lattice. Require lattice to be square matrix
 """
 function _compute_inverse_lattice(lattice::Matrix{T}) where {T}
-    @assert size(lattice)[1] == size(lattice)[2]
+    @assert size(lattice, 2) == size(lattice, 2)
     return inv(lattice)
 end
 
@@ -56,6 +56,16 @@ struct Brillouin{T,DIM}
     unit_cell_volume::T
     recip_cell_volume::T
 
+    # Particle types (elements) and particle positions and in fractional coordinates.
+    # Possibly empty. It's up to the `term_types` to make use of this (or not).
+    # `atom_groups` contains the groups of indices into atoms and positions, which
+    # point to identical atoms. It is computed automatically on Model construction and may
+    # be used to optimise the term instantiation.
+    atoms::Vector{Int}
+    positions::Vector{Vec3{T}}  # positions[i] is the location of atoms[i] in fract. coords
+    atom_groups::Vector{Vector{Int}}  # atoms[i] == atoms[j] for all i, j in atom_group[α]
+
+
     # collection of all allowed G vectors
     G_vector::Vector{SVector{DIM,Int}}
 end
@@ -63,13 +73,26 @@ end
 
 function Brillouin(;
     lattice::Matrix{T},
+    atoms::Vector{Int}=[],
+    positions::Vector{<:AbstractVector}=Vec3{T}[],
     G_vector=nothing) where {T}
+
+    # Atoms and terms
+    if length(atoms) != length(positions)
+        error("Length of atoms and positions vectors need to agree.")
+    end
+    atom_groups = [findall(Ref(pot) .== atoms) for pot in Set(atoms)]
+
+    # Lattice Vectors
+    @assert size(lattice, 1) = size(lattice, 2) "Lattice vector should be given in square matrix!"
     DIM = size(lattice, 1)
     recip_lattice = _compute_recip_lattice(lattice)
     inv_lattice = _compute_inverse_lattice(lattice)
     inv_recip_lattice = _compute_inverse_lattice(recip_lattice)
     unit_cell_volume = abs(det(lattice))
     recip_cell_volume = abs(det(recip_lattice))
+
+    # G vector default (0,0,0)
     if isnothing(G_vector)
         G_vector = [SVector{DIM,Int}(zeros(DIM)),]
     end
@@ -77,6 +100,22 @@ function Brillouin(;
     return Brillouin{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, unit_cell_volume, recip_cell_volume, G_vector)
 end
 
+"""
+    struct UniformBZMesh{T, DIM} <: AbstractMesh{T, DIM}
+
+Uniformly distributed Brillouin zone mesh. Defined as a uniform mesh on 1st Brillouin zone
+with Brillouin zone information stored in mesh.br::Brillouin. 
+
+# Parameters:
+- `T`: type of data
+- `DIM`: dimension of the Brillouin zone
+
+# Members:
+- `br`: Brillouin zone information including lattice info, atom pos and allowed G vectors
+- `origin`: origin of the uniform mesh, related to convention of 1st Brillouin zone. Commonly set to either (0,0,0) or such that (0,0,0) is at the center
+- `size`: size of the uniform mesh. For Monkhorst-Pack mesh require even number.
+- `shift`: k-shift of each mesh point. Take all zero for \Gamma-centered and all 1//2 for M-P mesh
+"""
 struct UniformBZMesh{T,DIM} <: AbstractMesh{T,DIM}
     br::Brillouin{T,DIM}
     origin::SVector{DIM,T}
@@ -142,6 +181,16 @@ function _indfloor(x, N; edgeshift=1)
     end
 end
 
+"""
+    function locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
+
+locate mesh point in mesh that is nearest to x. Useful for Monte-Carlo algorithm.
+Could also be used for zeroth order interpolation.
+
+# Parameters
+- `mesh`: aimed mesh
+- `x`: cartesian pos to locate
+"""
 function locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
     # find index of nearest grid point to the point
     displacement = SVector{DIM,T}(x) - mesh.origin
@@ -159,20 +208,32 @@ function locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
     return indexall
 end
 
+"""
+    function volume(mesh::UniformBZMesh, i)
+
+volume represented by mesh point i. When i is omitted return volume of the whole mesh. 
+For M-P mesh it's always volume(mesh)/length(mesh), but for others things are more complecated.
+Here we assume periodic boundary condition so for all case it's the same.
+
+# Parameters:
+- `mesh`: mesh
+- `i`: index of mesh point, if ommited return volume of whole mesh
+"""
 volume(mesh::UniformBZMesh) = mesh.br.recip_cell_volume
-function volume(mesh::UniformBZMesh{T,DIM}, i) where {T,DIM}
-    inds = _ind2inds(mesh.size, i)
-    cellarea = T(1.0)
-    for j in 1:DIM
-        if inds[j] == 1
-            cellarea *= T(0.5) + mesh.shift[j]
-        elseif inds[j] == mesh.size[j]
-            cellarea *= T(1.5) - mesh.shift[j]
-        end
-        # else cellarea *= 1.0 so nothing
-    end
-    return cellarea / length(mesh) * volume(mesh)
-end
+volume(mesh::UniformBZMesh, i) = mesh.br.recip_cell_volume / length(mesh)
+# function volume(mesh::UniformBZMesh{T,DIM}, i) where {T,DIM}
+#     inds = _ind2inds(mesh.size, i)
+#     cellarea = T(1.0)
+#     for j in 1:DIM
+#         if inds[j] == 1
+#             cellarea *= T(0.5) + mesh.shift[j]
+#         elseif inds[j] == mesh.size[j]
+#             cellarea *= T(1.5) - mesh.shift[j]
+#         end
+#         # else cellarea *= 1.0 so nothing
+#     end
+#     return cellarea / length(mesh) * volume(mesh)
+# end
 
 # c.f. DFTK.jl/src/Model.jl
 # UniformBZMesh iterate on 1st Brillouin Zone
