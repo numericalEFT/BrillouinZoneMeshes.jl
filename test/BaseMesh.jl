@@ -70,6 +70,27 @@
         end
 
         @testset "origin and shift convention" begin
+            DIM = 2
+            lattice = Matrix([1.0 0; 0 1]')
+            br = BaseMesh.Brillouin(lattice=lattice)
+
+            # even numbers
+            size = (4, 4)
+            # Gamma-centered, no shift
+            bzmesh = BaseMesh.UniformBZMesh(br=br, size=size, origin=0, shift=0)
+            @test bzmesh[1, 1] ≈ BaseMesh.SVector{DIM,eltype(lattice)}([0.0, 0.0])
+            # M-P, no shift
+            bzmesh = BaseMesh.UniformBZMesh(br=br, size=size, origin=-1 / 2, shift=0)
+            @test bzmesh[3, 3] ≈ BaseMesh.SVector{DIM,eltype(lattice)}([0.0, 0.0])
+
+            # odd numbers
+            size = (5, 5)
+            # Gamma-centered, no shift
+            bzmesh = BaseMesh.UniformBZMesh(br=br, size=size, origin=0, shift=0)
+            @test bzmesh[1, 1] ≈ BaseMesh.SVector{DIM,eltype(lattice)}([0.0, 0.0])
+            # M-P, 1/2 shift
+            bzmesh = BaseMesh.UniformBZMesh(br=br, size=size, origin=-1 / 2, shift=1 // 2)
+            @test bzmesh[3, 3] ≈ BaseMesh.SVector{DIM,eltype(lattice)}([0.0, 0.0])
 
         end
     end

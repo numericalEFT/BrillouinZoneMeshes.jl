@@ -9,6 +9,11 @@ export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, AbstractMesh, locate,
 
 abstract type AbstractMesh{T,DIM} <: AbstractArray{SVector{T,DIM},DIM} end
 
+Base.IteratorSize(::Type{AbstractMesh{T,DIM}}) where {T,DIM} = Base.HasLength()
+Base.IteratorEltype(::Type{AbstractMesh{T,DIM}}) where {T,DIM} = Base.HasEltype()
+Base.eltype(::Type{AbstractMesh{T,DIM}}) where {T,DIM} = eltype(T)
+
+
 """
 Compute the inverse of the lattice. Require lattice to be square matrix
 """
