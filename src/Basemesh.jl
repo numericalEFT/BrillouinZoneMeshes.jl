@@ -127,6 +127,22 @@ end
 # with shift = 0, result in Gamma-centered
 # can also customize with shift::SVector by calling default constructor
 # \Gamma=(0,0,0) is at center by default, can be set at corner by setting origin to it
+"""
+    function UniformBZMesh(; br::Brillouin, origin, size, shift)
+
+customized constructor for UniformBZMesh. The parameters origin and shift is provided to customize
+the mesh as Gamma-centered or M-P mesh. 
+
+# Parameters:
+- `br`: Brillouin zone info
+- `origin`: a number indicating shift of origin. 
+    the actuall origin becomes origin*(b1+b2+b3)
+    default value origin=-0.5 takes (0,0,0) to center of 1st BZ, origin=0 makes mesh[1,1,1]=(0,0,0)+shift
+- `size`: size of the mesh
+- `shift`: additional k-shift for mesh points. 
+    actuall shift is shift*(b1/N1+b2/N2+b3/N3)
+    for even N, shift=0.5 avoids high symmetry points while preserve symmetry.
+"""
 UniformBZMesh(; br::Brillouin{T,DIM}, origin::Real=-0.5, size, shift::Number=1 // 2) where {T,DIM} = UniformBZMesh{T,DIM}(br, SVector{DIM,T}(br.recip_lattice * ones(T, DIM) .* origin), size, SVector{DIM,Rational}(shift .* ones(Int, DIM)))
 
 Base.length(mesh::UniformBZMesh) = prod(mesh.size)
@@ -170,6 +186,7 @@ Base.iterate(mesh::UniformBZMesh) = (mesh[1], 1)
 Base.iterate(mesh::UniformBZMesh, state) = (state >= length(mesh)) ? nothing : (mesh[state+1], state + 1)
 
 function _indfloor(x, N; edgeshift=1)
+
     # edgeshift = 1 by default in floor function so that end point return N-1
     # edgeshift = 0 in locate function
     if x < 1
