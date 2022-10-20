@@ -62,7 +62,7 @@ struct Brillouin{T,DIM}
     # point to identical atoms. It is computed automatically on Model construction and may
     # be used to optimise the term instantiation.
     atoms::Vector{Int}
-    positions::Vector{Vec3{T}}  # positions[i] is the location of atoms[i] in fract. coords
+    positions::Vector{SVector{DIM,T}}  # positions[i] is the location of atoms[i] in fract. coords
     atom_groups::Vector{Vector{Int}}  # atoms[i] == atoms[j] for all i, j in atom_group[α]
 
 
@@ -73,9 +73,15 @@ end
 
 function Brillouin(;
     lattice::Matrix{T},
-    atoms::Vector{Int}=[],
-    positions::Vector{<:AbstractVector}=Vec3{T}[],
+    atoms::Vector{Int}=Vector{Int}([]),
+    positions=nothing,
     G_vector=nothing) where {T}
+
+    DIM = size(lattice, 1)
+
+    if isnothing(positions)
+        positions = Vector{SVector{DIM,T}}[]
+    end
 
     # Atoms and terms
     if length(atoms) != length(positions)
@@ -84,8 +90,7 @@ function Brillouin(;
     atom_groups = [findall(Ref(pot) .== atoms) for pot in Set(atoms)]
 
     # Lattice Vectors
-    @assert size(lattice, 1) = size(lattice, 2) "Lattice vector should be given in square matrix!"
-    DIM = size(lattice, 1)
+    @assert size(lattice, 1) == size(lattice, 2) "Lattice vector should be given in square matrix!"
     recip_lattice = _compute_recip_lattice(lattice)
     inv_lattice = _compute_inverse_lattice(lattice)
     inv_recip_lattice = _compute_inverse_lattice(recip_lattice)
@@ -97,7 +102,7 @@ function Brillouin(;
         G_vector = [SVector{DIM,Int}(zeros(DIM)),]
     end
 
-    return Brillouin{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, unit_cell_volume, recip_cell_volume, G_vector)
+    return Brillouin{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, unit_cell_volume, recip_cell_volume, atoms, positions, atom_groups, G_vector)
 end
 
 """
@@ -114,7 +119,7 @@ with Brillouin zone information stored in mesh.br::Brillouin.
 - `br`: Brillouin zone information including lattice info, atom pos and allowed G vectors
 - `origin`: origin of the uniform mesh, related to convention of 1st Brillouin zone. Commonly set to either (0,0,0) or such that (0,0,0) is at the center
 - `size`: size of the uniform mesh. For Monkhorst-Pack mesh require even number.
-- `shift`: k-shift of each mesh point. Take all zero for \Gamma-centered and all 1//2 for M-P mesh
+- `shift`: k-shift of each mesh point. Take all zero for Gamma-centered and all 1//2 for M-P mesh
 """
 struct UniformBZMesh{T,DIM} <: AbstractMesh{T,DIM}
     br::Brillouin{T,DIM}

@@ -68,6 +68,10 @@
             end
             @test vol ≈ BaseMesh.volume(bzmesh)
         end
+
+        @testset "origin and shift convention" begin
+
+        end
     end
 
 
