@@ -7,15 +7,18 @@ version = "0.1.0"
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
 CompositeGrids = "b5136c89-beeb-4521-9139-60d2cac8be56"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Spglib = "f761d5c5-86db-4880-b97f-9680a7cccfb5"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+spglib_jll = "ac4a9f1e-bdb2-5204-990c-47c8b2f70d4e"
 
 [compat]
 AbstractTrees = "0.3, 0.4"
+CompositeGrids = "0.0.6, 0.1"
 StaticArrays = "1"
 julia = "1.6"
-CompositeGrids = "0.0.6, 0.1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
