@@ -1,6 +1,8 @@
 module MeshMaps
 # symmetry reduce map for meshes
 
+using ..AbstractMeshes
+using ..Model
 using ..TreeMeshes
 using ..BaseMesh
 """

@@ -10,10 +10,23 @@ using CompositeGrids
 BaryCheb = CompositeGrids.BaryChebTools
 # export BaryCheb
 
-include("Basemesh.jl")
+include("AbstractMeshes.jl")
+using .AbstractMeshes
+export AbstractMeshes, AbstractMesh
+
+include("Model.jl")
+using .Model
+export Brillouin
+
+include("BaseMesh.jl")
 using .BaseMesh
 export BaseMesh
 export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, AbstractMesh# , locate, volume
+
+include("BZMeshes.jl")
+using .BZMeshes
+export BZMeshes
+export UniformBZMesh
 
 include("symmetry/UniformKMeshSym.jl")
 

@@ -1,5 +1,7 @@
 module PolarMeshes
 
+using ..AbstractMeshes
+using ..Model
 using ..StaticArrays
 using ..CompositeGrids
 using ..BaseMesh

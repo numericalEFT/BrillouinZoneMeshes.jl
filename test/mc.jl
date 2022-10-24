@@ -2,7 +2,7 @@
     # testing locate and volume functions provided for monte carlo
     rng = MersenneTwister(1234)
 
-    locate, volume = BaseMesh.locate, BaseMesh.volume
+    locate, volume = AbstractMeshes.locate, AbstractMeshes.volume
 
     function test_mc_histogram(mesh::AbstractMesh{T,DIM};
         Npp=1e5, f=(x -> sum(x))) where {T,DIM}

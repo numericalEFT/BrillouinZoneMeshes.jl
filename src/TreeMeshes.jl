@@ -1,5 +1,6 @@
 module TreeMeshes
 
+using ..AbstractMeshes
 using ..AbstractTrees
 using ..StaticArrays
 using ..BaseMesh
