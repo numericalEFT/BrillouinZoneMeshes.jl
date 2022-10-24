@@ -5,6 +5,7 @@ using StaticArrays
 using Statistics
 using LinearAlgebra
 using CompositeGrids
+using Printf
 
 # Write your package code here.
 BaryCheb = CompositeGrids.BaryChebTools
@@ -13,6 +14,8 @@ BaryCheb = CompositeGrids.BaryChebTools
 include("AbstractMeshes.jl")
 using .AbstractMeshes
 export AbstractMeshes, AbstractMesh
+
+include("printing.jl")
 
 include("Model.jl")
 using .Model

@@ -19,5 +19,7 @@ Ecut = 7              # kinetic energy cutoff
 # Ecut = 190.5u"eV"  # Could also use eV or other energy-compatible units
 basis = BrillouinZoneMeshes.UniformKMeshSym.PlaneWaveBasis(model; Ecut, kgrid)
 
+br = BrillouinZoneMeshes.Model.Brillouin(lattice=austrip.(lattice), atoms=atoms, positions=positions)
+
 meshmap = BrillouinZoneMeshes.reduced_uniform_meshmap(model, 3, kgrid_size=[4, 4, 4])
 println(meshmap.irreducible_indices)
