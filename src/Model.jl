@@ -69,9 +69,9 @@ end
 
 function Brillouin(;
     lattice::Matrix{T},
-    atoms::Vector{Int}=Vector{Int}([]),
+    atoms::AbstractVector{Int}=Vector{Int}([]),
     positions=nothing,
-    G_vector=nothing) where {T}
+    G_vector::Union{Nothing,AbstractVector}=nothing) where {T}
 
     DIM = size(lattice, 1)
 
