@@ -34,4 +34,22 @@ locate(mesh::AbstractMesh, x) = error("not implemented!")
 volume(mesh::AbstractMesh) = error("not implemented!")
 volume(mesh::AbstractMesh, I) = error("not implemented!")
 
+# tools useful for AbstractMesh
+@generated function _inds2ind(size::NTuple{DIM,Int}, I) where {DIM}
+    ex = :(I[DIM] - 1)
+    for i = (DIM-1):-1:1
+        ex = :(I[$i] - 1 + size[$i] * $ex)
+    end
+    return :($ex + 1)
+end
+
+@generated function _ind2inds(size::NTuple{DIM,Int}, I::Int) where {DIM}
+    inds, quotient = :((I - 1) % size[1] + 1), :((I - 1) ÷ size[1])
+    for i = 2:DIM-1
+        inds, quotient = :($inds..., $quotient % size[$i] + 1), :($quotient ÷ size[$i])
+    end
+    inds = :($inds..., $quotient + 1)
+    return :(SVector{DIM,Int}($inds))
+end
+
 end

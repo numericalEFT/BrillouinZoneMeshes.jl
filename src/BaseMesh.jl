@@ -7,120 +7,51 @@ using ..BaryCheb
 using ..AbstractMeshes
 using ..Model
 
-export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh
+export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, UMesh
 
-"""
-    struct UniformBZMesh{T, DIM} <: AbstractMesh{T, DIM}
-
-Uniformly distributed Brillouin zone mesh. Defined as a uniform mesh on 1st Brillouin zone
-with Brillouin zone information stored in mesh.br::Brillouin. 
-
-# Parameters:
-- `T`: type of data
-- `DIM`: dimension of the Brillouin zone
-
-# Members:
-- `br`: Brillouin zone information including lattice info, atom pos and allowed G vectors
-- `origin`: origin of the uniform mesh, related to convention of 1st Brillouin zone. Commonly set to either (0,0,0) or such that (0,0,0) is at the center
-- `size`: size of the uniform mesh. For Monkhorst-Pack mesh require even number.
-- `shift`: k-shift of each mesh point. Take all zero for Gamma-centered and all 1//2 for M-P mesh
-"""
-struct UniformBZMesh{T,DIM} <: AbstractMesh{T,DIM}
-    br::Brillouin{T,DIM}
+struct UMesh{T,DIM} <: AbstractMesh{T,DIM}
+    lattice::Matrix{T}
+    inv_lattice::Matrix{T}
+    cell_volume::T
     origin::SVector{DIM,T}
     size::NTuple{DIM,Int}
     shift::SVector{DIM,Rational}
 end
 
-# default shift is 1/2, result in Monkhorst-Pack mesh
-# with shift = 0, result in Gamma-centered
-# can also customize with shift::SVector by calling default constructor
-# \Gamma=(0,0,0) is at center by default, can be set at corner by setting origin to it
-"""
-    function UniformBZMesh(; br::Brillouin, origin, size, shift)
+UMesh(;
+    br::Brillouin{T,DIM},
+    origin::Real,
+    size,
+    shift::Real) where {T,DIM} = UMesh{T,DIM}(
+    br.recip_lattice,
+    br.inv_recip_lattice,
+    br.recip_cell_volume,
+    SVector{DIM,T}(br.recip_lattice * ones(T, DIM) .* origin),
+    size,
+    SVector{DIM,Rational}(shift .* ones(Int, DIM))
+)
 
-customized constructor for UniformBZMesh. The parameters origin and shift is provided to customize
-the mesh as Gamma-centered or M-P mesh. 
+Base.length(mesh::UMesh) = prod(mesh.size)
+Base.size(mesh::UMesh) = mesh.size
+Base.size(mesh::UMesh, I) = mesh.size[I]
 
-# Parameters:
-- `br`: Brillouin zone info
-- `origin`: a number indicating shift of origin. 
-    the actuall origin becomes origin*(b1+b2+b3)
-    default value origin=-0.5 takes (0,0,0) to center of 1st BZ, origin=0 makes mesh[1,1,1]=(0,0,0)+shift
-- `size`: size of the mesh
-- `shift`: additional k-shift for mesh points. 
-    actuall shift is shift*(b1/N1+b2/N2+b3/N3)
-    for even N, shift=0.5 avoids high symmetry points while preserve symmetry.
-"""
-UniformBZMesh(; br::Brillouin{T,DIM}, origin::Real=-0.5, size, shift::Number=1 // 2) where {T,DIM} = UniformBZMesh{T,DIM}(br, SVector{DIM,T}(br.recip_lattice * ones(T, DIM) .* origin), size, SVector{DIM,Rational}(shift .* ones(Int, DIM)))
-
-Base.length(mesh::UniformBZMesh) = prod(mesh.size)
-Base.size(mesh::UniformBZMesh) = mesh.size
-Base.size(mesh::UniformBZMesh, I) = mesh.size[I]
-
-function Base.show(io::IO, mesh::UniformBZMesh)
-    println("UniformBZMesh with $(length(mesh)) mesh points")
+function Base.show(io::IO, mesh::UMesh)
+    println("UMesh with $(length(mesh)) mesh points")
 end
 
-@generated function _inds2ind(size::NTuple{DIM,Int}, I) where {DIM}
-    ex = :(I[DIM] - 1)
-    for i = (DIM-1):-1:1
-        ex = :(I[$i] - 1 + size[$i] * $ex)
-    end
-    return :($ex + 1)
-end
-
-@generated function _ind2inds(size::NTuple{DIM,Int}, I::Int) where {DIM}
-    inds, quotient = :((I - 1) % size[1] + 1), :((I - 1) ÷ size[1])
-    for i = 2:DIM-1
-        inds, quotient = :($inds..., $quotient % size[$i] + 1), :($quotient ÷ size[$i])
-    end
-    inds = :($inds..., $quotient + 1)
-    return :(SVector{DIM,Int}($inds))
-end
-
-function Base.getindex(mesh::UniformBZMesh{T,DIM}, inds...) where {T,DIM}
+function Base.getindex(mesh::UMesh{T,DIM}, inds...) where {T,DIM}
     n = SVector{DIM,Int}(inds)
-    return mesh.origin + mesh.br.recip_lattice * ((n .- 1 .+ mesh.shift) ./ mesh.size)
+    return mesh.origin + mesh.lattice * ((n .- 1 .+ mesh.shift) ./ mesh.size)
 end
 
-function Base.getindex(mesh::UniformBZMesh, I::Int)
+function Base.getindex(mesh::UMesh, I::Int)
     return Base.getindex(mesh, _ind2inds(mesh.size, I)...)
 end
 
-Base.firstindex(mesh::UniformBZMesh) = 1
-Base.lastindex(mesh::UniformBZMesh) = length(mesh)
-# # iterator
-Base.iterate(mesh::UniformBZMesh) = (mesh[1], 1)
-Base.iterate(mesh::UniformBZMesh, state) = (state >= length(mesh)) ? nothing : (mesh[state+1], state + 1)
-
-function _indfloor(x, N; edgeshift=1)
-
-    # edgeshift = 1 by default in floor function so that end point return N-1
-    # edgeshift = 0 in locate function
-    if x < 1
-        return 1
-    elseif x >= N
-        return N - edgeshift
-    else
-        return floor(Int, x)
-    end
-end
-
-"""
-    function AbstractMeshes.locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
-
-locate mesh point in mesh that is nearest to x. Useful for Monte-Carlo algorithm.
-Could also be used for zeroth order interpolation.
-
-# Parameters
-- `mesh`: aimed mesh
-- `x`: cartesian pos to locate
-"""
-function AbstractMeshes.locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
+function AbstractMeshes.locate(mesh::UMesh{T,DIM}, x) where {T,DIM}
     # find index of nearest grid point to the point
     displacement = SVector{DIM,T}(x) - mesh.origin
-    inds = (mesh.br.inv_recip_lattice * displacement) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
+    inds = (mesh.inv_lattice * displacement) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
     indexall = 1
     # println((mesh.invlatvec * displacement))
     # println(inds)
@@ -133,39 +64,8 @@ function AbstractMeshes.locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
 
     return indexall
 end
-
-"""
-    function AbstractMeshes.volume(mesh::UniformBZMesh, i)
-
-volume represented by mesh point i. When i is omitted return volume of the whole mesh. 
-For M-P mesh it's always volume(mesh)/length(mesh), but for others things are more complecated.
-Here we assume periodic boundary condition so for all case it's the same.
-
-# Parameters:
-- `mesh`: mesh
-- `i`: index of mesh point, if ommited return volume of whole mesh
-"""
-AbstractMeshes.volume(mesh::UniformBZMesh) = mesh.br.recip_cell_volume
-AbstractMeshes.volume(mesh::UniformBZMesh, i) = mesh.br.recip_cell_volume / length(mesh)
-# function AbstractMeshes.volume(mesh::UniformBZMesh{T,DIM}, i) where {T,DIM}
-#     inds = _ind2inds(mesh.size, i)
-#     cellarea = T(1.0)
-#     for j in 1:DIM
-#         if inds[j] == 1
-#             cellarea *= T(0.5) + mesh.shift[j]
-#         elseif inds[j] == mesh.size[j]
-#             cellarea *= T(1.5) - mesh.shift[j]
-#         end
-#         # else cellarea *= 1.0 so nothing
-#     end
-#     return cellarea / length(mesh) * volume(mesh)
-# end
-
-# c.f. DFTK.jl/src/Model.jl
-# UniformBZMesh iterate on 1st Brillouin Zone
-# TODO: implement AbstractArray interface
-# TODO: volume and locate
-
+AbstractMeshes.volume(mesh::UMesh) = mesh.volume
+AbstractMeshes.volume(mesh::UMesh, i) = mesh.volume / length(mesh)
 
 
 #####################################
@@ -258,6 +158,19 @@ end
     end
     inds = :($inds..., $quotient + 1)
     return :(SVector{DIM,Int}($inds))
+end
+
+function _indfloor(x, N; edgeshift=1)
+
+    # edgeshift = 1 by default in floor function so that end point return N-1
+    # edgeshift = 0 in locate function
+    if x < 1
+        return 1
+    elseif x >= N
+        return N - edgeshift
+    else
+        return floor(Int, x)
+    end
 end
 
 function Base.floor(mesh::UniformMesh{DIM,N}, x) where {DIM,N}

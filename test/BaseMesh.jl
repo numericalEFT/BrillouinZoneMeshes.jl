@@ -32,7 +32,7 @@
         @testset "Indexing" begin
             size = (3, 4, 5)
             for i in 1:prod(size)
-                @test i == BaseMesh._inds2ind(size, BaseMesh._ind2inds(size, i))
+                @test i == BZMeshes._inds2ind(size, BZMeshes._ind2inds(size, i))
             end
         end
 
@@ -40,27 +40,27 @@
             N1, N2 = 3, 5
             lattice = Matrix([1/N1/2 0; 0 1.0/N2/2]') .* 2π
             # so that bzmesh[i,j] = (2i-1,2j-1)
-            br = BaseMesh.Brillouin(lattice=lattice)
-            bzmesh = BaseMesh.UniformBZMesh(br=br, size=(N1, N2), origin=0)
+            br = BZMeshes.Brillouin(lattice=lattice)
+            bzmesh = BZMeshes.UniformBZMesh(br=br, size=(N1, N2), origin=0)
             for (pi, p) in enumerate(bzmesh)
                 @test bzmesh[pi] ≈ p # linear index
-                inds = BaseMesh._ind2inds(bzmesh.size, pi)
+                inds = BZMeshes._ind2inds(size(bzmesh), pi)
                 @test p ≈ inds .* 2.0 .- 1.0
                 @test bzmesh[inds...] ≈ p # cartesian index
             end
         end
 
         @testset "locate and volume" begin
-            size = (3, 5, 7)
+            msize = (3, 5, 7)
             lattice = Matrix([2.0 0 0; 1 sqrt(3) 0; 7 11 19]')
             # size = (3, 5)
             # lattice = Matrix([2.3 0; 0 7.0]')
-            br = BaseMesh.Brillouin(lattice=lattice)
-            bzmesh = BaseMesh.UniformBZMesh(br=br, size=size)
+            br = BZMeshes.Brillouin(lattice=lattice)
+            bzmesh = BZMeshes.UniformBZMesh(br=br, size=msize)
             vol = 0.0
             for (pi, p) in enumerate(bzmesh)
                 @test bzmesh[pi] ≈ p # linear index
-                inds = BaseMesh._ind2inds(bzmesh.size, pi)
+                inds = BZMeshes._ind2inds(size(bzmesh), pi)
                 @test bzmesh[inds...] ≈ p # cartesian index
 
                 @test AbstractMeshes.locate(bzmesh, p) == pi
@@ -72,25 +72,25 @@
         @testset "origin and shift convention" begin
             DIM = 2
             lattice = Matrix([1.0 0; 0 1]')
-            br = BaseMesh.Brillouin(lattice=lattice)
+            br = BZMeshes.Brillouin(lattice=lattice)
 
             # even numbers
             size = (4, 4)
             # Gamma-centered, no shift
-            bzmesh = BaseMesh.UniformBZMesh(br=br, size=size, origin=0, shift=0)
-            @test bzmesh[1, 1] ≈ BaseMesh.SVector{DIM,eltype(lattice)}([0.0, 0.0])
+            bzmesh = BZMeshes.UniformBZMesh(br=br, size=size, origin=0, shift=0)
+            @test bzmesh[1, 1] ≈ BZMeshes.SVector{DIM,eltype(lattice)}([0.0, 0.0])
             # M-P, no shift
-            bzmesh = BaseMesh.UniformBZMesh(br=br, size=size, origin=-1 / 2, shift=0)
-            @test bzmesh[3, 3] ≈ BaseMesh.SVector{DIM,eltype(lattice)}([0.0, 0.0])
+            bzmesh = BZMeshes.UniformBZMesh(br=br, size=size, origin=-1 / 2, shift=0)
+            @test bzmesh[3, 3] ≈ BZMeshes.SVector{DIM,eltype(lattice)}([0.0, 0.0])
 
             # odd numbers
             size = (5, 5)
             # Gamma-centered, no shift
-            bzmesh = BaseMesh.UniformBZMesh(br=br, size=size, origin=0, shift=0)
-            @test bzmesh[1, 1] ≈ BaseMesh.SVector{DIM,eltype(lattice)}([0.0, 0.0])
+            bzmesh = BZMeshes.UniformBZMesh(br=br, size=size, origin=0, shift=0)
+            @test bzmesh[1, 1] ≈ BZMeshes.SVector{DIM,eltype(lattice)}([0.0, 0.0])
             # M-P, 1/2 shift
-            bzmesh = BaseMesh.UniformBZMesh(br=br, size=size, origin=-1 / 2, shift=1 // 2)
-            @test bzmesh[3, 3] ≈ BaseMesh.SVector{DIM,eltype(lattice)}([0.0, 0.0])
+            bzmesh = BZMeshes.UniformBZMesh(br=br, size=size, origin=-1 / 2, shift=1 // 2)
+            @test bzmesh[3, 3] ≈ BZMeshes.SVector{DIM,eltype(lattice)}([0.0, 0.0])
 
         end
     end
