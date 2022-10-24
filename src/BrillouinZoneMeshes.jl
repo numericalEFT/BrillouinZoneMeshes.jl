@@ -10,6 +10,10 @@ using CompositeGrids
 BaryCheb = CompositeGrids.BaryChebTools
 # export BaryCheb
 
+include("AbstractMeshes.jl")
+using .AbstractMeshes
+export AbstractMeshes, AbstractMesh
+
 include("Model.jl")
 using .Model
 export Brillouin

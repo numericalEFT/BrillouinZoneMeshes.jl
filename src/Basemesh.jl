@@ -4,15 +4,10 @@ using ..StaticArrays
 using ..LinearAlgebra
 
 using ..BaryCheb
+using ..AbstractMeshes
 using ..Model
 
-export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, AbstractMesh, locate, volume
-
-abstract type AbstractMesh{T,DIM} <: AbstractArray{SVector{T,DIM},DIM} end
-
-Base.IteratorSize(::Type{AbstractMesh{T,DIM}}) where {T,DIM} = Base.HasLength()
-Base.IteratorEltype(::Type{AbstractMesh{T,DIM}}) where {T,DIM} = Base.HasEltype()
-Base.eltype(::Type{AbstractMesh{T,DIM}}) where {T,DIM} = eltype(T)
+export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh
 
 """
     struct UniformBZMesh{T, DIM} <: AbstractMesh{T, DIM}
@@ -113,7 +108,7 @@ function _indfloor(x, N; edgeshift=1)
 end
 
 """
-    function locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
+    function AbstractMeshes.locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
 
 locate mesh point in mesh that is nearest to x. Useful for Monte-Carlo algorithm.
 Could also be used for zeroth order interpolation.
@@ -122,7 +117,7 @@ Could also be used for zeroth order interpolation.
 - `mesh`: aimed mesh
 - `x`: cartesian pos to locate
 """
-function locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
+function AbstractMeshes.locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
     # find index of nearest grid point to the point
     displacement = SVector{DIM,T}(x) - mesh.origin
     inds = (mesh.br.inv_recip_lattice * displacement) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
@@ -140,7 +135,7 @@ function locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
 end
 
 """
-    function volume(mesh::UniformBZMesh, i)
+    function AbstractMeshes.volume(mesh::UniformBZMesh, i)
 
 volume represented by mesh point i. When i is omitted return volume of the whole mesh. 
 For M-P mesh it's always volume(mesh)/length(mesh), but for others things are more complecated.
@@ -150,9 +145,9 @@ Here we assume periodic boundary condition so for all case it's the same.
 - `mesh`: mesh
 - `i`: index of mesh point, if ommited return volume of whole mesh
 """
-volume(mesh::UniformBZMesh) = mesh.br.recip_cell_volume
-volume(mesh::UniformBZMesh, i) = mesh.br.recip_cell_volume / length(mesh)
-# function volume(mesh::UniformBZMesh{T,DIM}, i) where {T,DIM}
+AbstractMeshes.volume(mesh::UniformBZMesh) = mesh.br.recip_cell_volume
+AbstractMeshes.volume(mesh::UniformBZMesh, i) = mesh.br.recip_cell_volume / length(mesh)
+# function AbstractMeshes.volume(mesh::UniformBZMesh{T,DIM}, i) where {T,DIM}
 #     inds = _ind2inds(mesh.size, i)
 #     cellarea = T(1.0)
 #     for j in 1:DIM
@@ -178,8 +173,6 @@ volume(mesh::UniformBZMesh, i) = mesh.br.recip_cell_volume / length(mesh)
 #####################################
 
 abstract type EqualLengthMesh{DIM,N} <: AbstractMesh{Float64,DIM} end
-locate(mesh::AbstractMesh, x) = error("implement for concrete type required!")
-volume(mesh::AbstractMesh, i) = error("implement for concrete type required!")
 
 abstract type MeshType end
 struct CenteredMesh <: MeshType end # Monkhorst-Pack mesh, take center points instead of left-bottom
@@ -282,7 +275,7 @@ function Base.floor(mesh::UniformMesh{DIM,N}, x) where {DIM,N}
     return indexall
 end
 
-function locate(mesh::UniformMesh{DIM,N,MT}, x) where {DIM,N,MT}
+function AbstractMeshes.locate(mesh::UniformMesh{DIM,N,MT}, x) where {DIM,N,MT}
     # find index of nearest grid point to the point
     displacement = SVector{DIM,Float64}(x) - mesh.origin
     # println(displacement)
@@ -296,17 +289,17 @@ function locate(mesh::UniformMesh{DIM,N,MT}, x) where {DIM,N,MT}
     return indexall
 end
 
-volume(mesh::UniformMesh) = abs(det(mesh.latvec))
-function volume(mesh::UniformMesh{DIM,N,MT}, i) where {DIM,N,MT}
+AbstractMeshes.volume(mesh::UniformMesh) = abs(det(mesh.latvec))
+function AbstractMeshes.volume(mesh::UniformMesh{DIM,N,MT}, i) where {DIM,N,MT}
     volume(MT, mesh, i)
 end
 
-function volume(::Type{<:CenteredMesh}, mesh, i)
+function AbstractMeshes.volume(::Type{<:CenteredMesh}, mesh, i)
     # for uniform centered mesh, all mesh points share the same volume
     return abs(det(mesh.latvec)) / length(mesh)
 end
 
-function volume(::Type{<:EdgedMesh}, mesh::UniformMesh{DIM,N,MT}, i) where {DIM,N,MT}
+function AbstractMeshes.volume(::Type{<:EdgedMesh}, mesh::UniformMesh{DIM,N,MT}, i) where {DIM,N,MT}
     inds = _ind2inds(mesh, i)
     n1, nend = count(i -> i == 1, inds), count(i -> i == N, inds)
     cellarea = 2^(DIM - n1 - nend) * 3^nend / 2^DIM
@@ -465,15 +458,15 @@ function volume1d(g::BaryCheb1D, i)
     end
 end
 
-function locate(mesh::BaryChebMesh{DIM,N}, x) where {DIM,N}
+function AbstractMeshes.locate(mesh::BaryChebMesh{DIM,N}, x) where {DIM,N}
     displacement = SVector{DIM,Float64}(x) - mesh.origin
     xs = (mesh.invlatvec * displacement) .* 2.0 .- 1.0
     inds = [locate1d(mesh.barycheb, xs[i]) for i in 1:DIM]
     return _inds2ind(mesh, inds)
 end
 
-volume(mesh::BaryChebMesh) = abs(det(mesh.latvec))
-function volume(mesh::BaryChebMesh{DIM,N}, i) where {DIM,N}
+AbstractMeshes.volume(mesh::BaryChebMesh) = abs(det(mesh.latvec))
+function AbstractMeshes.volume(mesh::BaryChebMesh{DIM,N}, i) where {DIM,N}
     inds = _ind2inds(mesh, i)
     return reduce(*, volume1d(mesh.barycheb, inds[j]) for j in 1:DIM) * volume(mesh) / 2^DIM
 end

@@ -63,10 +63,10 @@
                 inds = BaseMesh._ind2inds(bzmesh.size, pi)
                 @test bzmesh[inds...] ≈ p # cartesian index
 
-                @test BaseMesh.locate(bzmesh, p) == pi
-                vol += BaseMesh.volume(bzmesh, pi)
+                @test AbstractMeshes.locate(bzmesh, p) == pi
+                vol += AbstractMeshes.volume(bzmesh, pi)
             end
-            @test vol ≈ BaseMesh.volume(bzmesh)
+            @test vol ≈ AbstractMeshes.volume(bzmesh)
         end
 
         @testset "origin and shift convention" begin
