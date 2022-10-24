@@ -29,7 +29,7 @@ basis = PlaneWaveBasis(model; Ecut, kgrid, kshift=_kshift)
 br = BrillouinZoneMeshes.Model.Brillouin(lattice=austrip.(lattice), atoms=[1, 1], positions=positions)
 brmesh = BrillouinZoneMeshes.UniformBZMesh(br=br, size=tuple(kgrid...), shift=_kshift[1])
 
-meshmap = BrillouinZoneMeshes.reduced_uniform_meshmap(br, kgrid_size=kgrid, kshift=kshift)
+meshmap = BrillouinZoneMeshes._reduced_uniform_meshmap(br, kgrid_size=kgrid, kshift=kshift)
 println(meshmap.irreducible_indices)
 for (i, ind) in enumerate(meshmap.irreducible_indices)
     # println(AbstractMeshes._ind2inds(tuple(kgrid...), ind))

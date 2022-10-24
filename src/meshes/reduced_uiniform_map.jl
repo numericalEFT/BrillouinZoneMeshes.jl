@@ -33,7 +33,7 @@ end
 # to be consistent with DFTK: 
 #  - N is even, VASP is the same as DFTK: shift=0 will include Gamma point, shift=1/2 will not
 #  - N is odd, VASP is different as DFTK: shift=0 will not include Gamma point, shift=1/2 will
-function reduced_uniform_meshmap(model::Model.Brillouin{T,DIM}, symmetry::Bool=true;
+function _reduced_uniform_meshmap(model::Model.Brillouin{T,DIM}, symmetry::Bool=true;
     kgrid_size::Vector{Int}, kshift::Bool=false,
     tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE
 ) where {T,DIM}
