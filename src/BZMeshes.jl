@@ -25,7 +25,7 @@ with Brillouin zone information stored in mesh.br::Brillouin.
 - `br`: Brillouin zone information including lattice info, atom pos and allowed G vectors
 - `origin`: origin of the uniform mesh, related to convention of 1st Brillouin zone. Commonly set to either (0,0,0) or such that (0,0,0) is at the center
 - `size`: size of the uniform mesh. For Monkhorst-Pack mesh require even number.
-- `shift`: k-shift of each mesh point. Take all zero for Gamma-centered and all 1//2 for M-P mesh
+- `shift`: k-shift of each mesh point. Set all to be zero for Gamma-centered and all to be 1//2 for M-P mesh
 """
 struct UniformBZMesh{T,DIM} <: AbstractMesh{T,DIM}
     br::Brillouin{T,DIM}
@@ -46,11 +46,11 @@ the mesh as Gamma-centered or M-P mesh.
 - `br`: Brillouin zone info
 - `origin`: a number indicating shift of origin. 
     the actuall origin becomes origin*(b1+b2+b3)
-    default value origin=-0.5 takes (0,0,0) to center of 1st BZ, origin=0 makes mesh[1,1,1]=(0,0,0)+shift
+    default value origin=-1/2 takes (0,0,0) to center of 1st BZ, origin=0 makes mesh[1,1,1]=(0,0,0)+shift
 - `size`: size of the mesh
 - `shift`: additional k-shift for mesh points. 
     actuall shift is shift*(b1/N1+b2/N2+b3/N3)
-    for even N, shift=0.5 avoids high symmetry points while preserve symmetry.
+    for even N, shift=1/2 avoids high symmetry points while preserve symmetry.
 """
 UniformBZMesh(;
     br::Brillouin{T,DIM},
