@@ -4,11 +4,11 @@ Default logic to determine the symmetry operations to be used in the model.
 function default_symmetries(model::Model.Brillouin{T,DIM}
     ; tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE) where {T,DIM}
 
-    lattice = zeros(T, DIM, DIM)
+    lattice = zeros(T, 3, 3)
     for i in 1:DIM
         lattice[i, 1:DIM] = model.lattice[i, 1:DIM]
     end
-    positions = [zeros(T, DIM) for i in 1:length(model.atoms)]
+    positions = [zeros(T, 3) for i in 1:length(model.atoms)]
     for ai in eachindex(model.atoms)
         positions[ai][1:DIM] = model.positions[ai][1:DIM]
     end
@@ -44,7 +44,7 @@ function _reduced_uniform_meshmap(model::Model.Brillouin{T,DIM}, symmetry::Bool=
         symmetries = [one(PointSymmetry.SymOp)]
     end
     @assert !isempty(symmetries)  # Identity has to be always present.
-    _kgrid_size = ones(Int, DIM)
+    _kgrid_size = ones(Int, 3)
     _kgrid_size[1:DIM] = kgrid_size[1:DIM]
     _kshift = kshift ? [1 // 2, 1 // 2, 1 // 2] : [0, 0, 0]
 
