@@ -23,7 +23,9 @@ function default_symmetries(model::Model.Brillouin{T,DIM}
 end
 
 function _kcoords2ind(kcoord, kgrid_size, kshift)
-    kidx = [Int(kvec * kgrid_size[d] - kshift[d]) + kgrid_size[d] - 1 for (d, kvec) in enumerate(kcoord)]
+    # kidx = [Int(kvec * kgrid_size[d] - kshift[d]) + kgrid_size[d] - 1 for (d, kvec) in enumerate(kcoord)]
+    # inexact convert is not allowed with Int(), use floor(Int,) instead
+    kidx = [floor(Int, (kvec + 1 / 2) * kgrid_size[d] - kshift[d]) + 1 for (d, kvec) in enumerate(kcoord)]
     klinearidx = AbstractMeshes._inds2ind(tuple(kgrid_size...), tuple(kidx...))
     return klinearidx
 end
