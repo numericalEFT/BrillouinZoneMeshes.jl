@@ -11,7 +11,6 @@ using StaticArrays
         ksize = tuple(kgrid[1:dim]...)
         _kshift = kshift ? [1 // 2, 1 // 2, 1 // 2] : [0, 0, 0]
         # kshift should be converted between our(VASP) and DFTK convention
-        _kshift_dftk = [(iseven(ksize[i]) ? _kshift[i] : _kshift[i] + 1 // 2) for i in 1:length(_kshift)]
         # 1. Define lattice and atomic positions
         a = 5.431u"angstrom"          # Silicon lattice constant
         lattice = a / 2 * [[0 1 1.0]  # Silicon lattice vectors
@@ -31,10 +30,10 @@ using StaticArrays
         # kgrid = [4, 4, 4]     # k-point grid (Regular Monkhorst-Pack grid)
         Ecut = 7              # kinetic energy cutoff
         # Ecut = 190.5u"eV"  # Could also use eV or other energy-compatible units
-        basis = PlaneWaveBasis(model; Ecut, kgrid, kshift=_kshift_dftk)
+        basis = PlaneWaveBasis(model; Ecut, kgrid, kshift=_kshift)
 
         br = BrillouinZoneMeshes.Model.Brillouin(lattice=austrip.(lattice)[1:dim, 1:dim], atoms=[1, 1], positions=[positions[1][1:dim], positions[2][1:dim]])
-        brmesh = BrillouinZoneMeshes.UniformBZMesh(br=br, size=tuple(kgrid[1:dim]...), shift=_kshift[1])
+        brmesh = BrillouinZoneMeshes.DFTK_Monkhorst_Pack(br=br, size=tuple(kgrid[1:dim]...), shift=_kshift)
 
         meshmap = BrillouinZoneMeshes._reduced_uniform_meshmap(br, kgrid_size=kgrid[1:dim], kshift=kshift)
         println(meshmap.irreducible_indices)

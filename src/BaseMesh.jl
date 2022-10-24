@@ -18,17 +18,30 @@ struct UMesh{T,DIM} <: AbstractMesh{T,DIM}
     shift::SVector{DIM,Rational}
 end
 
+# UMesh(;
+#     br::Brillouin{T,DIM},
+#     origin::Real,
+#     size,
+#     shift::Real) where {T,DIM} = UMesh{T,DIM}(
+#     br.recip_lattice,
+#     br.inv_recip_lattice,
+#     br.recip_cell_volume,
+#     SVector{DIM,T}(br.recip_lattice * ones(T, DIM) .* origin),
+#     size,
+#     SVector{DIM,Rational}(shift .* ones(Int, DIM))
+# )
+
 UMesh(;
     br::Brillouin{T,DIM},
-    origin::Real,
+    origin,
     size,
-    shift::Real) where {T,DIM} = UMesh{T,DIM}(
+    shift) where {T,DIM} = UMesh{T,DIM}(
     br.recip_lattice,
     br.inv_recip_lattice,
     br.recip_cell_volume,
-    SVector{DIM,T}(br.recip_lattice * ones(T, DIM) .* origin),
+    SVector{DIM,T}(br.recip_lattice * origin),
     size,
-    SVector{DIM,Rational}(shift .* ones(Int, DIM))
+    SVector{DIM,Rational}(shift)
 )
 
 Base.length(mesh::UMesh) = prod(mesh.size)
