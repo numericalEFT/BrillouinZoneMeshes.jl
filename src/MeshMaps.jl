@@ -5,6 +5,9 @@ using ..AbstractMeshes
 using ..Model
 using ..TreeMeshes
 using ..BaseMesh
+
+export MeshMap, ReducedBZMesh
+
 """
     struct MeshMap
 
@@ -20,23 +23,24 @@ struct MeshMap
     map::Vector{Int}
     inv_map::Dict{Int,Vector{Int}}
 
-    # function MeshMap(map::Vector{Int})
-    #     reduced_length = maximum(map)
-    #     inv_map = Vector{Vector{Int}}(undef, reduced_length)
-    #     for (i, ind) in enumerate(map)
-    #         # i is index of full mesh, ind is index of reduced mesh
-    #         if isassigned(inv_map, ind)
-    #             push!(inv_map[ind], i)
-    #         else
-    #             inv_map[ind] = Vector{Int}([i,])
-    #         end
-    #     end
-
-    #     return new(map, reduced_length, inv_map)
-    # end
+    function MeshMap(map::Vector{Int})
+        irreducible_indices = Vector{Int}([])
+        inv_map = Dict{Int,Vector{Int}}([])
+        for (i, ind) in enumerate(map)
+            if !(ind in irreducible_indices)
+                push!(irreducible_indices, ind)
+                push!(inv_map, (ind => [i,]))
+            else
+                push!(inv_map[ind], i)
+            end
+        end
+        return new(irreducible_indices, map, inv_map)
+    end
 end
 
 # TODO: constructors that generate map for specific type of mesh and symmetry
+MeshMap(mesh::AbstractMesh) = error("Map reduce not defined for $(typeof(mesh))!")
+
 
 ## TODO: 1st step: symmetry reduce for M-P mesh(centered uniform mesh)
 
@@ -50,13 +54,10 @@ Map-reduced mesh constructed from mesh::MT with symmetry reduction.
 - `mesh`: bare mesh from which the reduced mesh constructed
 - `meshmap`: map from mesh to the reduced mesh
 """
-struct ReducedMesh{T,DIM,MT<:AbstractMesh{T,DIM}} <: AbstractMesh{T,DIM}
+struct ReducedBZMesh{T,DIM,MT<:AbstractMesh{T,DIM}} <: AbstractMesh{T,DIM}
     mesh::MT
     meshmap::MeshMap
 end
-
-# TODO: implement AbstractMesh interface
-# including AbstractArray interface and locate/volume functions
 
 
 
