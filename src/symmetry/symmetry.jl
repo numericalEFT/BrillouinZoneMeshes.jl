@@ -39,6 +39,11 @@
 
 @doc raw"""
 Return the ``k``-point symmetry operations associated to a lattice and atoms.
+
+# Arguments
+- lattice :: 3x3 AbstractMatrix: lattice vectors in columns.
+- atoms :: Vector of atoms
+- positions :: Vector of positions of the atoms in fractional coordinates.
 """
 function symmetry_operations(lattice, atoms, positions, magnetic_moments=[];
     tol_symmetry=SYMMETRY_TOLERANCE)

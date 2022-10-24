@@ -31,7 +31,8 @@ using .BZMeshes
 export BZMeshes
 export UniformBZMesh
 
-include("symmetry/UniformKMeshSym.jl")
+include("symmetry/PointSymmetry.jl")
+export PointSymmetry
 
 include("TreeMeshes.jl")
 using .TreeMeshes

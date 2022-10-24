@@ -61,6 +61,12 @@ UniformBZMesh(;
     UMesh(br=br, origin=origin, size=size, shift=shift)
 )
 
+# Gamma_centered: origin=0, 
+# Monkhorst-Pack: origin=-1/2, consistent with VASP
+# to be consistent with DFTK: 
+#  - N is even, VASP is the same as DFTK: shift=0 will include Gamma point, shift=1/2 will not
+#  - N is odd, VASP is different as DFTK: shift=0 will not include Gamma point, shift=1/2 will
+
 Base.length(mesh::UniformBZMesh) = length(mesh.mesh)
 Base.size(mesh::UniformBZMesh) = size(mesh.mesh)
 Base.size(mesh::UniformBZMesh, I) = size(mesh.mesh)
