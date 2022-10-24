@@ -54,7 +54,7 @@ the mesh as Gamma-centered or M-P mesh.
 """
 UniformBZMesh(;
     br::Brillouin{T,DIM},
-    origin::Real=-0.5,
+    origin::Real=-1 // 2,
     size,
     shift::Real=1 // 2) where {T,DIM} = UniformBZMesh{T,DIM}(
     br,
