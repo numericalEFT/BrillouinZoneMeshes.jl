@@ -1,4 +1,4 @@
-module UniformKMeshSym
+module PointSymmetry
 using spglib_jll
 using LinearAlgebra
 using Printf
@@ -14,12 +14,14 @@ const Vec3{T} = SVector{3,T} where {T}
 const AbstractArray3{T} = AbstractArray{T,3}
 
 include("SymOp.jl")
+
+#TODO: comment the following out
 include("Model.jl")
 include("structure.jl")
 include("PlaneWaveBasis.jl")
+###############################
 
 include("symmetry.jl")
 include("bzmesh.jl")
-include("printing.jl")
-include("show.jl")
+
 end

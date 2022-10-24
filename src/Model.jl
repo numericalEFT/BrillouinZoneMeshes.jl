@@ -103,6 +103,46 @@ function Brillouin(;
     return Brillouin{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, unit_cell_volume, recip_cell_volume, atoms, positions, atom_groups, G_vector)
 end
 
+# TODO: Add the following helper functions
+# #=
+# There are two types of quantities, depending on how they transform under change of coordinates.
+
+# Positions transform with the lattice: r_cart = lattice * r_red. We term them vectors.
+
+# Linear forms on vectors (anything that appears in an expression f⋅r) transform
+# with the inverse lattice transpose: if f_cart ⋅ r_cart = f_red ⋅ r_red, then
+# f_cart = lattice' \ f_red. We term them covectors.
+# Examples of covectors are forces.
+
+# Reciprocal vectors are a special case: they are covectors, but conventionally have an
+# additional factor of 2π in their definition, so they transform rather with 2π times the
+# inverse lattice transpose: q_cart = 2π lattice' \ q_red = recip_lattice * q_red.
+# =#
+# vector_red_to_cart(model::Brillouin, rred) = model.lattice * rred
+# vector_cart_to_red(model::Brillouin, rcart) = model.inv_lattice * rcart
+# covector_red_to_cart(model::Brillouin, fred) = model.inv_lattice' * fred
+# covector_cart_to_red(model::Brillouin, fcart) = model.lattice' * fcart
+# recip_vector_red_to_cart(model::Brillouin, qred) = model.recip_lattice * qred
+# recip_vector_cart_to_red(model::Brillouin, qcart) = model.inv_recip_lattice * qcart
+
+# #=
+# Transformations on vectors and covectors are matrices and comatrices.
+
+# Consider two covectors f and g related by a transformation matrix B. In reduced
+# coordinates g_red = B_red f_red and in cartesian coordinates we want g_cart = B_cart f_cart.
+# From g_cart = L⁻ᵀ g_red = L⁻ᵀ B_red f_red = L⁻ᵀ B_red Lᵀ f_cart, we see B_cart = L⁻ᵀ B_red Lᵀ.
+
+# Similarly for two vectors r and s with s_red = A_red r_red and s_cart = A_cart r_cart:
+# s_cart = L s_red = L A_red r_red = L A_red L⁻¹ r_cart, thus A_cart = L A_red L⁻¹.
+
+# Examples of matrices are the symmetries in real space (W)
+# Examples of comatrices are the symmetries in reciprocal space (S)
+# =#
+# matrix_red_to_cart(model::Brillouin, Ared) = model.lattice * Ared * model.inv_lattice
+# matrix_cart_to_red(model::Brillouin, Acart) = model.inv_lattice * Acart * model.lattice
+# comatrix_red_to_cart(model::Brillouin, Bred) = model.inv_lattice' * Bred * model.lattice'
+# comatrix_cart_to_red(model::Brillouin, Bcart) = model.lattice' * Bcart * model.inv_lattice'
+
 # Implementation of the show function for Model
 
 function Base.show(io::IO, model::Brillouin{T,DIM}) where {T,DIM}

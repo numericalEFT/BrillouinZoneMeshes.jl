@@ -39,6 +39,11 @@
 
 @doc raw"""
 Return the ``k``-point symmetry operations associated to a lattice and atoms.
+
+# Arguments
+- lattice :: 3x3 AbstractMatrix: lattice vectors in columns.
+- atoms :: Vector of atoms
+- positions :: Vector of positions of the atoms in fractional coordinates.
 """
 function symmetry_operations(lattice, atoms, positions, magnetic_moments=[];
     tol_symmetry=SYMMETRY_TOLERANCE)
@@ -94,166 +99,6 @@ function standardize_atoms(lattice, atoms, positions, magnetic_moments=[]; kwarg
     atom_groups = [findall(Ref(pot) .== atoms) for pot in Set(atoms)]
     ret = spglib_standardize_cell(lattice, atom_groups, positions, magnetic_moments; kwargs...)
     (; ret.lattice, atoms, ret.positions, ret.magnetic_moments)
-end
-
-
-"""
-Apply a symmetry operation to eigenvectors `ψk` at a given `kpoint` to obtain an
-equivalent point in [-0.5, 0.5)^3 and associated eigenvectors (expressed in the
-basis of the new ``k``-point).
-"""
-function apply_symop(symop::SymOp, basis, kpoint, ψk::AbstractVecOrMat)
-    S, τ = symop.S, symop.τ
-    isone(symop) && return kpoint, ψk
-
-    # Apply S and reduce coordinates to interval [-0.5, 0.5)
-    # Doing this reduction is important because
-    # of the finite kinetic energy basis cutoff
-    @assert all(-0.5 .≤ kpoint.coordinate .< 0.5)
-    Sk_raw = S * kpoint.coordinate
-    Sk = normalize_kpoint_coordinate(Sk_raw)
-    kshift = convert.(Int, Sk - Sk_raw)
-    @assert all(-0.5 .≤ Sk .< 0.5)
-
-    # Check whether the resulting k-point is in the basis:
-    ikfull = findfirst(1:length(basis.kpoints)) do idx
-        all(isinteger, basis.kpoints[idx].coordinate - Sk)
-    end
-    if isnothing(ikfull)
-        # Build a new k-point datastructure:
-        Skpoint = build_kpoints(basis, [Sk])[1]
-    else
-        Skpoint = basis.kpoints[ikfull]
-        @assert Skpoint.coordinate ≈ Sk
-    end
-
-    # Since the eigenfunctions of the Hamiltonian at k and Sk satisfy
-    #      u_{Sk}(x) = u_{k}(S^{-1} (x - τ))
-    # their Fourier transform is related as
-    #      ̂u_{Sk}(G) = e^{-i G \cdot τ} ̂u_k(S^{-1} G)
-    invS = Mat3{Int}(inv(S))
-    Gs_full = [G + kshift for G in G_vectors(basis, Skpoint)]
-    ψSk = zero(ψk)
-    for iband in 1:size(ψk, 2)
-        for (ig, G_full) in enumerate(Gs_full)
-            igired = index_G_vectors(basis, kpoint, invS * G_full)
-            @assert igired !== nothing
-            ψSk[ig, iband] = cis2pi(-dot(G_full, τ)) * ψk[igired, iband]
-        end
-    end
-
-    Skpoint, ψSk
-end
-
-"""
-Apply a symmetry operation to a density.
-"""
-function apply_symop(symop::SymOp, basis, ρin; kwargs...)
-    isone(symop) && return ρin
-    symmetrize_ρ(basis, ρin; symmetries=[symop], kwargs...)
-end
-
-# Accumulates the symmetrized versions of the density ρin into ρout (in Fourier space).
-# No normalization is performed
-function accumulate_over_symmetries!(ρaccu, ρin, basis::PlaneWaveBasis{T}, symmetries) where {T}
-    for symop in symmetries
-        # Common special case, where ρin does not need to be processed
-        if isone(symop)
-            ρaccu .+= ρin
-            continue
-        end
-
-        # Transform ρin -> to the partial density at S * k.
-        #
-        # Since the eigenfunctions of the Hamiltonian at k and Sk satisfy
-        #      u_{Sk}(x) = u_{k}(S^{-1} (x - τ))
-        # with Fourier transform
-        #      ̂u_{Sk}(G) = e^{-i G \cdot τ} ̂u_k(S^{-1} G)
-        # equivalently
-        #     ρ ̂_{Sk}(G) = e^{-i G \cdot τ} ̂ρ_k(S^{-1} G)
-        invS = Mat3{Int}(inv(symop.S))
-        for (ig, G) in enumerate(G_vectors_generator(basis.fft_size))
-            igired = index_G_vectors(basis, invS * G)
-            isnothing(igired) && continue
-
-            if iszero(symop.τ)
-                @inbounds ρaccu[ig] += ρin[igired]
-            else
-                factor = cis2pi(-T(dot(G, symop.τ)))
-                @inbounds ρaccu[ig] += factor * ρin[igired]
-            end
-        end
-    end  # symop
-    ρaccu
-end
-
-# Low-pass filters ρ (in Fourier) so that symmetry operations acting on it stay in the grid
-function lowpass_for_symmetry!(ρ, basis; symmetries=basis.symmetries)
-    for symop in symmetries
-        isone(symop) && continue
-        for (ig, G) in enumerate(G_vectors_generator(basis.fft_size))
-            if index_G_vectors(basis, symop.S * G) === nothing
-                ρ[ig] = 0
-            end
-        end
-    end
-    ρ
-end
-
-"""
-Symmetrize a density by applying all the basis (by default) symmetries and forming the average.
-"""
-@views function symmetrize_ρ(basis, ρ; symmetries=basis.symmetries, do_lowpass=true)
-    ρin_fourier = fft(basis, ρ)
-    ρout_fourier = zero(ρin_fourier)
-    for σ = 1:size(ρ, 4)
-        accumulate_over_symmetries!(ρout_fourier[:, :, :, σ],
-            ρin_fourier[:, :, :, σ], basis, symmetries)
-        do_lowpass && lowpass_for_symmetry!(ρout_fourier[:, :, :, σ], basis; symmetries)
-    end
-    irfft(basis, ρout_fourier ./ length(symmetries))
-end
-
-"""
-Symmetrize the stress tensor, given as a Matrix in cartesian coordinates
-"""
-function symmetrize_stresses(model::Model, stresses; symmetries)
-    # see (A.28) of https://arxiv.org/pdf/0906.2569.pdf
-    stresses_symmetrized = zero(stresses)
-    for symop in symmetries
-        W_cart = matrix_red_to_cart(model, symop.W)
-        stresses_symmetrized += W_cart * stresses / W_cart
-    end
-    stresses_symmetrized /= length(symmetries)
-    stresses_symmetrized
-end
-function symmetrize_stresses(basis::PlaneWaveBasis, stresses)
-    symmetrize_stresses(basis.model, stresses; basis.symmetries)
-end
-
-"""
-Symmetrize the forces in *reduced coordinates*, forces given as an
-array forces[iel][α,i]
-"""
-function symmetrize_forces(model::Model, forces; symmetries)
-    symmetrized_forces = zero(forces)
-    for group in model.atom_groups, symop in symmetries
-        positions_group = model.positions[group]
-        W, w = symop.W, symop.w
-        for (idx, position) in enumerate(positions_group)
-            # see (A.27) of https://arxiv.org/pdf/0906.2569.pdf
-            # (but careful that our symmetries are r -> Wr+w, not R(r+f))
-            other_at = W \ (position - w)
-            i_other_at = findfirst(a -> is_approx_integer(a - other_at), positions_group)
-            # (A.27) is in cartesian coordinates, and since Wcart is orthogonal,
-            # Fsymcart = Wcart * Fcart <=> Fsymred = inv(Wred') Fred
-            symmetrized_forces[idx] += inv(W') * forces[group[i_other_at]]
-        end
-    end
-    symmetrized_forces / length(symmetries)
-end
-function symmetrize_forces(basis::PlaneWaveBasis, forces)
-    symmetrize_forces(basis.model, forces; basis.symmetries)
 end
 
 """"
@@ -327,6 +172,11 @@ function unfold_bz(scfres)
     merge(scfres, new_scfres)
 end
 
+""""
+Convert a `kcoords` into one that doesn't use BZ symmetry.
+This is mainly useful for debug purposes (e.g. in cases we don't want to
+bother thinking about symmetries).
+"""
 function unfold_kcoords(kcoords, symmetries)
     all_kcoords = [normalize_kpoint_coordinate(symop.S * kcoord)
                    for kcoord in kcoords, symop in symmetries]
@@ -336,12 +186,4 @@ function unfold_kcoords(kcoords, symmetries)
         digits = ceil(Int, -log10(SYMMETRY_TOLERANCE))
         normalize_kpoint_coordinate(round.(k; digits))
     end
-end
-
-"""
-Ensure its real-space equivalent of passed Fourier-space representation is entirely real by
-removing wavevectors `G` that don't have a `-G` counterpart in the basis.
-"""
-function enforce_real!(basis, fourier_coeffs)
-    lowpass_for_symmetry!(fourier_coeffs, basis; symmetries=[SymOp(-Mat3(I), Vec3(0, 0, 0))])
 end
