@@ -2,6 +2,8 @@ module Model
 
 using ..StaticArrays
 using ..LinearAlgebra
+import ..showfieldln
+using Printf
 
 export Brillouin
 
@@ -69,7 +71,7 @@ end
 
 function Brillouin(;
     lattice::Matrix{T},
-    atoms::Vector{Int}=Vector{Int}([]),
+    atoms::AbstractVector{Int}=Vector{Int}([]),
     positions=nothing,
     G_vector=nothing) where {T}
 
@@ -99,6 +101,39 @@ function Brillouin(;
     end
 
     return Brillouin{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, unit_cell_volume, recip_cell_volume, atoms, positions, atom_groups, G_vector)
+end
+
+# Implementation of the show function for Model
+
+function Base.show(io::IO, model::Brillouin{T,DIM}) where {T,DIM}
+    print(io, "Brillouin Zone (", DIM, "D) with lattice vectors $(model.lattice))")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", model::Brillouin{T,DIM}) where {T,DIM}
+    println(io, "Brillouin Zone (", DIM, "D)")
+    for i = 1:DIM
+        header = i == 1 ? "lattice" : ""
+        if DIM == 1
+            showfieldln(io, header, (@sprintf "[%-10.6g, ]" model.lattice[i, :]...))
+        elseif DIM == 2
+            showfieldln(io, header, (@sprintf "[%-10.6g, %-10.6g]" model.lattice[i, :]...))
+        elseif DIM == 3
+            showfieldln(io, header, (@sprintf "[%-10.6g, %-10.6g, %-10.6g]" model.lattice[i, :]...))
+        else
+            showfieldln(io, header, ("$(model.lattice[i, :]...)"))
+        end
+    end
+    showfieldln(io, "unit cell volume", @sprintf "%.5g" model.unit_cell_volume)
+
+    if !isempty(model.atoms)
+        println(io)
+        showfieldln(io, "atoms", model.atoms)
+        for (i, el) in enumerate(model.atoms)
+            header = "atom $el position"
+            showfieldln(io, header, model.positions[i])
+        end
+        # showfieldln(io, "positions", model.positions)
+    end
 end
 
 end
