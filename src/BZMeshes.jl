@@ -9,7 +9,7 @@ using ..Model
 using ..BaseMesh
 using ..BaseMesh: _indfloor
 
-export UniformBZMesh
+export UniformBZMesh, DFTK_Monkhorst_Pack
 
 """
     struct UniformBZMesh{T, DIM} <: AbstractMesh{T, DIM}
@@ -58,8 +58,19 @@ UniformBZMesh(;
     size,
     shift::Real=1 // 2) where {T,DIM} = UniformBZMesh{T,DIM}(
     br,
-    UMesh(br=br, origin=origin, size=size, shift=shift)
+    UMesh(br=br, origin=origin .* ones(T, DIM), size=size, shift=shift .* ones(Int, DIM))
 )
+
+function DFTK_Monkhorst_Pack(;
+    br::Brillouin{T,DIM},
+    size,
+    shift::AbstractVector) where {T,DIM}
+    kshift = [(iseven(size[i]) ? shift[i] : shift[i] + 1 // 2) for i in 1:DIM]
+    return UniformBZMesh{T,DIM}(
+        br,
+        UMesh(br=br, origin=-1 // 2 .* ones(T, DIM), size=size, shift=kshift)
+    )
+end
 
 # Gamma_centered: origin=0, 
 # Monkhorst-Pack: origin=-1/2, consistent with VASP
