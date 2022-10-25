@@ -171,13 +171,15 @@ function standard_brillouin(;
     _positions = Vector{dtype}.(std_cell.positions)
     # magnetic_moments = normalize_magnetic_moment.(std_cell.magmoms)
     # println(_lattice)
-    for i in 1:DIM
-        lattice[1:DIM, 1:DIM] .= _lattice[1:DIM, 1:DIM]
-    end
+
+    ### truncate 3D convention to DIM
+    lattice[1:DIM, 1:DIM] .= _lattice[1:DIM, 1:DIM]
     positions = []
     for i in eachindex(_positions)
         push!(positions, _positions[i][1:DIM])
     end
+
+    ## make sure the truncation doesn't cause error
     __lattice, __positions = PointSymmetry._make3D(lattice, positions)
     @assert __lattice ≈ _lattice
     @assert __positions ≈ _positions
