@@ -115,6 +115,19 @@ function uniform_meshmap(mesh::BZMeshes.UniformBZMesh{T,DIM},
         kgrid_size, Ws; is_shift, is_time_reversal=false
     )
 
+    # if size = [4, 4, 4]
+    # grid = 
+    # [[ 0  0  0]
+    #  [ 1  0  0]
+    #  [ 2  0  0]
+    #  [-1  0  0]
+    #  [ 0  1  0]
+    #  [ 1  1  0]
+    #  [ 2  1  0]
+    #  [-1  1  0]
+    #  ....      ]
+    @assert grid[2][1] - grid[1][1] == 1 "expect the first index to iterate first"
+
     mapping .+= 1
     kidx_unique = unique(mapping)
 
@@ -160,7 +173,7 @@ function uniform_meshmap(mesh::BZMeshes.UniformBZMesh{T,DIM},
     for k in kidx_unique
         @assert haskey(inv_kmap, k)
     end
-    return MeshMaps.MeshMap(kidx_unique, mapping, inv_kmap)
+    return MeshMaps.MeshMap(kidx_unique, mapping, inv_kmap), grid, mapping
 
     # kcoords, kweights, symmetries = PointSymmetry.bzmesh_ir_wedge(_kgrid_size, symmetries; kshift=_kshift)
     # all_kcoords = PointSymmetry.unfold_kcoords(kcoords, symmetries)
