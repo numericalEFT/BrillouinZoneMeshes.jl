@@ -56,7 +56,7 @@ function spglib_cell(lattice, atom_groups, positions, magnetic_moments)
     spg = spglib_atoms(atom_groups, positions, magnetic_moments)
     (; cell=Spglib.Cell(lattice, spg.positions, spg.numbers, spg.spins), spg.collinear)
 end
-function spglib_cell(model::Model, magnetic_moments)
+function spglib_cell(model, magnetic_moments)
     spglib_cell(model.lattice, model.atom_groups, model.positions, magnetic_moments)
 end
 
@@ -149,6 +149,9 @@ function spglib_get_stabilized_reciprocal_mesh(kgrid_size, rotations::Vector;
     return n_kpts, Int.(mapping), [Vec3{Int}(grid_address[:, i]) for i in 1:nkpt]
 end
 
+normalize_magnetic_moment(::Nothing)::Vec3{Float64} = (0, 0, 0)
+normalize_magnetic_moment(mm::Number)::Vec3{Float64} = (0, 0, mm)
+normalize_magnetic_moment(mm::AbstractVector)::Vec3{Float64} = mm
 
 """
 Returns crystallographic conventional cell according to the International Table of
@@ -174,7 +177,7 @@ function spglib_standardize_cell(lattice::AbstractArray{T}, atom_groups, positio
     magnetic_moments = normalize_magnetic_moment.(std_cell.magmoms)
     (; lattice, atom_groups, positions, magnetic_moments)
 end
-function spglib_standardize_cell(model::Model, magnetic_moments=[]; kwargs...)
+function spglib_standardize_cell(model, magnetic_moments=[]; kwargs...)
     spglib_standardize_cell(model.lattice, model.atom_groups, model.positions,
         magnetic_moments; kwargs...)
 end
