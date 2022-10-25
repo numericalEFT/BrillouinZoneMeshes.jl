@@ -72,6 +72,18 @@ function DFTK_Monkhorst_Pack(;
     )
 end
 
+function Monkhorst_Pack(;
+    br::Brillouin{T,DIM},
+    size,
+    shift::AbstractVector{Bool}=[false, false, false]
+) where {T,DIM}
+    # kshift = [(iseven(size[i]) ? shift[i] : shift[i] + 1 // 2) for i in 1:DIM]
+    return UniformBZMesh{T,DIM}(
+        br,
+        UMesh(br=br, origin=-ones(T, DIM) / 2, size=tuple(size...), shift=shift)
+    )
+end
+
 # Gamma_centered: origin=0, 
 # Monkhorst-Pack: origin=-1/2, consistent with VASP
 # to be consistent with DFTK: 
