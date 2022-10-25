@@ -8,6 +8,13 @@
         meshmap = BrillouinZoneMeshes.uniform_meshmap(brmesh)
         # println(meshmap.irreducible_indices)
         # println(kcoords)
+
+        # for kpoint in meshmap.irreducible_indices
+        #     kvec = brmesh.mesh.inv_lattice * brmesh[kpoint]
+        #     println(kvec)
+        #     # _kvec = BrillouinZoneMeshes.Model.recip_vector_red_to_cart(br, meshmap.kcoords_global[kpoint])
+        #     # @test kvec ≈ _kvec
+        # end
         klist = Vector{Int}()
         for coord in kcoords
             kvec = brmesh.mesh.lattice * coord
@@ -18,12 +25,7 @@
         end
         @test sort(klist) == sort(meshmap.irreducible_indices)
 
-        # for kpoint in meshmap.irreducible_indices
-        #     kvec = brmesh.mesh.inv_lattice * brmesh[kpoint]
-        #     println(kvec)
-        #     # _kvec = BrillouinZoneMeshes.Model.recip_vector_red_to_cart(br, meshmap.kcoords_global[kpoint])
-        #     # @test kvec ≈ _kvec
-        # end
+        return meshmap, brmesh
     end
     size, shift = [4, 4, 4], false
     kcoords = [[0.0, 0.0, 0.0],
@@ -130,4 +132,22 @@
     test(3, silicon.lattice, silicon.atoms, silicon.positions, size, shift;
         kcoords=kcoords, kweights=kweights)
 
+    ########### test 2D #############
+    lattice = [[1.0 0.0]; [0.0 1.0]]
+    atoms = [1,]
+    pos = [[0.0, 0.0],]
+    size, shift = [2, 2], false
+    kcoords = [
+        [0.0, 0.0],
+        [-0.5, 0.0],
+        [-0.5, -0.5]
+    ]
+
+    kweights = [] #TODO: not calculated
+
+    meshmap, brmesh = test(2, lattice, atoms, pos, size, shift;
+        kcoords=kcoords, kweights=kweights)
+    # for i in meshmap.irreducible_indices
+    #     println(brmesh[i])
+    # end
 end
