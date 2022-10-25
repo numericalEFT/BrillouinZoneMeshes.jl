@@ -75,7 +75,7 @@ end
 function Monkhorst_Pack(;
     br::Brillouin{T,DIM},
     size,
-    shift::AbstractVector{Bool}=[false, false, false]
+    shift::AbstractVector=[0, 0, 0]
 ) where {T,DIM}
     # kshift = [(iseven(size[i]) ? shift[i] : shift[i] + 1 // 2) for i in 1:DIM]
     return UniformBZMesh{T,DIM}(

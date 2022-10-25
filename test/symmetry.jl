@@ -21,7 +21,7 @@ Si = ElementPsp(:Si, psp=load_psp("hgh/lda/Si-q4"))
 atoms = [Si, Si]
 model = model_LDA(lattice, atoms, positions)
 
-kgrid = [4, 4, 1]     # k-point grid (Regular Monkhorst-Pack grid)
+kgrid = [4, 4, 4]     # k-point grid (Regular Monkhorst-Pack grid)
 Ecut = 7              # kinetic energy cutoff
 # Ecut = 190.5u"eV"  # Could also use eV or other energy-compatible units
 basis = PlaneWaveBasis(model; Ecut, kgrid, kshift=_kshift)
