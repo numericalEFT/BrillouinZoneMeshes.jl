@@ -1,33 +1,6 @@
 @testset "Base Mesh" begin
     rng = MersenneTwister(1234)
 
-    @testset "Brillouin" begin
-
-        # square lattice
-        DIM = 2
-        lattice = Matrix([1.0 0; 0 1]')
-        br = BaseMesh.Brillouin(lattice=lattice)
-        @test br.inv_lattice .* 2π ≈ br.recip_lattice
-        @test br.unit_cell_volume ≈ abs(det(lattice))
-        @test br.recip_cell_volume ≈ 1 / abs(det(lattice)) * (2π)^DIM
-
-        # triagular lattice
-        DIM = 2
-        lattice = Matrix([2.0 0; 1 sqrt(3)]')
-        br = BaseMesh.Brillouin(lattice=lattice)
-        @test br.inv_lattice .* 2π ≈ br.recip_lattice
-        @test br.unit_cell_volume ≈ abs(det(lattice))
-        @test br.recip_cell_volume ≈ 1 / abs(det(lattice)) * (2π)^DIM
-
-        # 3d testing lattice
-        DIM = 3
-        lattice = Matrix([2.0 0 0; 1 sqrt(3) 0; 7 11 19]')
-        br = BaseMesh.Brillouin(lattice=lattice)
-        @test br.inv_lattice .* 2π ≈ br.recip_lattice
-        @test br.unit_cell_volume ≈ abs(det(lattice))
-        @test br.recip_cell_volume ≈ 1 / abs(det(lattice)) * (2π)^DIM
-    end
-
     @testset "UniformBZMesh" begin
         @testset "Indexing" begin
             size = (3, 4, 5)

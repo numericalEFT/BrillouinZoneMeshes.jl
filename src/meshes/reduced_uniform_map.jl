@@ -128,8 +128,10 @@ function uniform_meshmap(mesh::BZMeshes.UniformBZMesh{T,DIM},
     #     kgrid_size, Ws; is_shift, is_time_reversal=false
     # )
 
-    lat, atoms, pos, mag_moments = PointSymmetry.spglib_standardize_cell(mesh.br, primitive=true)
-    # lat, atoms, pos, mag_moments = mesh.br.lattice, mesh.br.atoms, mesh.br.positions, []
+    # lat, atoms, pos, mag_moments = PointSymmetry.spglib_standardize_cell(mesh.br, primitive=true)
+    lat, atoms, pos, mag_moments = mesh.br.lattice, mesh.br.atoms, mesh.br.positions, []
+
+    lat, pos = PointSymmetry._make3D(lat, pos)
 
     cell, _ = PointSymmetry.spglib_cell(lat, atoms, pos, mag_moments)
     # println(cell)
@@ -182,7 +184,7 @@ function uniform_meshmap(mesh::BZMeshes.UniformBZMesh{T,DIM},
     # in *wrong results* being returned. See the discussion in
     # https://github.com/spglib/spglib/issues/101
     for (iks_reducible, k) in zip(k_all_reducible, kirreds), ikred in iks_reducible
-        kred = (is_shift ./ 2 .+ grid[ikred]) ./ kgrid_size
+        kred = (is_shift ./ 2 .+ grid[ikred]) ./ _kgrid_size
 
         found_mapping = any(symmetries) do symop
             # If the difference between kred and W' * k == W^{-1} * k

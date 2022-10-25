@@ -1,5 +1,6 @@
 module Model
 
+using ..PointSymmetry
 using ..StaticArrays
 using ..LinearAlgebra
 import ..showfieldln
@@ -38,6 +39,9 @@ end
 Container storing information of Brillouin zone. Including lattice vector, reciprocal lattice vector and their inverse;
 volume of unit cell and reciprocal unit cell; G vectors for extended Brillouin zone.
 
+Lattice parameters `lattice` are given by a ``3×3`` matrix with floating point values,
+where ``𝐚``, ``𝐛``, and ``𝐜`` are given as __columns__.
+
 # Parameters:
 - `T`: type of data
 - `DIM`: dimension of the Brillouin zone
@@ -47,8 +51,14 @@ volume of unit cell and reciprocal unit cell; G vectors for extended Brillouin z
 - `recip_lattice`: reciprocal lattice vector
 - `inv_lattice`: inverse of lattice vector
 - `inv_recip_lattice`: inverse of reciprocal lattice vector
+
 - `unit_cell_volume`: volume of lattice unit cell
 - `recip_cell_volume`: volume of reciprocal lattice unit cell
+
+- `atoms`: list of integers representing atom types
+- `positions`:  # positions[i] is the location of atoms[i] in fract. coords
+- `atom_groups``:  atoms[i] == atoms[j] for all i, j in atom_group[α]
+
 - `G_vector`: a list of G vectors in extended Brillouin zone
 """
 struct Brillouin{T,DIM}
@@ -116,6 +126,80 @@ function get_latvec(br::Brillouin, I::Int; isrecip=true)
     else
         return get_latvec(br.lattice, I)
     end
+end
+
+# normalize_magnetic_moment(::Nothing)::Vec3{Float64} = (0, 0, 0)
+# normalize_magnetic_moment(mm::Number)::Vec3{Float64} = (0, 0, mm)
+# normalize_magnetic_moment(mm::AbstractVector)::Vec3{Float64} = mm
+
+"""
+    function standard_brillouin(;
+        dtype=Float64,
+        lattice::AbstractMatrix,
+        atoms::AbstractVector=[1,],
+        positions::AbstractVector{<:AbstractVector}=[zeros(dtype, size(lattice, 1)),],
+        primitive=true,
+        correct_symmetry=true,
+        # magnetic_moments=[],
+        tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE,
+        G_vector=nothing)
+    
+Returns a `Brillouin` object with crystallographic conventional cell according to the International Table of
+Crystallography Vol A (ITA) in case `primitive=false`. If `primitive=true`
+the primitive lattice is returned in the convention of the reference work of
+Cracknell, Davies, Miller, and Love (CDML). Of note this has minor differences to
+the primitive setting choice made in the ITA.
+"""
+function standard_brillouin(;
+    dtype=Float64,
+    lattice::AbstractMatrix,
+    atoms::AbstractVector=[1,],
+    positions::AbstractVector{<:AbstractVector}=[zeros(dtype, size(lattice, 1)),],
+    primitive=true,
+    correct_symmetry=true,
+    # magnetic_moments=[],
+    tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE,
+    G_vector=nothing)
+
+    DIM = size(lattice, 1)
+
+    # Atoms and terms
+    if length(atoms) != length(positions)
+        error("Length of atoms and positions vectors need to agree.")
+    end
+    atom_groups = [findall(Ref(pot) .== atoms) for pot in Set(atoms)]
+
+
+    _lattice, _positions = PointSymmetry._make3D(lattice, positions)
+
+    magnetic_moments = []
+    cell, _ = PointSymmetry.spglib_cell(_lattice, atom_groups, _positions, magnetic_moments)
+    std_cell = PointSymmetry.standardize_cell(cell; to_primitive=primitive, symprec=tol_symmetry,
+        no_idealize=!correct_symmetry)
+
+    _lattice = Matrix{dtype}(std_cell.lattice)
+    _types = std_cell.types
+    _atoms = Int.(_types)
+    _positions = Vector{dtype}.(std_cell.positions)
+    # magnetic_moments = normalize_magnetic_moment.(std_cell.magmoms)
+
+    ### truncate 3D convention to DIM
+    lattice[1:DIM, 1:DIM] .= _lattice[1:DIM, 1:DIM]
+    positions = []
+    for i in eachindex(_positions)
+        push!(positions, _positions[i][1:DIM])
+    end
+
+    ## make sure the truncation doesn't cause error
+    __lattice, __positions = PointSymmetry._make3D(lattice, positions)
+    @assert __lattice ≈ _lattice
+    @assert __positions ≈ _positions
+
+    return Brillouin(;
+        lattice=lattice,
+        atoms=_atoms,
+        positions=positions,
+        G_vector=G_vector)
 end
 
 # TODO: Add the following helper functions
