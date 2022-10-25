@@ -39,6 +39,16 @@ function Base.show(io::IO, mesh::UMesh)
     println("UMesh with $(length(mesh)) mesh points")
 end
 
+function AbstractMeshes.fractional_coordinates(mesh::UMesh{T,DIM}, I::Int) where {T,DIM}
+    n = SVector{DIM,Int}(ind2inds(mesh.size, I))
+    return (n .- 1 .+ mesh.shift) ./ mesh.size
+end
+
+function AbstractMeshes.fractional_coordinates(mesh::UMesh{T,DIM}, x::AbstractVector) where {T,DIM}
+    displacement = SVector{DIM,T}(x)
+    return (mesh.inv_lattice * displacement)
+end
+
 function Base.getindex(mesh::UMesh{T,DIM}, inds...) where {T,DIM}
     n = SVector{DIM,Int}(inds)
     return mesh.origin + mesh.lattice * ((n .- 1 .+ mesh.shift) ./ mesh.size)
@@ -50,8 +60,8 @@ end
 
 function AbstractMeshes.locate(mesh::UMesh{T,DIM}, x) where {T,DIM}
     # find index of nearest grid point to the point
-    displacement = SVector{DIM,T}(x) - mesh.origin
-    inds = (mesh.inv_lattice * displacement) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
+    svx = SVector{DIM,T}(x)
+    inds = fractional_coordinates(mesh, svx - mesh.origin) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
     indexall = 1
     # println((mesh.invlatvec * displacement))
     # println(inds)
@@ -68,6 +78,17 @@ AbstractMeshes.volume(mesh::UMesh) = mesh.volume
 AbstractMeshes.volume(mesh::UMesh, i) = mesh.volume / length(mesh)
 
 
+# in spglib, grid_address runs from 1-ceil(N/2) to N-ceil(N/2)
+# thus -1:2 for N=4 and -2:2 for N=5
+
+function spglib_grid_address_to_index(mesh::UMesh{T,DIM}, ga) where {T,DIM}
+    inds = ga[1:DIM] # if length(x)==3 but DIM==2, take first two
+    fcoords = (inds .+ mesh.shift) ./ mesh.size
+    # shift fcoords 
+    fcoords = [(fcoords[i] < 0) ? (fcoords[i] + 1) : fcoords[i] for i in 1:DIM]
+    x = mesh.origin + mesh.lattice * fcoords
+    return locate(mesh, x)
+end
 #####################################
 # LEGACY CODE BELOW
 #####################################
