@@ -128,8 +128,8 @@ function uniform_meshmap(mesh::BZMeshes.UniformBZMesh{T,DIM},
     #     kgrid_size, Ws; is_shift, is_time_reversal=false
     # )
 
-    lat, atoms, pos, mag_moments = PointSymmetry.spglib_standardize_cell(mesh.br, primitive=true)
-    # lat, atoms, pos, mag_moments = mesh.br.lattice, mesh.br.atoms, mesh.br.positions, []
+    # lat, atoms, pos, mag_moments = PointSymmetry.spglib_standardize_cell(mesh.br, primitive=true)
+    lat, atoms, pos, mag_moments = mesh.br.lattice, mesh.br.atoms, mesh.br.positions, []
 
     cell, _ = PointSymmetry.spglib_cell(lat, atoms, pos, mag_moments)
     # println(cell)
