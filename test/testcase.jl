@@ -8,7 +8,8 @@ silicon = (
     atoms=[1, 1],
     n_electrons=8,
     positions=[ones(3) / 8, -ones(3) / 8],  # in fractional coordinates
-    kcoords=[[0, 0, 0],  # in fractional coordinates
+    kcoords=[
+        [0, 0, 0],  # in fractional coordinates
         [1 / 3, 0, 0],
         [1 / 3, 1 / 3, 0],
         [-1 / 3, 1 / 3, 0]],

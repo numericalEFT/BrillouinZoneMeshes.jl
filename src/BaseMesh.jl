@@ -101,18 +101,6 @@ end
 AbstractMeshes.volume(mesh::UMesh) = mesh.volume
 AbstractMeshes.volume(mesh::UMesh, i) = mesh.volume / length(mesh)
 
-
-# in spglib, grid_address runs from 1-ceil(N/2) to N-ceil(N/2)
-# thus -1:2 for N=4 and -2:2 for N=5
-
-function spglib_grid_address_to_index(mesh::UMesh{T,DIM}, ga) where {T,DIM}
-    inds = ga[1:DIM] # if length(x)==3 but DIM==2, take first two
-    fcoords = (inds .+ mesh.shift) ./ mesh.size #fractional coordinates as defined in spglib
-    # shift fcoords, nomalize to [0, 1)
-    fcoords = [(fcoords[i] < 0) ? (fcoords[i] + 1) : fcoords[i] for i in 1:DIM]
-    x = mesh.lattice * fcoords
-    return locate(mesh, x)
-end
 #####################################
 # LEGACY CODE BELOW
 #####################################

@@ -10,6 +10,8 @@ using BrillouinZoneMeshes.AbstractTrees
 using LinearAlgebra, Random
 using Test
 
+include("testcase.jl")
+
 @testset "BrillouinZoneMeshes.jl" begin
 
     if isempty(ARGS)
@@ -17,7 +19,7 @@ using Test
         include("BaseMesh.jl")
         include("TreeMeshes.jl")
         include("mc.jl")
-        include("DFTK.jl")
+        include("spglib.jl")
     else
         include(ARGS[1])
     end
