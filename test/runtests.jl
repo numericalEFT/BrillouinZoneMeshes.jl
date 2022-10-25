@@ -19,8 +19,9 @@ include("testcase.jl")
         include("BaseMesh.jl")
         include("TreeMeshes.jl")
         include("mc.jl")
-        include("spglib.jl")
+        include("PointSymmetry.jl")
         include("UniformMeshMap.jl")
+        include("Model.jl")
     else
         include(ARGS[1])
     end

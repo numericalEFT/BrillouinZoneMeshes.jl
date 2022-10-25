@@ -2,6 +2,17 @@ using BrillouinZoneMeshes.PointSymmetry: spglib_spacegroup_number, spglib_standa
 using LinearAlgebra
 using Test
 
+@testset "make3D" begin
+    lattice = [[1.0, 0.0] [0.0, 1.0]] #must be a matrix
+    pos = [[0.0, 0.0], [0.5, 0.5]]
+    _lat, _pos = PointSymmetry._make3D(lattice, pos)
+    @test _lat[:, 1] ≈ [1.0, 0.0, 0.0]
+    @test _lat[:, 2] ≈ [0.0, 1.0, 0.0]
+    @test _lat[:, 3] ≈ [0.0, 0.0, 1.0]
+    @test _pos[1] ≈ [0.0, 0.0, 0.0]
+    @test _pos[2] ≈ [0.5, 0.5, 0.0]
+end
+
 @testset "spglib" begin
     a = 10.3
     Si = 1

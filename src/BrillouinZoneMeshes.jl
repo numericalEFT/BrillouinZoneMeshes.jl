@@ -17,6 +17,10 @@ export AbstractMeshes, AbstractMesh
 
 include("printing.jl")
 
+
+include("symmetry/PointSymmetry.jl")
+export PointSymmetry
+
 include("Model.jl")
 using .Model
 export Brillouin
@@ -30,9 +34,6 @@ include("BZMeshes.jl")
 using .BZMeshes
 export BZMeshes
 export UniformBZMesh
-
-include("symmetry/PointSymmetry.jl")
-export PointSymmetry
 
 include("TreeMeshes.jl")
 using .TreeMeshes
