@@ -164,13 +164,9 @@ function standard_brillouin(;
 
     _lattice = Matrix{dtype}(std_cell.lattice)
     _types = std_cell.types
-    # _atoms = [findall(Ref(pot) .== _types) for pot in Set(_types)]
-    # println(_atoms)
     _atoms = Int.(_types)
-    # println(std_cell.positions)
     _positions = Vector{dtype}.(std_cell.positions)
     # magnetic_moments = normalize_magnetic_moment.(std_cell.magmoms)
-    # println(_lattice)
 
     ### truncate 3D convention to DIM
     lattice[1:DIM, 1:DIM] .= _lattice[1:DIM, 1:DIM]
