@@ -17,7 +17,7 @@ const Mat3{T} = SMatrix{3,3,T,9} where {T}
 const Vec3{T} = SVector{3,T} where {T}
 const AbstractArray3{T} = AbstractArray{T,3}
 
-function _make3D(lattice::AbstractMatrix{T}, position::AbstractVector{<:AbstractVector}) where {T}
+function _make3D(lattice::AbstractMatrix{T}, position::AbstractVector) where {T}
     @assert size(lattice, 1) == size(lattice, 2)
     DIM = size(lattice, 1)
     _lattice = zeros(T, 3, 3)

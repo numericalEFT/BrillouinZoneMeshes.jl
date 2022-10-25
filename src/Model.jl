@@ -138,7 +138,6 @@ function standard_brillouin(;
     G_vector=nothing)
 
     DIM = size(lattice, 1)
-    T = dtype
 
     # Atoms and terms
     if length(atoms) != length(positions)
@@ -155,6 +154,10 @@ function standard_brillouin(;
         no_idealize=!correct_symmetry)
 
     _lattice = Matrix{dtype}(std_cell.lattice)
+    _types = std_cell.types
+    # _atoms = [findall(Ref(pot) .== _types) for pot in Set(_types)]
+    # println(_atoms)
+    _atoms = Int.(_types)
     # println(std_cell.positions)
     _positions = Vector{dtype}.(std_cell.positions)
     # magnetic_moments = normalize_magnetic_moment.(std_cell.magmoms)
@@ -162,8 +165,9 @@ function standard_brillouin(;
     for i in 1:DIM
         lattice[1:DIM, 1:DIM] .= _lattice[1:DIM, 1:DIM]
     end
+    positions = []
     for i in eachindex(_positions)
-        positions[i][1:DIM] .= _positions[i][1:DIM]
+        push!(positions, _positions[i][1:DIM])
     end
     __lattice, __positions = PointSymmetry._make3D(lattice, positions)
     @assert __lattice ≈ _lattice
@@ -171,7 +175,7 @@ function standard_brillouin(;
 
     return Brillouin(;
         lattice=lattice,
-        atoms=atoms,
+        atoms=_atoms,
         positions=positions,
         G_vector=G_vector)
 end
