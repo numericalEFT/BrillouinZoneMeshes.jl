@@ -6,6 +6,7 @@ using ..LinearAlgebra
 using ..BaryCheb
 using ..AbstractMeshes
 using ..Model
+using ..Model: get_latvec
 
 export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, UMesh
 
@@ -101,6 +102,7 @@ end
 AbstractMeshes.volume(mesh::UMesh) = mesh.volume
 AbstractMeshes.volume(mesh::UMesh, i) = mesh.volume / length(mesh)
 
+Model.get_latvec(mesh::UMesh, I::Int) = Model.get_latvec(mesh.lattice, I)
 #####################################
 # LEGACY CODE BELOW
 #####################################

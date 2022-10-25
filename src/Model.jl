@@ -5,7 +5,7 @@ using ..LinearAlgebra
 import ..showfieldln
 using Printf
 
-export Brillouin
+export Brillouin, get_latvec
 
 """
 Compute the inverse of the lattice. Require lattice to be square matrix
@@ -22,6 +22,14 @@ that G ⋅ R ∈ 2π ℤ for all R in the lattice.
 """
 function _compute_recip_lattice(lattice::Matrix{T}) where {T}
     return 2T(π) * _compute_inverse_lattice(lattice)
+end
+
+"""
+Return I-th lattice vector of lattice.
+Lattice vectors are specified column-wise in lattice::Matrix.
+"""
+function get_latvec(lattice::Matrix, I::Int)
+    return view(lattice, :, I)
 end
 
 """
@@ -68,7 +76,6 @@ struct Brillouin{T,DIM}
     G_vector::Vector{SVector{DIM,Int}}
 end
 
-
 function Brillouin(;
     lattice::Matrix{T},
     atoms::AbstractVector{Int}=Vector{Int}([]),
@@ -101,6 +108,14 @@ function Brillouin(;
     end
 
     return Brillouin{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, unit_cell_volume, recip_cell_volume, atoms, positions, atom_groups, G_vector)
+end
+
+function get_latvec(br::Brillouin, I::Int; isrecip=true)
+    if isrecip
+        return get_latvec(br.recip_lattice, I)
+    else
+        return get_latvec(br.lattice, I)
+    end
 end
 
 # TODO: Add the following helper functions

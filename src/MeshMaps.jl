@@ -5,6 +5,7 @@ using ..AbstractMeshes
 using ..Model
 using ..TreeMeshes
 using ..BaseMesh
+using ..BZMeshes
 
 export MeshMap, ReducedBZMesh
 
@@ -22,6 +23,7 @@ struct MeshMap
     irreducible_indices::Vector{Int}
     map::Vector{Int}
     inv_map::Dict{Int,Vector{Int}}
+    inv_indices::Dict{Int,Int}
 
     function MeshMap(map::Vector{Int})
         irreducible_indices = Vector{Int}([])
@@ -34,13 +36,24 @@ struct MeshMap
                 push!(inv_map[ind], i)
             end
         end
-        return new(irreducible_indices, map, inv_map)
+        inv_indices = Dict{Int,Int}([])
+        for (i, irind) in enumerate(irreducible_indices)
+            push!(inv_indices, (irind => i))
+        end
+        return new(irreducible_indices, map, inv_map, inv_indices)
     end
 end
 
 # TODO: constructors that generate map for specific type of mesh and symmetry
 MeshMap(mesh::AbstractMesh) = error("Map reduce not defined for $(typeof(mesh))!")
 
+Base.length(mm::MeshMap) = length(mm.irreducible_indices)
+Base.size(mm::MeshMap) = (length(mm),)
+Base.getindex(mm::MeshMap, I::Int) = mm.map[I]
+
+# locate corresponding index in reduced mesh for index of full mesh
+AbstractMeshes.locate(mm::MeshMap, I::Int) = mm.inv_indices[mm.map[I]]
+_foldnumber(mm::MeshMap, I::Int) = length(mm.inv_map[I])
 
 ## TODO: 1st step: symmetry reduce for M-P mesh(centered uniform mesh)
 
@@ -59,9 +72,18 @@ struct ReducedBZMesh{T,DIM,MT<:AbstractMesh{T,DIM}} <: AbstractMesh{T,DIM}
     meshmap::MeshMap
 end
 
+# length and size return REDUCED length of mesh
+Base.length(mesh::ReducedBZMesh) = length(mesh.meshmap)
+Base.size(mesh::ReducedBZMesh) = size(mesh.meshmap)
 
+# linear index only go through REDUCED points
+Base.getindex(mesh::ReducedBZMesh, I::Int) = mesh.mesh[mesh.meshmap.irreducible_indices[I]]
+# cartesian index return points of FULL mesh
+Base.getindex(mesh::ReducedBZMesh, inds...) = Base.getindex(mesh.mesh, inds...)
 
-
+AbstractMeshes.locate(mesh::ReducedBZMesh, x) = locate(mesh.meshmap, locate(mesh.mesh, x))
+AbstractMeshes.volume(mesh::ReducedBZMesh) = volume(mesh.mesh)
+AbstractMeshes.volume(mesh::ReducedBZMesh, I::Int) = volume(mesh.mesh, mesh.meshmap.irreducible_indices[I]) * _foldnumber(mesh.meshmap, mesh.meshmap.irreducible_indices[I])
 
 ######################################################
 ## LEGACY CODE BELOW
