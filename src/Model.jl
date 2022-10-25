@@ -31,6 +31,9 @@ end
 Container storing information of Brillouin zone. Including lattice vector, reciprocal lattice vector and their inverse;
 volume of unit cell and reciprocal unit cell; G vectors for extended Brillouin zone.
 
+Lattice parameters `lattice` are given by a ``3×3`` matrix with floating point values,
+where ``𝐚``, ``𝐛``, and ``𝐜`` are given as __columns__.
+
 # Parameters:
 - `T`: type of data
 - `DIM`: dimension of the Brillouin zone
@@ -40,8 +43,14 @@ volume of unit cell and reciprocal unit cell; G vectors for extended Brillouin z
 - `recip_lattice`: reciprocal lattice vector
 - `inv_lattice`: inverse of lattice vector
 - `inv_recip_lattice`: inverse of reciprocal lattice vector
+
 - `unit_cell_volume`: volume of lattice unit cell
 - `recip_cell_volume`: volume of reciprocal lattice unit cell
+
+- `atoms`: list of integers representing atom types
+- `positions`:  # positions[i] is the location of atoms[i] in fract. coords
+- `atom_groups``:  atoms[i] == atoms[j] for all i, j in atom_group[α]
+
 - `G_vector`: a list of G vectors in extended Brillouin zone
 """
 struct Brillouin{T,DIM}
