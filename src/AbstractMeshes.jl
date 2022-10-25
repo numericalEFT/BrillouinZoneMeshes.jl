@@ -4,7 +4,7 @@ module AbstractMeshes
 
 using ..StaticArrays
 
-export AbstractMesh, locate, volume
+export AbstractMesh, locate, volume, fractional_coordinates
 
 # the return value of AbstractMesh should be a SVector{T,DIM}
 abstract type AbstractMesh{T,DIM} <: AbstractArray{SVector{T,DIM},DIM} end
@@ -51,5 +51,8 @@ end
     inds = :($inds..., $quotient + 1)
     return :(SVector{DIM,Int}($inds))
 end
+
+# optional functions
+fractional_coordinates(mesh::AbstractMesh, I::Int) = error("not implemented!")
 
 end

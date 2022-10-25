@@ -46,7 +46,7 @@ export PolarMeshes
 include("MeshMaps.jl")
 using .MeshMaps
 export MeshMaps
-export SymMap, MappedData
+export SymMap, MappedData, MeshMap, ReducedBZMesh
 
 include("meshes/reduced_uiniform_map.jl")
 
