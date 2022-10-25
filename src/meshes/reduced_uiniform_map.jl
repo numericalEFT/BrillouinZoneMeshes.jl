@@ -105,6 +105,11 @@ function uniform_meshmap(mesh::BZMeshes.UniformBZMesh{T,DIM},
     # println("sym before: ", length(symmetries))
     # return kcoords_mp
 
+    #TODO: It is probably makes sense to use the symmetry operations to reduce the number of kpoints
+    # Filter those symmetry operations that preserve the MP grid
+    # kcoords_mp = kgrid_monkhorst_pack(kgrid_size; kshift)
+    # symmetries = symmetries_preserving_kgrid(symmetries, kcoords_mp
+
     Ws = [symop.W for symop in symmetries]
     _, mapping, grid = PointSymmetry.spglib_get_stabilized_reciprocal_mesh(
         kgrid_size, Ws; is_shift, is_time_reversal=false
