@@ -20,6 +20,7 @@ include("testcase.jl")
         include("TreeMeshes.jl")
         include("mc.jl")
         include("spglib.jl")
+        include("UniformMeshMap.jl")
     else
         include(ARGS[1])
     end

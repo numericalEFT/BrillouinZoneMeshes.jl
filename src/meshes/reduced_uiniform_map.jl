@@ -95,6 +95,7 @@ end
 
 function uniform_meshmap(mesh::BZMeshes.UniformBZMesh{T,DIM},
     symmetry::Bool=true;
+    is_time_reversal::Bool=true,
     tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE
 ) where {T,DIM}
     # Determine symmetry operations to use
@@ -112,7 +113,7 @@ function uniform_meshmap(mesh::BZMeshes.UniformBZMesh{T,DIM},
     _kgrid_size = ones(Int, 3)
     _kgrid_size[1:DIM] .= kgrid_size[1:DIM]
     is_shift = [0, 0, 0]
-    is_shift[1:DIM] .= Int.(kshift)
+    is_shift[1:DIM] .= Int.(kshift * 2)
     # kcoords_mp = [mesh.mesh.inv_lattice * mesh[k] for k in 1:length(mesh)]
     # println("sym before: ", length(symmetries))
     # return kcoords_mp
@@ -120,12 +121,29 @@ function uniform_meshmap(mesh::BZMeshes.UniformBZMesh{T,DIM},
     #TODO: It is probably makes sense to use the symmetry operations to reduce the number of kpoints
     # Filter those symmetry operations that preserve the MP grid
     # kcoords_mp = kgrid_monkhorst_pack(kgrid_size; kshift)
-    # symmetries = symmetries_preserving_kgrid(symmetries, kcoords_mp
+    # symmetries = symmetries_preserving_kgrid(symmetries, kcoords_mp)
 
-    Ws = [symop.W for symop in symmetries]
-    _, mapping, grid = PointSymmetry.spglib_get_stabilized_reciprocal_mesh(
-        kgrid_size, Ws; is_shift, is_time_reversal=false
-    )
+    # Ws = [symop.W for symop in symmetries]
+    # _, mapping, grid = PointSymmetry.spglib_get_stabilized_reciprocal_mesh(
+    #     kgrid_size, Ws; is_shift, is_time_reversal=false
+    # )
+
+    lat, atoms, pos, mag_moments = PointSymmetry.spglib_standardize_cell(mesh.br, primitive=true)
+    # lat, atoms, pos, mag_moments = mesh.br.lattice, mesh.br.atoms, mesh.br.positions, []
+
+    cell, _ = PointSymmetry.spglib_cell(lat, atoms, pos, mag_moments)
+    # println(cell)
+    ngrid, mapping, _grid = PointSymmetry.get_ir_reciprocal_mesh(cell, _kgrid_size, is_shift;
+        is_time_reversal=is_time_reversal, symprec=PointSymmetry.SYMMETRY_TOLERANCE)
+
+    _grid = Int.(_grid)
+    grid = Vector{Vector{Int}}()
+    for i in 1:length(mesh)
+        k = _grid[3*(i-1)+1:3*i]
+        # println(k)
+        push!(grid, k)
+    end
+    # println(grid)
 
     # if size = [4, 4, 4]
     # grid = 
@@ -140,20 +158,23 @@ function uniform_meshmap(mesh::BZMeshes.UniformBZMesh{T,DIM},
     #  ....      ]
     @assert grid[2][1] - grid[1][1] == 1 "expect the first index to iterate first"
 
-    mapping .+= 1
+    # mapping .+= 1
     kidx_unique = unique(mapping)
 
     # Convert irreducible k-points to DFTK conventions
     kirreds = [(is_shift ./ 2 .+ grid[ik]) ./ _kgrid_size for ik in kidx_unique]
+    # println(kirreds)
 
     # Find the indices of the corresponding reducible k-points in `grid`, which one of the
     # irreducible k-points in `kirreds` generates.
     k_all_reducible = [findall(isequal(elem), mapping) for elem in kidx_unique]
+    # println(k_all_reducible)
 
     # Number of reducible k-points represented by the irreducible k-point `kirreds[ik]`
     n_equivalent_k = length.(k_all_reducible)
     @assert sum(n_equivalent_k) == prod(kgrid_size)
     kweights = n_equivalent_k / sum(n_equivalent_k)
+    # println("kweights: ", kweights)
 
     # This loop checks for reducible k-points, which could not be mapped to any irreducible
     # k-point yet even though spglib claims this can be done.
@@ -176,16 +197,17 @@ function uniform_meshmap(mesh::BZMeshes.UniformBZMesh{T,DIM},
         end
     end
 
+    new_map = zeros(Int, length(mesh))
+    for (i, m) in enumerate(mapping)
+        grid_address = grid[i]
+        mapped_grid_address = grid[m]
+        kidx = spglib_grid_address_to_index(mesh.mesh, grid_address)
+        mapped_kidx = spglib_grid_address_to_index(mesh.mesh, mapped_grid_address)
+        new_map[kidx] = mapped_kidx
+    end
+
     # return kirreds, mapping, k_all_reducible
-    inv_kmap = Dict{Int,Vector{Int}}()
-    for g in k_all_reducible
-        inv_kmap[g[1]] = g
-        # @assert g[1] in kidx_unique
-    end
-    for k in kidx_unique
-        @assert haskey(inv_kmap, k)
-    end
-    return MeshMaps.MeshMap(kidx_unique, mapping, inv_kmap), grid, mapping
+    return MeshMaps.MeshMap(new_map)
 
     # kcoords, kweights, symmetries = PointSymmetry.bzmesh_ir_wedge(_kgrid_size, symmetries; kshift=_kshift)
     # all_kcoords = PointSymmetry.unfold_kcoords(kcoords, symmetries)

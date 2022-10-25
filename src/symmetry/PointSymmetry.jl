@@ -3,6 +3,9 @@ using spglib_jll
 using LinearAlgebra
 using Printf
 using StaticArrays
+using Spglib
+export get_ir_reciprocal_mesh
+
 
 # Deduce the value type (floating-point type for storing plain an static data
 # in Model and PlaneWaveBasis) from e.g. an interval or a dual type.
