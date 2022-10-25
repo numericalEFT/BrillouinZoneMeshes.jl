@@ -18,17 +18,30 @@ struct UMesh{T,DIM} <: AbstractMesh{T,DIM}
     shift::SVector{DIM,Rational}
 end
 
+# UMesh(;
+#     br::Brillouin{T,DIM},
+#     origin::Real,
+#     size,
+#     shift::Real) where {T,DIM} = UMesh{T,DIM}(
+#     br.recip_lattice,
+#     br.inv_recip_lattice,
+#     br.recip_cell_volume,
+#     SVector{DIM,T}(br.recip_lattice * ones(T, DIM) .* origin),
+#     size,
+#     SVector{DIM,Rational}(shift .* ones(Int, DIM))
+# )
+
 UMesh(;
     br::Brillouin{T,DIM},
-    origin::Real,
+    origin,
     size,
-    shift::Real) where {T,DIM} = UMesh{T,DIM}(
+    shift) where {T,DIM} = UMesh{T,DIM}(
     br.recip_lattice,
     br.inv_recip_lattice,
     br.recip_cell_volume,
-    SVector{DIM,T}(br.recip_lattice * ones(T, DIM) .* origin),
+    SVector{DIM,T}(br.recip_lattice * origin),
     size,
-    SVector{DIM,Rational}(shift .* ones(Int, DIM))
+    SVector{DIM,Rational}(shift)
 )
 
 Base.length(mesh::UMesh) = prod(mesh.size)
@@ -37,6 +50,16 @@ Base.size(mesh::UMesh, I) = mesh.size[I]
 
 function Base.show(io::IO, mesh::UMesh)
     println("UMesh with $(length(mesh)) mesh points")
+end
+
+function AbstractMeshes.fractional_coordinates(mesh::UMesh{T,DIM}, I::Int) where {T,DIM}
+    n = SVector{DIM,Int}(ind2inds(mesh.size, I))
+    return (n .- 1 .+ mesh.shift) ./ mesh.size
+end
+
+function AbstractMeshes.fractional_coordinates(mesh::UMesh{T,DIM}, x::AbstractVector) where {T,DIM}
+    displacement = SVector{DIM,T}(x)
+    return (mesh.inv_lattice * displacement)
 end
 
 function Base.getindex(mesh::UMesh{T,DIM}, inds...) where {T,DIM}
@@ -48,25 +71,35 @@ function Base.getindex(mesh::UMesh, I::Int)
     return Base.getindex(mesh, _ind2inds(mesh.size, I)...)
 end
 
+
+function cycling_floor(I, N)
+    ifloor = (floor(Int, I) + N) % N
+    if ifloor == 0
+        return N
+    else
+        return ifloor
+    end
+end
+
 function AbstractMeshes.locate(mesh::UMesh{T,DIM}, x) where {T,DIM}
     # find index of nearest grid point to the point
-    displacement = SVector{DIM,T}(x) - mesh.origin
-    inds = (mesh.inv_lattice * displacement) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
+    svx = SVector{DIM,T}(x)
+    inds = fractional_coordinates(mesh, svx - mesh.origin) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
     indexall = 1
     # println((mesh.invlatvec * displacement))
     # println(inds)
     factor = 1
-    indexall += (_indfloor(inds[1], mesh.size[1]; edgeshift=0) - 1) * factor
+    # indexall += (_indfloor(inds[1], mesh.size[1]; edgeshift=0) - 1) * factor
+    indexall += (cycling_floor(inds[1], mesh.size[1]) - 1) * factor
     for i in 2:DIM
         factor *= mesh.size[i-1]
-        indexall += (_indfloor(inds[i], mesh.size[i]; edgeshift=0) - 1) * factor
+        indexall += (cycling_floor(inds[i], mesh.size[i]) - 1) * factor
     end
 
     return indexall
 end
 AbstractMeshes.volume(mesh::UMesh) = mesh.volume
 AbstractMeshes.volume(mesh::UMesh, i) = mesh.volume / length(mesh)
-
 
 #####################################
 # LEGACY CODE BELOW

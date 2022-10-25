@@ -31,7 +31,8 @@ using .BZMeshes
 export BZMeshes
 export UniformBZMesh
 
-include("symmetry/UniformKMeshSym.jl")
+include("symmetry/PointSymmetry.jl")
+export PointSymmetry
 
 include("TreeMeshes.jl")
 using .TreeMeshes
@@ -45,9 +46,9 @@ export PolarMeshes
 include("MeshMaps.jl")
 using .MeshMaps
 export MeshMaps
-export SymMap, MappedData
+export SymMap, MappedData, MeshMap, ReducedBZMesh
 
-include("meshes/reduced_uiniform_map.jl")
+include("meshes/reduced_uniform_map.jl")
 
 include("Visualization.jl")
 using .Visualization

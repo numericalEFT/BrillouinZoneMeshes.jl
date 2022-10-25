@@ -55,19 +55,26 @@ function bzmesh_ir_wedge(kgrid_size, symmetries; kshift=[0, 0, 0])
         convert(Int, 2 * ks)
     end
 
+    println("ksym", length(symmetries))
     # Filter those symmetry operations that preserve the MP grid
     kcoords_mp = kgrid_monkhorst_pack(kgrid_size; kshift)
     symmetries = symmetries_preserving_kgrid(symmetries, kcoords_mp)
 
+    println("after ksym", length(symmetries))
+
     # Give the remaining symmetries to spglib to compute an irreducible k-point mesh
     # TODO implement time-reversal symmetry and turn the flag to true
     Ws = [symop.W for symop in symmetries]
+    println("sym: ", length(Ws))
+    println("kgrid: ", kgrid_size)
     _, mapping, grid = spglib_get_stabilized_reciprocal_mesh(
         kgrid_size, Ws; is_shift, is_time_reversal=false
     )
+    println("grid ($(length(grid)))\n", grid)
     # Convert irreducible k-points to DFTK conventions
     kgrid_size = Vec3{Int}(kgrid_size)
     kirreds = [(kshift .+ grid[ik+1]) .// kgrid_size for ik in unique(mapping)]
+    println("kirreds\n", kirreds)
     kirreds = normalize_kpoint_coordinate.(kirreds)
 
     # Find the indices of the corresponding reducible k-points in `grid`, which one of the
