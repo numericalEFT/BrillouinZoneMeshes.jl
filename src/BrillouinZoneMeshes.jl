@@ -48,7 +48,7 @@ using .MeshMaps
 export MeshMaps
 export SymMap, MappedData, MeshMap, ReducedBZMesh
 
-include("meshes/reduced_uiniform_map.jl")
+include("meshes/reduced_uniform_map.jl")
 
 include("Visualization.jl")
 using .Visualization
