@@ -105,6 +105,8 @@ AbstractMeshes.volume(mesh::UMesh, i) = mesh.volume / length(mesh)
 
 Model.get_latvec(mesh::UMesh, I::Int) = Model.get_latvec(mesh.lattice, I)
 
+# equal length first. 
+# CompositeMesh without equal length makes linear indexing difficult
 struct CompositeMesh{T,DIM,MT,GT} <: AbstractMesh{T,DIM}
     # composite mesh constructed upon a mesh and a set of grids
     # the dimension represented by the grids becomes the first dimension
@@ -112,25 +114,53 @@ struct CompositeMesh{T,DIM,MT,GT} <: AbstractMesh{T,DIM}
     # the mesh point at (i,j,k...) will be (mesh.grids[j,k...][i], mesh.mesh[j,k...]...)
     mesh::MT
     grids::Vector{GT}
+    size::NTuple{DIM,Int}
 end
 
 function CompositeMesh(mesh::AbstractMesh{T,DIM}, grids::Vector{GT}) where {T,DIM,GT}
     MT = typeof(mesh)
+    # N of element in grids should match length of mesh
     @assert length(mesh) == length(grids)
-    return CompositeMesh{T,DIM + 1,MT,GT}(mesh, grids)
+    # length of all grids should be the same
+    @assert length.(grids) == ones(length(grids)) .* length(grids[1])
+    size = (length(grids[1]), size(mesh)...)
+    return CompositeMesh{T,DIM + 1,MT,GT}(mesh, grids, size)
 end
 
 function CompositeMesh(mesh::AbstractGrid{T}, grids::Vector{GT}) where {T,DIM,GT}
     MT = typeof(mesh)
     @assert length(mesh) == length(grids)
-    return CompositeMesh{T,2,MT,GT}(mesh, grids)
+    @assert length.(grids) == ones(length(grids)) .* length(grids[1])
+    msize = (length(grids[1]), size(mesh)...)
+    return CompositeMesh{T,2,MT,GT}(mesh, grids, msize)
 end
 
-Base.length(mesh::CompositeMesh) = sum(length.(mesh.grids))
-Base.size(mesh::CompositeMesh) = (length(mesh),)
+Base.length(mesh::CompositeMesh) = prod(mesh.size)
+Base.size(mesh::CompositeMesh) = mesh.size
+Base.size(mesh::CompositeMesh, I::Int) = mesh.size[I]
 
-Base.getindex(mesh::CompositeMesh{T,DIM,MT,GT}, i, j) where {T,DIM,MT,GT} = SVector{DIM,T}([mesh.grids[j][i], mesh.mesh[j]...])
+function Base.getindex(mesh::CompositeMesh{T,DIM,MT,GT}, inds...) where {T,DIM,MT,GT}
+    i1, I = inds[1], AbstractMeshes._inds2ind(size(mesh.mesh), inds[2:end]...)
+    return SVector{DIM,T}([mesh.grids[I][i1], mesh.mesh[I]...])
+end
 
+function Base.getindex(mesh::CompositeMesh, I::Int)
+    return Base.getindex(mesh, AbstractMeshes._ind2inds(mesh.size, I)...)
+end
+
+function AbstractMeshes.locate(mesh::CompositeMesh, x)
+    I = AbstractMeshes.locate(mesh.mesh, x[2:end])
+    i1 = AbstractMeshes.locate(mesh.grids[I], x[1])
+    return i1 + (I - 1) * size(mesh)[1]
+end
+
+function AbstractMeshes.volume(mesh::CompositeMesh)
+    return prod(AbstractMeshes.volume(mesh.mesh, I) * AbstractMeshes.volume(mesh.grids[I]) for I in 1:length(mesh.mesh))
+end
+function AbstractMeshes.volume(mesh::CompositeMesh, I::Int)
+    i1, I2 = I % size(mesh)[1], I ÷ size(mesh)[1] + 1
+    return AbstractMeshes.volume(mesh.mesh, I2) * AbstraceMeshes.volume(mesh.grids[I], i1)
+end
 #####################################
 # LEGACY CODE BELOW
 #####################################

@@ -3,6 +3,7 @@ module AbstractMeshes
 # define interface of AbstractMesh
 
 using ..StaticArrays
+using ..CompositeGrids
 
 export AbstractMesh, locate, volume, fractional_coordinates
 
@@ -55,4 +56,8 @@ end
 # optional functions
 fractional_coordinates(mesh::AbstractMesh, I::Int) = error("not implemented!")
 
+# wrapper of external functions from CompositeGrids
+locate(grid::AbstractGrid, x) = CompositeGrids.Interp.locate(grid, x[1])
+volume(grid::AbstractGrid) = CompositeGrids.Interp.volume(grid)
+volume(grid::AbstractGrid, I) = CompositeGrids.Interp.volume(grid, I)
 end

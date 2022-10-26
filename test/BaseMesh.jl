@@ -72,6 +72,7 @@
         @testset "Construct CompositeMesh" begin
             using BrillouinZoneMeshes.CompositeGrids
             using BrillouinZoneMeshes.BaseMesh
+            using BrillouinZoneMeshes.AbstractMeshes
 
             a, b = 0.8, 1.2
 
@@ -98,6 +99,12 @@
                     @test p[2] == cm.mesh[j]
                 end
             end
+            vol = 0.0
+            for (pi, p) in enumerate(cm)
+                @test pi == AbstractMeshes.locate(cm, p)
+                vol += AbstractMeshes.volume(cm, pi)
+            end
+            @test vol ≈ AbstractMeshes.volume(cm)
         end
     end
 
