@@ -91,6 +91,13 @@
             cm = CompositeMesh(theta, grids)
             println([cm.grids[i].panel[2] for i in 1:length(theta)])
 
+            for j in 1:length(cm.mesh)
+                for i in 1:length(cm.grids[j])
+                    p = cm[i, j]
+                    @test p[1] == cm.grids[j][i]
+                    @test p[2] == cm.mesh[j]
+                end
+            end
         end
     end
 

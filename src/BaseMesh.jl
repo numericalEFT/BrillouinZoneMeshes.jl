@@ -116,14 +116,20 @@ end
 
 function CompositeMesh(mesh::AbstractMesh{T,DIM}, grids::Vector{GT}) where {T,DIM,GT}
     MT = typeof(mesh)
+    @assert length(mesh) == length(grids)
     return CompositeMesh{T,DIM + 1,MT,GT}(mesh, grids)
 end
 
 function CompositeMesh(mesh::AbstractGrid{T}, grids::Vector{GT}) where {T,DIM,GT}
     MT = typeof(mesh)
+    @assert length(mesh) == length(grids)
     return CompositeMesh{T,2,MT,GT}(mesh, grids)
 end
 
+Base.length(mesh::CompositeMesh) = sum(length.(mesh.grids))
+Base.size(mesh::CompositeMesh) = (length(mesh),)
+
+Base.getindex(mesh::CompositeMesh{T,DIM,MT,GT}, i, j) where {T,DIM,MT,GT} = SVector{DIM,T}([mesh.grids[j][i], mesh.mesh[j]...])
 
 #####################################
 # LEGACY CODE BELOW
