@@ -68,6 +68,31 @@
         end
     end
 
+    @testset "CompositeMesh" begin
+        @testset "Construct CompositeMesh" begin
+            using BrillouinZoneMeshes.CompositeGrids
+            using BrillouinZoneMeshes.BaseMesh
+
+            a, b = 0.8, 1.2
+
+            N, M = 3, 2
+            # theta grid dense around 0 and π
+            theta = CompositeGrid.LogDensedGrid(
+                :cheb,
+                [0.0, 2π],
+                [0.0, π, 2π],
+                N,
+                0.1,
+                M
+            )
+            println(theta)
+            grids = [CompositeGrid.LogDensedGrid(:cheb, [0.0, 2.0], [sqrt(a * cos(θ)^2 + b * sin(θ)^2),], N, 0.1, M) for θ in theta]
+
+            cm = CompositeMesh(theta, grids)
+            println([cm.grids[i].panel[2] for i in 1:length(theta)])
+
+        end
+    end
 
     function dispersion(k)
         me = 0.5

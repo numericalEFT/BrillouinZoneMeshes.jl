@@ -2,13 +2,14 @@ module BaseMesh
 
 using ..StaticArrays
 using ..LinearAlgebra
+using ..CompositeGrids
 
 using ..BaryCheb
 using ..AbstractMeshes
 using ..Model
 using ..Model: get_latvec
 
-export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, UMesh
+export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, UMesh, CompositeMesh
 
 struct UMesh{T,DIM} <: AbstractMesh{T,DIM}
     lattice::Matrix{T}
@@ -103,6 +104,27 @@ AbstractMeshes.volume(mesh::UMesh) = mesh.volume
 AbstractMeshes.volume(mesh::UMesh, i) = mesh.volume / length(mesh)
 
 Model.get_latvec(mesh::UMesh, I::Int) = Model.get_latvec(mesh.lattice, I)
+
+struct CompositeMesh{T,DIM,MT,GT} <: AbstractMesh{T,DIM}
+    # composite mesh constructed upon a mesh and a set of grids
+    # the dimension represented by the grids becomes the first dimension
+    # while other dimensions are represented by mesh
+    # the mesh point at (i,j,k...) will be (mesh.grids[j,k...][i], mesh.mesh[j,k...]...)
+    mesh::MT
+    grids::Vector{GT}
+end
+
+function CompositeMesh(mesh::AbstractMesh{T,DIM}, grids::Vector{GT}) where {T,DIM,GT}
+    MT = typeof(mesh)
+    return CompositeMesh{T,DIM + 1,MT,GT}(mesh, grids)
+end
+
+function CompositeMesh(mesh::AbstractGrid{T}, grids::Vector{GT}) where {T,DIM,GT}
+    MT = typeof(mesh)
+    return CompositeMesh{T,2,MT,GT}(mesh, grids)
+end
+
+
 #####################################
 # LEGACY CODE BELOW
 #####################################
