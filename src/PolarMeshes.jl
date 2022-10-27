@@ -1,22 +1,26 @@
 
 # this file is included in BZMeshes
+using ..CoordinateTransformations
 
 export PolarMesh, AngleMesh
 
-struct AngleMesh{DIM,AT} <: AbstractMesh{Float64,DIM}
-    angle_grids::AT # AT is supposed to be a Tuple or Vector of angle grids
-    dims::NTuple{DIM,Int}
+const _polar2cart = CartesianFromPolar()
+const _spherical2cart = CartesianFromSpherical()
+const _cart2polar = PolarFromCartesian()
+const _cart2spherical = SphericalFromCartesian()
+
+struct PolarMesh{T,DIM,MT} <: AbstractMesh{T,DIM}
+    br::Brillouin{T,DIM}
+    mesh::MT # actual mesh. assume order as (r,θ,ϕ...)
 end
 
-Base.length(mesh::AngleMesh) = prod(mesh.dims)
-Base.size(mesh::AngleMesh) = mesh.dims
-Base.size(mesh::AngleMesh, I::Int) = mesh.dims[I]
+Base.length(mesh::PolarMesh) = length(mesh.mesh)
+Base.size(mesh::PolarMesh) = size(mesh.mesh)
+Base.size(mesh::PolarMesh, I::Int) = size(mesh.mesh, I)
 
-function Base.getindex(mesh::AngleMesh{DIM,AT}, inds...) where {DIM,AT}
+function Base.getindex(mesh::PolarMesh{T,2,MT}, inds...) where {T,MT}
+    return _polar2cart(Polar(getindex(mesh.mesh, inds...)))
 end
-
-struct PolarMesh{DIM,RG} <: AbstractMesh{Float64,DIM}
-    radial_grids::Vector{RG}
-    angle_mesh::AngleMesh
+function Base.getindex(mesh::PolarMesh{T,3,MT}, inds...) where {T,MT}
+    return _spherical2cart(Polar(getindex(mesh.mesh, inds...)))
 end
-

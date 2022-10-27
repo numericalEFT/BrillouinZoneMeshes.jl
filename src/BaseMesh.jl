@@ -55,7 +55,7 @@ function Base.show(io::IO, mesh::UMesh)
 end
 
 function AbstractMeshes.fractional_coordinates(mesh::UMesh{T,DIM}, I::Int) where {T,DIM}
-    n = SVector{DIM,Int}(ind2inds(mesh.size, I))
+    n = SVector{DIM,Int}(_ind2inds(mesh.size, I))
     return (n .- 1 .+ mesh.shift) ./ mesh.size
 end
 
