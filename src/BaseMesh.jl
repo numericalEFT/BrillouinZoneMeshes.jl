@@ -127,7 +127,7 @@ function CompositeMesh(mesh::AbstractMesh{T,DIM}, grids::Vector{GT}) where {T,DI
     return CompositeMesh{T,DIM + 1,MT,GT}(mesh, grids, size)
 end
 
-function CompositeMesh(mesh::AbstractGrid{T}, grids::Vector{GT}) where {T,DIM,GT}
+function CompositeMesh(mesh::AbstractGrid{T}, grids::Vector{GT}) where {T,GT}
     MT = typeof(mesh)
     @assert length(mesh) == length(grids)
     @assert length.(grids) == ones(length(grids)) .* length(grids[1])
@@ -155,12 +155,13 @@ function AbstractMeshes.locate(mesh::CompositeMesh, x)
 end
 
 function AbstractMeshes.volume(mesh::CompositeMesh)
-    return prod(AbstractMeshes.volume(mesh.mesh, I) * AbstractMeshes.volume(mesh.grids[I]) for I in 1:length(mesh.mesh))
+    return sum(AbstractMeshes.volume(mesh.mesh, I) * AbstractMeshes.volume(mesh.grids[I]) for I in 1:length(mesh.mesh))
 end
 function AbstractMeshes.volume(mesh::CompositeMesh, I::Int)
-    i1, I2 = I % size(mesh)[1], I ÷ size(mesh)[1] + 1
-    return AbstractMeshes.volume(mesh.mesh, I2) * AbstraceMeshes.volume(mesh.grids[I], i1)
+    i1, I2 = (I - 1) % size(mesh)[1] + 1, (I - 1) ÷ size(mesh)[1] + 1
+    return AbstractMeshes.volume(mesh.mesh, I2) * AbstractMeshes.volume(mesh.grids[I2], i1)
 end
+
 #####################################
 # LEGACY CODE BELOW
 #####################################

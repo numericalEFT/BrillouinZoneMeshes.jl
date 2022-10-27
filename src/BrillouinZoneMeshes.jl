@@ -6,6 +6,7 @@ using Statistics
 using LinearAlgebra
 using CompositeGrids
 using Printf
+using CoordinateTransformations
 
 # Write your package code here.
 BaryCheb = CompositeGrids.BaryChebTools
@@ -39,10 +40,6 @@ include("TreeMeshes.jl")
 using .TreeMeshes
 export TreeMeshes
 export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency# , interp, integrate
-
-include("PolarMeshes.jl")
-using .PolarMeshes
-export PolarMeshes
 
 include("MeshMaps.jl")
 using .MeshMaps

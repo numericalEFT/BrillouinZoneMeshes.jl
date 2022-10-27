@@ -151,4 +151,6 @@ AbstractMeshes.volume(mesh::UniformBZMesh, i) = mesh.br.recip_cell_volume / leng
 
 Model.get_latvec(mesh::UniformBZMesh, I::Int) = Model.get_latvec(mesh.mesh, I)
 
+include("PolarMeshes.jl")
+
 end

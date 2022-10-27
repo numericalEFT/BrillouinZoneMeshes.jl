@@ -1,15 +1,7 @@
-module PolarMeshes
 
-using ..AbstractMeshes
-using ..Model
-using ..StaticArrays
-using ..CompositeGrids
-using ..BaseMesh
+# this file is included in BZMeshes
 
 export PolarMesh, AngleMesh
-
-_polar2cartesian(r, θ, ϕ) = SVector{3,Float}{r * sin(θ) * cos(ϕ),r * sin(θ) * sin(ϕ),r * cos(θ)}
-_polar2cartesian(r, θ) = SVector{2,Float}(r * cos(θ), r * sin(θ))
 
 struct AngleMesh{DIM,AT} <: AbstractMesh{Float64,DIM}
     angle_grids::AT # AT is supposed to be a Tuple or Vector of angle grids
@@ -28,4 +20,3 @@ struct PolarMesh{DIM,RG} <: AbstractMesh{Float64,DIM}
     angle_mesh::AngleMesh
 end
 
-end

@@ -91,7 +91,7 @@
 
             cm = CompositeMesh(theta, grids)
             println([cm.grids[i].panel[2] for i in 1:length(theta)])
-
+            println(size(cm))
             for j in 1:length(cm.mesh)
                 for i in 1:length(cm.grids[j])
                     p = cm[i, j]
@@ -101,6 +101,7 @@
             end
             vol = 0.0
             for (pi, p) in enumerate(cm)
+                # println(pi, p)
                 @test pi == AbstractMeshes.locate(cm, p)
                 vol += AbstractMeshes.volume(cm, pi)
             end
