@@ -8,12 +8,86 @@ using ..AbstractMeshes
 using ..Model
 using ..Model: get_latvec
 
+
 export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, UMesh
 
-struct UMesh{T,DIM} <: AbstractMesh{T,DIM}
+############## Abstract Uniform Mesh #################
+abstract type AbstractUniformMesh{T,DIM} <: AbstractMesh{T,DIM} end
+export AbstractUniformMesh
+export inv_lattice_vector, lattice_vector, cell_volume
+
+Base.length(mesh::AbstractUniformMesh) = prod(mesh.size)
+Base.size(mesh::AbstractUniformMesh) = mesh.size
+Base.size(mesh::AbstractUniformMesh, I) = mesh.size[I]
+
+function AbstractMeshes.fractional_coordinates(mesh::AbstractUniformMesh{T,DIM}, I::Int) where {T,DIM}
+    n = SVector{DIM,Int}(AbstractMeshes._ind2inds(mesh.size, I))
+    return (n .- 1 .+ mesh.shift) ./ mesh.size
+end
+
+function AbstractMeshes.fractional_coordinates(mesh::AbstractUniformMesh{T,DIM}, x::AbstractVector) where {T,DIM}
+    displacement = SVector{DIM,T}(x)
+    return (inv_lattice_vector(mesh) * displacement)
+end
+
+function Base.getindex(mesh::AbstractUniformMesh{T,DIM}, inds...) where {T,DIM}
+    n = SVector{DIM,Int}(inds)
+    return mesh.origin + lattice_vector(mesh) * ((n .- 1 .+ mesh.shift) ./ mesh.size)
+end
+
+function Base.getindex(mesh::AbstractUniformMesh, I::Int)
+    return Base.getindex(mesh, AbstractMeshes._ind2inds(mesh.size, I)...)
+end
+
+"""
+    function AbstractMeshes.locate(mesh::AbstractUniformMesh{T,DIM}, x) where {T,DIM}
+
+locate mesh point in mesh that is nearest to x. Useful for Monte-Carlo algorithm.
+Could also be used for zeroth order interpolation.
+
+# Parameters
+- `mesh`: aimed mesh
+- `x`: cartesian pos to locate
+"""
+function AbstractMeshes.locate(mesh::AbstractUniformMesh{T,DIM}, x) where {T,DIM}
+    # find index of nearest grid point to the point
+    svx = SVector{DIM,T}(x)
+    inds = fractional_coordinates(mesh, svx - mesh.origin) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
+    indexall = 1
+    # println((mesh.invlatvec * displacement))
+    # println(inds)
+    factor = 1
+    # indexall += (_indfloor(inds[1], mesh.size[1]; edgeshift=0) - 1) * factor
+    indexall += (cycling_floor(inds[1], mesh.size[1]) - 1) * factor
+    for i in 2:DIM
+        factor *= mesh.size[i-1]
+        indexall += (cycling_floor(inds[i], mesh.size[i]) - 1) * factor
+    end
+
+    return indexall
+end
+
+"""
+    function AbstractMeshes.volume(mesh::AbstractUniformMesh, i)
+
+volume represented by mesh point i. When i is omitted return volume of the whole mesh. 
+For M-P mesh it's always volume(mesh)/length(mesh), but for others things are more complecated.
+Here we assume periodic boundary condition so for all case it's the same.
+
+# Parameters:
+- `mesh`: mesh
+- `i`: index of mesh point, if ommited return volume of whole mesh
+"""
+AbstractMeshes.volume(mesh::AbstractUniformMesh) = cell_volume(mesh)
+AbstractMeshes.volume(mesh::AbstractUniformMesh, i) = cell_volume(mesh) / length(mesh)
+
+
+############## general purposed uniform mesh #################
+struct UMesh{T,DIM} <: AbstractUniformMesh{T,DIM}
     lattice::Matrix{T}
     inv_lattice::Matrix{T}
     cell_volume::T
+
     origin::SVector{DIM,T}
     size::NTuple{DIM,Int}
     shift::SVector{DIM,Rational}
@@ -45,33 +119,15 @@ UMesh(;
     SVector{DIM,Rational}(shift)
 )
 
-Base.length(mesh::UMesh) = prod(mesh.size)
-Base.size(mesh::UMesh) = mesh.size
-Base.size(mesh::UMesh, I) = mesh.size[I]
+lattice_vector(mesh::UMesh) = mesh.lattice
+inv_lattice_vector(mesh::UMesh) = mesh.inv_lattice
+lattice_vector(mesh::UMesh, i::Int) = get_latvec(mesh.lattice, i)
+inv_lattice_vector(mesh::UMesh, i::Int) = get_latvec(mesh.inv_lattice, i)
+cell_volume(mesh::UMesh) = mesh.cell_volume
 
 function Base.show(io::IO, mesh::UMesh)
     println("UMesh with $(length(mesh)) mesh points")
 end
-
-function AbstractMeshes.fractional_coordinates(mesh::UMesh{T,DIM}, I::Int) where {T,DIM}
-    n = SVector{DIM,Int}(ind2inds(mesh.size, I))
-    return (n .- 1 .+ mesh.shift) ./ mesh.size
-end
-
-function AbstractMeshes.fractional_coordinates(mesh::UMesh{T,DIM}, x::AbstractVector) where {T,DIM}
-    displacement = SVector{DIM,T}(x)
-    return (mesh.inv_lattice * displacement)
-end
-
-function Base.getindex(mesh::UMesh{T,DIM}, inds...) where {T,DIM}
-    n = SVector{DIM,Int}(inds)
-    return mesh.origin + mesh.lattice * ((n .- 1 .+ mesh.shift) ./ mesh.size)
-end
-
-function Base.getindex(mesh::UMesh, I::Int)
-    return Base.getindex(mesh, _ind2inds(mesh.size, I)...)
-end
-
 
 function cycling_floor(I, N)
     ifloor = (floor(Int, I) + N) % N
@@ -82,27 +138,6 @@ function cycling_floor(I, N)
     end
 end
 
-function AbstractMeshes.locate(mesh::UMesh{T,DIM}, x) where {T,DIM}
-    # find index of nearest grid point to the point
-    svx = SVector{DIM,T}(x)
-    inds = fractional_coordinates(mesh, svx - mesh.origin) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
-    indexall = 1
-    # println((mesh.invlatvec * displacement))
-    # println(inds)
-    factor = 1
-    # indexall += (_indfloor(inds[1], mesh.size[1]; edgeshift=0) - 1) * factor
-    indexall += (cycling_floor(inds[1], mesh.size[1]) - 1) * factor
-    for i in 2:DIM
-        factor *= mesh.size[i-1]
-        indexall += (cycling_floor(inds[i], mesh.size[i]) - 1) * factor
-    end
-
-    return indexall
-end
-AbstractMeshes.volume(mesh::UMesh) = mesh.volume
-AbstractMeshes.volume(mesh::UMesh, i) = mesh.volume / length(mesh)
-
-Model.get_latvec(mesh::UMesh, I::Int) = Model.get_latvec(mesh.lattice, I)
 #####################################
 # LEGACY CODE BELOW
 #####################################
