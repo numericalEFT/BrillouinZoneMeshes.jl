@@ -4,6 +4,7 @@ using ..StaticArrays
 using ..LinearAlgebra
 
 using ..AbstractMeshes
+using ..AbstractMeshes: _inds2ind, _ind2inds
 using ..Model
 using ..BaseMesh
 using ..MeshMaps

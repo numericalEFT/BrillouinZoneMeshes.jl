@@ -102,7 +102,7 @@
             theta = CompositeGrid.LogDensedGrid(
                 :cheb,
                 [-π, π],
-                [0.0, π, 2π],
+                [-π, 0, π],
                 N,
                 0.1,
                 M

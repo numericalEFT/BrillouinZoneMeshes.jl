@@ -10,7 +10,7 @@ using ..Model
 using ..Model: get_latvec
 
 
-export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, UMesh
+export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, UMesh, CompositeMesh
 
 ############## Abstract Uniform Mesh #################
 abstract type AbstractUniformMesh{T,DIM} <: AbstractMesh{T,DIM} end

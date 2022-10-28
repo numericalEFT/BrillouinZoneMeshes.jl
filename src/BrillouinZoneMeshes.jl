@@ -47,10 +47,6 @@ using .BZMeshes
 export BZMeshes
 export UniformBZMesh
 
-include("PolarMeshes.jl")
-using .PolarMeshes
-export PolarMeshes
-
 include("Visualization.jl")
 using .Visualization
 
