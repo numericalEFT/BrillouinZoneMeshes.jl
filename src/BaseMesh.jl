@@ -82,7 +82,6 @@ Here we assume periodic boundary condition so for all case it's the same.
 AbstractMeshes.volume(mesh::AbstractUniformMesh) = cell_volume(mesh)
 AbstractMeshes.volume(mesh::AbstractUniformMesh, i) = cell_volume(mesh) / length(mesh)
 
-
 ############## general purposed uniform mesh #################
 struct UMesh{T,DIM} <: AbstractUniformMesh{T,DIM}
     lattice::Matrix{T}
@@ -142,7 +141,7 @@ end
 
 # equal length first. 
 # CompositeMesh without equal length makes linear indexing difficult
-struct CompositeMesh{T,DIM,MT,GT} <: AbstractMesh{T,DIM}
+struct CompositeMesh{T,DIM,MT,GT<:AbstractGrid} <: AbstractMesh{T,DIM}
     # composite mesh constructed upon a mesh and a set of grids
     # the dimension represented by the grids becomes the first dimension
     # while other dimensions are represented by mesh

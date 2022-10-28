@@ -56,10 +56,14 @@
             br = BZMeshes.Brillouin(lattice=lattice)
 
             pm = PolarMesh(br, cm)
+            vol = 0.0
             for (i, p) in enumerate(pm)
                 @test p == BZMeshes._polar2cart(pm[Angular, i])
                 @test AbstractMeshes.locate(pm, p) == i
+                vol += AbstractMeshes.volume(pm, i)
             end
+            # grid is on a circle with r=2.0
+            @test vol ≈ 4π
         end
 
         @testset "3D PolarMesh" begin
@@ -95,10 +99,14 @@
             pm = PolarMesh(br, cm)
             println(typeof(size(pm)))
 
+            vol = 0.0
             for (i, p) in enumerate(pm)
                 @test p == BZMeshes._spherical2cart(pm[Angular, i])
                 @test AbstractMeshes.locate(pm, p) == i
+                vol += AbstractMeshes.volume(pm, i)
             end
+            # a ball with r=2.0
+            @test vol ≈ 32π / 3
         end
     end
 end
