@@ -187,6 +187,34 @@ function standard_brillouin(;
         G_vector=G_vector)
 end
 
+"""
+Default logic to determine the symmetry operations to be used in the model.
+"""
+function default_symmetries(model::Brillouin{T,DIM}
+    ; tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE) where {T,DIM}
+
+    lattice = zeros(T, 3, 3)
+    for i in 1:DIM
+        lattice[i, 1:DIM] = model.lattice[i, 1:DIM]
+    end
+    for i in DIM+1:3
+        lattice[i, i] = 1
+    end
+    positions = [zeros(T, 3) for i in 1:length(model.atoms)]
+    for ai in eachindex(model.atoms)
+        positions[ai][1:DIM] = model.positions[ai][1:DIM]
+    end
+    atoms = model.atoms
+
+    # Standard case from here on:
+    if length(positions) != length(atoms)
+        error("Length of atoms and positions vectors need to agree.")
+    end
+
+    return PointSymmetry.symmetry_operations(lattice, atoms, positions; tol_symmetry)
+end
+
+
 # TODO: Add the following helper functions
 # #=
 # There are two types of quantities, depending on how they transform under change of coordinates.

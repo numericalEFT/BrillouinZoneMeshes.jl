@@ -94,7 +94,7 @@ end
 end
 
 @testset "Spglib grid index test" begin
-    getidx(umesh, kidx) = BrillouinZoneMeshes.spglib_grid_address_to_index(umesh, kidx)
+    getidx(umesh, kidx) = BZMeshes.spglib_grid_address_to_index(umesh, kidx)
     function test(dim, lattice, atoms, pos, ksize, kshift::Bool)
         println("Test $dim-D grid size: ", ksize, " with a shift ", kshift)
         _kshift = [kshift, kshift, kshift]

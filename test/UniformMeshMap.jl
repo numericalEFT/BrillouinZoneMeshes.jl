@@ -5,7 +5,7 @@
         _kshift = _kshift[1:dim]
         br = BrillouinZoneMeshes.Model.Brillouin(lattice=lattice, atoms=atoms, positions=pos)
         brmesh = BrillouinZoneMeshes.BZMeshes.Monkhorst_Pack(br=br, size=tuple(ksize...), shift=_kshift)
-        meshmap = BrillouinZoneMeshes.uniform_meshmap(brmesh)
+        meshmap = MeshMap(brmesh)
         # println(meshmap.irreducible_indices)
         # println(kcoords)
 
