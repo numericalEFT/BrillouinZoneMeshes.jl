@@ -10,19 +10,15 @@
         0.0 0.0 1.0]
     br = Brillouin(lattice=lattice, atoms=[1,], positions=[[0.0, 0.0, 0.0],])
     brmesh = BZMeshes.Monkhorst_Pack(br=br, size=tuple(ksize...), shift=[0, 0, 0])
-    meshmap = BrillouinZoneMeshes.uniform_meshmap(brmesh)
-    # println(brmehs.)
-    for i in meshmap.irreducible_indices
-        println(brmesh.mesh.inv_lattice * brmesh[i], ": ", meshmap.inv_map)
-        println(brmesh.br.inv_lattice * brmesh[i], ": ", meshmap.inv_map)
-        # println(brmesh.br.inv_recip_lattice * brmesh[i], ": ", meshmap.inv_map)
-    end
-    
+    meshmap = MeshMap(brmesh)
+
     res = 0.0
     for (i, ind) in enumerate(meshmap.irreducible_indices)
-        # println(brmesh.mesh.inv_lattice * brmesh[i], ": ", meshmap.inv_map)
-        weight = volume(brmesh, ind)*length(meshmap.inv_map[ind])
-        res +=  
+        println(inv_lattice_vector(brmesh) * brmesh[i], ": ", length(meshmap.inv_map[ind]))
+        weight = AbstractMeshes.volume(brmesh, ind) * length(meshmap.inv_map[ind])
+        x, y, z = brmesh[ind]
+        res += f(x, y, z) * weight
     end
+    println(res)
 
 end

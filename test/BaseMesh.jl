@@ -15,6 +15,10 @@
             # so that bzmesh[i,j] = (2i-1,2j-1)
             br = BZMeshes.Brillouin(lattice=lattice)
             bzmesh = BZMeshes.UniformBZMesh(br=br, size=(N1, N2), origin=0)
+
+            println(bzmesh)
+            display(bzmesh)
+
             for (pi, p) in enumerate(bzmesh)
                 @test bzmesh[pi] ≈ p # linear index
                 inds = AbstractMeshes._ind2inds(size(bzmesh), pi)

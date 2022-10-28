@@ -281,7 +281,7 @@ function Base.show(io::IO, ::MIME"text/plain", model::Brillouin{T,DIM}) where {T
         println(io)
         showfieldln(io, "atoms", model.atoms)
         for (i, el) in enumerate(model.atoms)
-            header = "atom $el position"
+            header = "$i-th atom $el position"
             showfieldln(io, header, model.positions[i])
         end
         # showfieldln(io, "positions", model.positions)

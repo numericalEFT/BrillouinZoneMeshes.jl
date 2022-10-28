@@ -38,6 +38,9 @@ end
     atoms = [Si, Si]
     positions = [ones(3) / 8, -ones(3) / 8]
     model = BrillouinZoneMeshes.Model.standard_brillouin(lattice=lattice, atoms=atoms, positions=positions, primitive=false)
+    println(model)
+    display(model)
+
     @test spglib_spacegroup_number(model) == 227
     @test model.lattice ≈ a * I(3)
 
