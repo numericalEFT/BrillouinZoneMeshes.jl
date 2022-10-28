@@ -104,7 +104,7 @@ occurs both before and after applying `trans`, so that if `trans` is
 linear we have
     ctrans(origin) == origin
 As a consequence, `recenter` only makes sense if the output space of
-`trans` is isomorphic with the input space.
+`trans` is isomorϕc with the input space.
 For example, if `trans` is a rotation matrix, then `ctrans` rotates
 space around `origin`.
 """
@@ -152,23 +152,23 @@ end
 ### 2D Coordinate systems ###
 #############################
 """
-`Polar{T,A}(r::T, θ::A)` - 2D polar coordinates
+`Polar{T,A}(r::T, ϕ::A)` - 2D polar coordinates
 """
 struct Polar{T,A}
     r::T
-    θ::A
+    ϕ::A
 
-    Polar{T,A}(r, θ) where {T,A} = new(r, θ)
+    Polar{T,A}(r, ϕ) where {T,A} = new(r, ϕ)
 end
 
-function Polar(r, θ)
-    r2, θ2 = promote(r, θ)
+function Polar(r, ϕ)
+    r2, ϕ2 = promote(r, ϕ)
 
-    return Polar{typeof(r2),typeof(θ2)}(r2, θ2)
+    return Polar{typeof(r2),typeof(ϕ2)}(r2, ϕ2)
 end
 
-Base.show(io::IO, x::Polar) = print(io, "Polar(r=$(x.r), θ=$(x.θ) rad)")
-Base.isapprox(p1::Polar, p2::Polar; kwargs...) = isapprox(p1.r, p2.r; kwargs...) && isapprox(p1.θ, p2.θ; kwargs...)
+Base.show(io::IO, x::Polar) = print(io, "Polar(r=$(x.r), ϕ=$(x.ϕ) rad)")
+Base.isapprox(p1::Polar, p2::Polar; kwargs...) = isapprox(p1.r, p2.r; kwargs...) && isapprox(p1.ϕ, p2.ϕ; kwargs...)
 
 "`PolarFromCartesian()` - transformation from `AbstractVector` of length 2 to `Polar` type"
 struct PolarFromCartesian <: Transformation end
@@ -196,13 +196,13 @@ end
 transform_deriv_params(::PolarFromCartesian, x::AbstractVector) = error("PolarFromCartesian has no parameters")
 
 function (::CartesianFromPolar)(x::Polar)
-    s, c = sincos(x.θ)
+    s, c = sincos(x.ϕ)
     SVector(x.r * c, x.r * s)
 end
 function transform_deriv(::CartesianFromPolar, x::Polar)
-    sθ, cθ = sincos(x.θ)
-    @SMatrix [cθ -x.r*sθ
-        sθ x.r*cθ]
+    sϕ, cϕ = sincos(x.ϕ)
+    @SMatrix [cϕ -x.r*sϕ
+        sϕ x.r*cϕ]
 end
 transform_deriv_params(::CartesianFromPolar, x::Polar) = error("CartesianFromPolar has no parameters")
 
@@ -228,8 +228,8 @@ There are many Spherical coordinate conventions and this library uses a somewhat
 Given a vector `v` with Cartesian coordinates `xyz`, let `v_xy = [x,y,0]` be the orthogonal projection of `v` on the `xy` plane.
 
 * `r` is the radius. It is given by `norm(v, 2)`.
-* `θ` is the azimuth. It is the angle from the x-axis to `v_xy`
-* `ϕ` is the latitude. It is the angle from `v_xy` to `v`.
+* `θ` is the latitude. It is the angle from `v_xy` to `v`.
+* `ϕ` is the azimuth. It is the angle from the x-axis to `v_xy`
 
 ```jldoctest
 julia> using CoordinateTransformations
@@ -238,9 +238,9 @@ julia> v = randn(3);
 
 julia> sph = SphericalFromCartesian()(v);
 
-julia> r = sph.r; θ=sph.θ; ϕ=sph.ϕ;
+julia> r = sph.r; ϕ=sph.ϕ; θ=sph.θ;
 
-julia> v ≈ [r * cos(θ) * cos(ϕ), r * sin(θ) * cos(ϕ), r*sin(ϕ)]
+julia> v ≈ [r * cos(ϕ) * cos(θ), r * sin(ϕ) * cos(θ), r*sin(θ)]
 true
 """
 struct Spherical{T,A}
@@ -254,31 +254,31 @@ end
 function Spherical(r, θ, ϕ)
     r2, θ2, ϕ2 = promote(r, θ, ϕ)
 
-    return Spherical{typeof(r2),typeof(θ2)}(r2, θ2, ϕ2)
+    return Spherical{typeof(r2),typeof(ϕ2)}(r2, θ2, ϕ2)
 end
 
 Base.show(io::IO, x::Spherical) = print(io, "Spherical(r=$(x.r), θ=$(x.θ) rad, ϕ=$(x.ϕ) rad)")
-Base.isapprox(p1::Spherical, p2::Spherical; kwargs...) = isapprox(p1.r, p2.r; kwargs...) && isapprox(p1.θ, p2.θ; kwargs...) && isapprox(p1.ϕ, p2.ϕ; kwargs...)
+Base.isapprox(p1::Spherical, p2::Spherical; kwargs...) = isapprox(p1.r, p2.r; kwargs...) && isapprox(p1.ϕ, p2.ϕ; kwargs...) && isapprox(p1.θ, p2.θ; kwargs...)
 
 """
-Cylindrical(r, θ, z) - 3D cylindrical coordinates
+Cylindrical(r, ϕ, z) - 3D cylindrical coordinates
 """
 struct Cylindrical{T,A}
     r::T
-    θ::A
+    ϕ::A
     z::T
 
-    Cylindrical{T,A}(r, θ, z) where {T,A} = new(r, θ, z)
+    Cylindrical{T,A}(r, ϕ, z) where {T,A} = new(r, ϕ, z)
 end
 
-function Cylindrical(r, θ, z)
-    r2, θ2, z2 = promote(r, θ, z)
+function Cylindrical(r, ϕ, z)
+    r2, ϕ2, z2 = promote(r, ϕ, z)
 
-    return Cylindrical{typeof(r2),typeof(θ2)}(r2, θ2, z2)
+    return Cylindrical{typeof(r2),typeof(ϕ2)}(r2, ϕ2, z2)
 end
 
-Base.show(io::IO, x::Cylindrical) = print(io, "Cylindrical(r=$(x.r), θ=$(x.θ) rad, z=$(x.z))")
-Base.isapprox(p1::Cylindrical, p2::Cylindrical; kwargs...) = isapprox(p1.r, p2.r; kwargs...) && isapprox(p1.θ, p2.θ; kwargs...) && isapprox(p1.z, p2.z; kwargs...)
+Base.show(io::IO, x::Cylindrical) = print(io, "Cylindrical(r=$(x.r), ϕ=$(x.ϕ) rad, z=$(x.z))")
+Base.isapprox(p1::Cylindrical, p2::Cylindrical; kwargs...) = isapprox(p1.r, p2.r; kwargs...) && isapprox(p1.ϕ, p2.ϕ; kwargs...) && isapprox(p1.z, p2.z; kwargs...)
 
 "`SphericalFromCartesian()` - transformation from 3D point to `Spherical` type"
 struct SphericalFromCartesian <: Transformation end
@@ -304,37 +304,14 @@ Base.show(io::IO, trans::SphericalFromCylindrical) = print(io, "SphericalFromCyl
 function (::SphericalFromCartesian)(x::AbstractVector)
     length(x) == 3 || error("Spherical transform takes a 3D coordinate")
 
-    Spherical(hypot(x[1], x[2], x[3]), atan(x[2], x[1]), atan(x[3], hypot(x[1], x[2])))
+    Spherical(hypot(x[1], x[2], x[3]), atan(x[3], hypot(x[1], x[2])), atan(x[2], x[1]))
 end
-function transform_deriv(::SphericalFromCartesian, x::AbstractVector)
-    length(x) == 3 || error("Spherical transform takes a 3D coordinate")
-    T = eltype(x)
-
-    r = hypot(x[1], x[2], x[3])
-    rxy = hypot(x[1], x[2])
-    fxy = x[2] / x[1]
-    cxy = one(T) / (x[1] * (one(T) + fxy * fxy))
-    f = -x[3] / (rxy * r * r)
-
-    @SMatrix [x[1]/r x[2]/r x[3]/r
-        -fxy*cxy cxy zero(T)
-        f*x[1] f*x[2] rxy/(r*r)]
-end
-transform_deriv_params(::SphericalFromCartesian, x::AbstractVector) = error("SphericalFromCartesian has no parameters")
 
 function (::CartesianFromSpherical)(x::Spherical)
-    sθ, cθ = sincos(x.θ)
     sϕ, cϕ = sincos(x.ϕ)
-    SVector(x.r * cθ * cϕ, x.r * sθ * cϕ, x.r * sϕ)
-end
-function transform_deriv(::CartesianFromSpherical, x::Spherical{T}) where {T}
     sθ, cθ = sincos(x.θ)
-    sϕ, cϕ = sincos(x.ϕ)
-    @SMatrix [cθ*cϕ -x.r*sθ*cϕ -x.r*cθ*sϕ
-        sθ*cϕ x.r*cθ*cϕ -x.r*sθ*sϕ
-        sϕ zero(T) x.r*cϕ]
+    SVector(x.r * cϕ * cθ, x.r * sϕ * cθ, x.r * sθ)
 end
-transform_deriv_params(::CartesianFromSpherical, x::Spherical) = error("CartesianFromSpherical has no parameters")
 
 # Cartesian <-> Cylindrical
 function (::CylindricalFromCartesian)(x::AbstractVector)
@@ -357,20 +334,20 @@ end
 transform_deriv_params(::CylindricalFromCartesian, x::AbstractVector) = error("CylindricalFromCartesian has no parameters")
 
 function (::CartesianFromCylindrical)(x::Cylindrical)
-    sθ, cθ = sincos(x.θ)
-    SVector(x.r * cθ, x.r * sθ, x.z)
+    sϕ, cϕ = sincos(x.ϕ)
+    SVector(x.r * cϕ, x.r * sϕ, x.z)
 end
 function transform_deriv(::CartesianFromCylindrical, x::Cylindrical{T}) where {T}
-    sθ, cθ = sincos(x.θ)
-    @SMatrix [cθ -x.r*sθ zero(T)
-        sθ x.r*cθ zero(T)
+    sϕ, cϕ = sincos(x.ϕ)
+    @SMatrix [cϕ -x.r*sϕ zero(T)
+        sϕ x.r*cϕ zero(T)
         zero(T) zero(T) one(T)]
 end
 transform_deriv_params(::CartesianFromPolar, x::Cylindrical) = error("CartesianFromCylindrical has no parameters")
 
 function (::CylindricalFromSpherical)(x::Spherical)
-    sϕ, cϕ = sincos(x.ϕ)
-    Cylindrical(x.r * cϕ, x.θ, x.r * sϕ)
+    sθ, cθ = sincos(x.θ)
+    Cylindrical(x.r * cθ, x.ϕ, x.r * sθ)
 end
 function transform_deriv(::CylindricalFromSpherical, x::Spherical)
     M1 = transform_deriv(CylindricalFromCartesian(), CartesianFromSpherical()(x))
@@ -380,7 +357,7 @@ end
 transform_deriv_params(::CylindricalFromSpherical, x::Spherical) = error("CylindricalFromSpherical has no parameters")
 
 function (::SphericalFromCylindrical)(x::Cylindrical)
-    Spherical(hypot(x.r, x.z), x.θ, atan(x.z, x.r))
+    Spherical(hypot(x.r, x.z), x.ϕ, atan(x.z, x.r))
 end
 function transform_deriv(::SphericalFromCylindrical, x::Cylindrical)
     M1 = transform_deriv(SphericalFromCartesian(), CartesianFromCylindrical()(x))
