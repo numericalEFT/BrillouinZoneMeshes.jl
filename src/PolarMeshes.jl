@@ -1,14 +1,20 @@
 
 # this file is included in BZMeshes
-using ..CoordinateTransformations
+include("utilities/coordinatesystems.jl")
+using .Coordinates
 
 export PolarMesh, Angular
 
 const Angular = Union{Polar,Spherical}
+
+
 const _polar2cart = CartesianFromPolar()
 const _spherical2cart = CartesianFromSpherical()
 const _cart2polar = PolarFromCartesian()
 const _cart2spherical = SphericalFromCartesian()
+
+_extract(r::Polar{T,A}) where {T,A} = SVector{2,T}(r.r, r.θ)
+_extract(r::Spherical{T,A}) where {T,A} = SVector{3,T}(r.r, r.θ, r.ϕ)
 
 struct PolarMesh{T,DIM,MT} <: AbstractMesh{T,DIM}
     br::Brillouin{T,DIM}
@@ -30,6 +36,7 @@ function Base.getindex(mesh::PolarMesh, I::Int)
     return Base.getindex(mesh, _ind2inds(size(mesh), I)...)
 end
 # provide getindex which return angular results
+# call looks like mesh[Angular, i, j] -> Polar(r,θ)
 function Base.getindex(mesh::PolarMesh{T,2,MT}, ::Type{<:Angular}, i::Int, j::Int) where {T,MT}
     return Polar(getindex(mesh.mesh, i, j)...)
 end
@@ -38,4 +45,11 @@ function Base.getindex(mesh::PolarMesh{T,3,MT}, ::Type{<:Angular}, i::Int, j::In
 end
 function Base.getindex(mesh::PolarMesh, T::Type{<:Angular}, I::Int)
     return Base.getindex(mesh, T, _ind2inds(size(mesh), I)...)
+end
+
+function AbstractMeshes.locate(mesh::PolarMesh, r::Angular)
+    return AbstractMeshes.locate(mesh.mesh, _extract(r))
+end
+function AbstractMeshes.locate(mesh::PolarMesh{T,2,MT}, x::AbstractVector) where {T,MT}
+    return AbstractMeshes.locate(mesh, _cart2polar(x))
 end

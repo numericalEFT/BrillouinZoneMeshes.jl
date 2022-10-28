@@ -1,6 +1,6 @@
 @testset "PolarMeshes" begin
     using BrillouinZoneMeshes.BZMeshes
-    using BrillouinZoneMeshes.CoordinateTransformations
+    using BrillouinZoneMeshes.BZMeshes.Coordinates
     using BrillouinZoneMeshes.CompositeGrids
     using BrillouinZoneMeshes.BaseMesh
     using BrillouinZoneMeshes.AbstractMeshes
@@ -41,8 +41,8 @@
             # theta grid dense around 0 and π
             theta = CompositeGrid.LogDensedGrid(
                 :cheb,
-                [0.0, 2π],
-                [0.0, π, 2π],
+                [-π, π],
+                [-π, 0.0, π],
                 N,
                 0.1,
                 M
@@ -58,6 +58,7 @@
             pm = PolarMesh(br, cm)
             for (i, p) in enumerate(pm)
                 @test p == BZMeshes._polar2cart(pm[Angular, i])
+                @test AbstractMeshes.locate(pm, p) == i
             end
         end
     end

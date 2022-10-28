@@ -127,12 +127,11 @@ function CompositeMesh(mesh::AbstractMesh{T,DIM}, grids::Vector{GT}) where {T,DI
     return CompositeMesh{T,DIM + 1,MT,GT}(mesh, grids, size)
 end
 
-function CompositeMesh(mesh::AbstractGrid{T}, grids::Vector{GT}) where {T,GT}
-    MT = typeof(mesh)
+function CompositeMesh(mesh::MT, grids::Vector{GT}) where {MT<:AbstractGrid,GT}
     @assert length(mesh) == length(grids)
     @assert length.(grids) == ones(length(grids)) .* length(grids[1])
     msize = (length(grids[1]), size(mesh)...)
-    return CompositeMesh{T,2,MT,GT}(mesh, grids, msize)
+    return CompositeMesh{eltype(MT),2,MT,GT}(mesh, grids, msize)
 end
 
 Base.length(mesh::CompositeMesh) = prod(mesh.size)

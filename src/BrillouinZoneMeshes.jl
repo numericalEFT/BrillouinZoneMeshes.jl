@@ -6,7 +6,7 @@ using Statistics
 using LinearAlgebra
 using CompositeGrids
 using Printf
-using CoordinateTransformations
+# using CoordinateTransformations
 
 # Write your package code here.
 BaryCheb = CompositeGrids.BaryChebTools
@@ -17,7 +17,6 @@ using .AbstractMeshes
 export AbstractMeshes, AbstractMesh
 
 include("printing.jl")
-
 
 include("symmetry/PointSymmetry.jl")
 export PointSymmetry
