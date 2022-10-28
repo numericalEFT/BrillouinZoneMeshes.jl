@@ -101,24 +101,6 @@ function standardize_atoms(lattice, atoms, positions, magnetic_moments=[]; kwarg
     (; ret.lattice, atoms, ret.positions, ret.magnetic_moments)
 end
 
-""""
-Convert a `basis` into one that doesn't use BZ symmetry.
-This is mainly useful for debug purposes (e.g. in cases we don't want to
-bother thinking about symmetries).
-"""
-function unfold_bz(basis::PlaneWaveBasis)
-    if length(basis.symmetries) == 1
-        return basis
-    else
-        kcoords = unfold_kcoords(basis.kcoords_global, basis.symmetries)
-        return PlaneWaveBasis(basis.model,
-            basis.Ecut, basis.fft_size, basis.variational,
-            kcoords, [1 / length(kcoords) for _ in kcoords],
-            basis.kgrid, basis.kshift,
-            basis.symmetries_respect_rgrid, basis.comm_kpts)
-    end
-end
-
 # find where in the irreducible basis `basis_irred` the k-point `kpt_unfolded` is handled
 function unfold_mapping(basis_irred, kpt_unfolded)
     for ik_irred = 1:length(basis_irred.kpoints)
