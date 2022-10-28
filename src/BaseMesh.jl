@@ -6,6 +6,7 @@ using ..LinearAlgebra
 using ..BaryCheb
 using ..AbstractMeshes
 using ..Model
+using ..Model: get_latvec
 
 
 export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, UMesh
@@ -120,6 +121,8 @@ UMesh(;
 
 lattice_vector(mesh::UMesh) = mesh.lattice
 inv_lattice_vector(mesh::UMesh) = mesh.inv_lattice
+lattice_vector(mesh::UMesh, i::Int) = get_latvec(mesh.lattice, i)
+inv_lattice_vector(mesh::UMesh, i::Int) = get_latvec(mesh.inv_lattice, i)
 cell_volume(mesh::UMesh) = mesh.cell_volume
 
 function Base.show(io::IO, mesh::UMesh)

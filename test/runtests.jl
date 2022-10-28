@@ -21,6 +21,7 @@ include("testcase.jl")
         include("mc.jl")
         include("PointSymmetry.jl")
         include("UniformMeshMap.jl")
+        include("MeshMap.jl")
         include("Model.jl")
     else
         include(ARGS[1])

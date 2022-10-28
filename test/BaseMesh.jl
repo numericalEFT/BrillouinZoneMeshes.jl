@@ -27,6 +27,23 @@
             end
         end
 
+        @testset "lattice vector and inverse lattice vector" begin
+            lattice = Matrix([2.0 0 0; 1 sqrt(3) 0; 7 11 19]')
+            msize = (3, 5, 7)
+            br = BZMeshes.Brillouin(lattice=lattice)
+            bzmesh = BZMeshes.UniformBZMesh(br=br, size=msize)
+
+            @test lattice_vector(bzmesh, 1) ≈ br.recip_lattice[:, 1]
+            @test lattice_vector(bzmesh, 2) ≈ br.recip_lattice[:, 2]
+            @test lattice_vector(bzmesh, 3) ≈ br.recip_lattice[:, 3]
+
+            @test inv_lattice_vector(bzmesh, 1) ≈ br.inv_recip_lattice[:, 1]
+            @test inv_lattice_vector(bzmesh, 2) ≈ br.inv_recip_lattice[:, 2]
+            @test inv_lattice_vector(bzmesh, 3) ≈ br.inv_recip_lattice[:, 3]
+
+            @test lattice_vector(bzmesh) * inv_lattice_vector(bzmesh) ≈ Matrix(I, 3, 3)
+        end
+
         @testset "locate and volume" begin
             msize = (3, 5, 7)
             lattice = Matrix([2.0 0 0; 1 sqrt(3) 0; 7 11 19]')

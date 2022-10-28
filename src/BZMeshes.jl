@@ -108,6 +108,8 @@ end
 
 BaseMesh.lattice_vector(mesh::UniformBZMesh) = mesh.br.recip_lattice
 BaseMesh.inv_lattice_vector(mesh::UniformBZMesh) = mesh.br.inv_recip_lattice
+BaseMesh.lattice_vector(mesh::UniformBZMesh, i::Int) = Model.get_latvec(mesh.br.recip_lattice, i)
+BaseMesh.inv_lattice_vector(mesh::UniformBZMesh, i::Int) = Model.get_latvec(mesh.br.inv_recip_lattice, i)
 BaseMesh.cell_volume(mesh::UniformBZMesh) = mesh.br.recip_cell_volume
 
 # function Base.show(io::IO, mesh::UniformBZMesh)
