@@ -51,8 +51,6 @@ include("PolarMeshes.jl")
 using .PolarMeshes
 export PolarMeshes
 
-# include("meshes/reduced_uniform_map.jl")
-
 include("Visualization.jl")
 using .Visualization
 
