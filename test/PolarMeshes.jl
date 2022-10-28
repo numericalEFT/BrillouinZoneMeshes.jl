@@ -61,5 +61,44 @@
                 @test AbstractMeshes.locate(pm, p) == i
             end
         end
+
+        @testset "3D PolarMesh" begin
+            N, M = 2, 2
+            # theta grid dense around 0 and π
+            phi = CompositeGrid.LogDensedGrid(
+                :cheb,
+                [-π, π],
+                [-π, 0.0, π],
+                N,
+                0.1,
+                M
+            )
+            theta = CompositeGrid.LogDensedGrid(
+                :cheb,
+                [-π / 2, π / 2],
+                [0.0,],
+                N,
+                0.1,
+                M
+            )
+            rg = CompositeGrid.LogDensedGrid(:cheb, [0.0, 2.0], [1.0,], N, 0.1, M)
+            am = CompositeMesh(phi, [theta for i in 1:length(phi)])
+            println(typeof(size(am)))
+            cm = CompositeMesh(am, [rg for i in 1:length(am)])
+            println(typeof(size(cm)))
+            println(typeof(size(cm.mesh)))
+
+            DIM = 3
+            lattice = Matrix([1.0 0 0; 0 1 0; 0 0 1]')
+            br = BZMeshes.Brillouin(lattice=lattice)
+
+            pm = PolarMesh(br, cm)
+            println(typeof(size(pm)))
+
+            for (i, p) in enumerate(pm)
+                @test p == BZMeshes._spherical2cart(pm[Angular, i])
+                @test AbstractMeshes.locate(pm, p) == i
+            end
+        end
     end
 end

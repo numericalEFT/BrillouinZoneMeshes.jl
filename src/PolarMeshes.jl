@@ -7,7 +7,10 @@ export PolarMesh, Angular
 
 const Angular = Union{Polar,Spherical}
 
-
+# use coordinate systems copied from CoordinateTransformations
+# changed some convention thus different from their package
+# our ϕ ∈ [-π, π] is the angle from x-axis
+# our θ ∈ [-π/2, π/2] is the angle from xy-plane
 const _polar2cart = CartesianFromPolar()
 const _spherical2cart = CartesianFromSpherical()
 const _cart2polar = PolarFromCartesian()
@@ -52,4 +55,7 @@ function AbstractMeshes.locate(mesh::PolarMesh, r::Angular)
 end
 function AbstractMeshes.locate(mesh::PolarMesh{T,2,MT}, x::AbstractVector) where {T,MT}
     return AbstractMeshes.locate(mesh, _cart2polar(x))
+end
+function AbstractMeshes.locate(mesh::PolarMesh{T,3,MT}, x::AbstractVector) where {T,MT}
+    return AbstractMeshes.locate(mesh, _cart2spherical(x))
 end

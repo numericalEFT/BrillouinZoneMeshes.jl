@@ -123,14 +123,14 @@ function CompositeMesh(mesh::AbstractMesh{T,DIM}, grids::Vector{GT}) where {T,DI
     @assert length(mesh) == length(grids)
     # length of all grids should be the same
     @assert length.(grids) == ones(length(grids)) .* length(grids[1])
-    size = (length(grids[1]), size(mesh)...)
-    return CompositeMesh{T,DIM + 1,MT,GT}(mesh, grids, size)
+    msize = (length(grids[1]), size(mesh)...)
+    return CompositeMesh{T,DIM + 1,MT,GT}(mesh, grids, msize)
 end
 
 function CompositeMesh(mesh::MT, grids::Vector{GT}) where {MT<:AbstractGrid,GT}
     @assert length(mesh) == length(grids)
     @assert length.(grids) == ones(length(grids)) .* length(grids[1])
-    msize = (length(grids[1]), size(mesh)...)
+    msize = (length(grids[1]), length(mesh))
     return CompositeMesh{eltype(MT),2,MT,GT}(mesh, grids, msize)
 end
 
@@ -139,7 +139,10 @@ Base.size(mesh::CompositeMesh) = mesh.size
 Base.size(mesh::CompositeMesh, I::Int) = mesh.size[I]
 
 function Base.getindex(mesh::CompositeMesh{T,DIM,MT,GT}, inds...) where {T,DIM,MT,GT}
-    i1, I = inds[1], AbstractMeshes._inds2ind(size(mesh.mesh), inds[2:end]...)
+    # i1, I = inds[1], AbstractMeshes._inds2ind(mesh.size, 1, inds[2:end]...)
+    # seems generated function doesn't work here 
+    # as compiler doesn't know mesh.size
+    i1, I = inds[1], Base._sub2ind(size(mesh.mesh), inds[2:end]...)
     return SVector{DIM,T}([mesh.grids[I][i1], mesh.mesh[I]...])
 end
 
