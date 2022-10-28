@@ -35,14 +35,7 @@ function _make3D(lattice::AbstractMatrix{T}, position::AbstractVector) where {T}
 end
 
 include("SymOp.jl")
-
-#TODO: comment the following out
-include("Model.jl")
-include("structure.jl")
-include("PlaneWaveBasis.jl")
-###############################
-
+include("spglib.jl")
 include("symmetry.jl")
-include("bzmesh.jl")
 
 end

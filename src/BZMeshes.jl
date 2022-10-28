@@ -9,6 +9,9 @@ using ..BaseMesh
 using ..MeshMaps
 using ..PointSymmetry
 # using ..BaseMesh.AbstractUniformMesh
+import ..showfieldln
+import ..showfield
+import ..SHOWINDENTION
 
 export UniformBZMesh, DFTK_Monkhorst_Pack, Monkhorst_Pack
 
@@ -61,7 +64,8 @@ function UniformBZMesh(;
     br::Brillouin{T,DIM},
     origin::Real=-1 // 2,
     size::Union{AbstractVector,Tuple},
-    shift::AbstractVector{Bool}=[true for _ in eachindex(size)]) where {T,DIM}
+    shift::Union{AbstractVector{Bool},AbstractVector{Int}}=[true for _ in eachindex(size)]
+) where {T,DIM}
 
     _shift = [s == true ? 1 // 2 : 0 for s in shift]
 
@@ -73,7 +77,7 @@ end
 function DFTK_Monkhorst_Pack(;
     br::Brillouin{T,DIM},
     size,
-    shift::AbstractVector{Bool}) where {T,DIM}
+    shift::AbstractVector{Bool}=[false, false, false]) where {T,DIM}
     kshift = [iseven(size[i]) ? shift[i] : !(shift[i]) for i in 1:DIM]
     return UniformBZMesh(
         br=br,
@@ -91,7 +95,7 @@ function Monkhorst_Pack(;
     #  - N is odd, VASP is different as DFTK: shift=0 will not include Gamma point, shift=1/2 will
     br::Brillouin{T,DIM},
     size,
-    shift::AbstractVector{Bool}=[0, 0, 0]
+    shift::AbstractVector=[false, false, false]
 ) where {T,DIM}
     # kshift = [(iseven(size[i]) ? shift[i] : shift[i] + 1 // 2) for i in 1:DIM]
     return UniformBZMesh(
@@ -106,8 +110,33 @@ BaseMesh.lattice_vector(mesh::UniformBZMesh) = mesh.br.recip_lattice
 BaseMesh.inv_lattice_vector(mesh::UniformBZMesh) = mesh.br.inv_recip_lattice
 BaseMesh.cell_volume(mesh::UniformBZMesh) = mesh.br.recip_cell_volume
 
+# function Base.show(io::IO, mesh::UniformBZMesh)
+#     println("UniformBZMesh with $(length(mesh)) mesh points")
+# end
+
 function Base.show(io::IO, mesh::UniformBZMesh)
-    println("UniformBZMesh with $(length(mesh)) mesh points")
+    print(io, "Uniform BZ mesh (Brillouin = ", mesh.br)
+    print(io, ", origin = ", inv_lattice_vector(mesh) * mesh.origin)
+    print(io, ", size = ", mesh.size)
+    print(io, ", shift = ", mesh.shift)
+    print(io, ")")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", mesh::UniformBZMesh)
+    println(io, "Uniform BZ mesh:")
+    if mesh.origin == 0
+        println(io, "mesh type", "  Gamma-centered")
+    else
+        println(io, "mesh type", "  Monkhorst-Pack")
+    end
+    showfieldln(io, "origin = ", inv_lattice_vector(mesh) * mesh.origin)
+    showfieldln(io, "size = ", mesh.size)
+    showfieldln(io, "shift = ", mesh.shift)
+
+    println(io)
+    modelstr = sprint(show, "text/plain", mesh.br)
+    indent = " "^SHOWINDENTION
+    print(io, indent, "Discretized " * replace(modelstr, "\n" => "\n" * indent))
 end
 
 ################## Mesh Reduce ############################
