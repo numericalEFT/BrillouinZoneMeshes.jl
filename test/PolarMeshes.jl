@@ -37,7 +37,6 @@
         @testset "2D PolarMesh" begin
 
             a, b = 0.8, 1.2
-
             N, M = 3, 2
             # theta grid dense around 0 and π
             theta = CompositeGrid.LogDensedGrid(
@@ -52,6 +51,14 @@
             grids = [CompositeGrid.LogDensedGrid(:cheb, [0.0, 2.0], [sqrt(a * cos(θ)^2 + b * sin(θ)^2),], N, 0.1, M) for θ in theta]
             cm = CompositeMesh(theta, grids)
 
+            DIM = 2
+            lattice = Matrix([1.0 0; 0 1]')
+            br = BZMeshes.Brillouin(lattice=lattice)
+
+            pm = PolarMesh(br, cm)
+            for (i, p) in enumerate(pm)
+                @test p == BZMeshes._polar2cart(pm[Angular, i])
+            end
         end
     end
 end
