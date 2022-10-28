@@ -29,6 +29,8 @@ include("BaseMesh.jl")
 using .BaseMesh
 export BaseMesh
 export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, AbstractMesh# , locate, volume
+export inv_lattice_vector, lattice_vector, cell_volume
+export AbstractUniformMesh
 
 include("BZMeshes.jl")
 using .BZMeshes

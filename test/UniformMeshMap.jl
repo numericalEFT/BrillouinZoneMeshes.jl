@@ -1,7 +1,7 @@
 @testset "Uniform MeshMap test" begin
     function test(dim, lattice, atoms, pos, ksize, kshift; kcoords, kweights=nothing)
         println("Test $dim-D grid size: ", ksize, " with a shift ", kshift)
-        _kshift = kshift ? [1 // 2, 1 // 2, 1 // 2] : [0, 0, 0]
+        _kshift = [kshift, kshift, kshift]
         _kshift = _kshift[1:dim]
         br = BrillouinZoneMeshes.Model.Brillouin(lattice=lattice, atoms=atoms, positions=pos)
         brmesh = BrillouinZoneMeshes.BZMeshes.Monkhorst_Pack(br=br, size=tuple(ksize...), shift=_kshift)
@@ -17,8 +17,8 @@
         # end
         klist = Vector{Int}()
         for coord in kcoords
-            kvec = brmesh.mesh.lattice * coord
-            kidx = BrillouinZoneMeshes.locate(brmesh.mesh, kvec)
+            kvec = lattice_vector(brmesh) * coord
+            kidx = BrillouinZoneMeshes.locate(brmesh, kvec)
             # weight = BrillouinZoneMeshes.volume(brmesh.mesh, kidx)
             # println(brmesh[kidx], " -> ", brmesh.mesh.inv_lattice * brmesh[kidx])
             push!(klist, meshmap.map[kidx])

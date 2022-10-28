@@ -4,13 +4,11 @@ using ..StaticArrays
 using ..LinearAlgebra
 
 using ..AbstractMeshes
-using ..AbstractMeshes: _inds2ind, _ind2inds
 using ..Model
 using ..BaseMesh
-using ..BaseMesh: _indfloor
-using ..BaseMesh.AbstractUniformMesh
+# using ..BaseMesh.AbstractUniformMesh
 
-export UniformBZMesh, DFTK_Monkhorst_Pack
+export UniformBZMesh, DFTK_Monkhorst_Pack, Monkhorst_Pack
 
 """
     struct UniformBZMesh{T, DIM} <: AbstractUniformMesh{T, DIM}
@@ -57,24 +55,29 @@ the mesh as Gamma-centered or M-P mesh.
     actuall shift is shift*(b1/N1+b2/N2+b3/N3)
     for even N, shift=1/2 avoids high symmetry points while preserve symmetry.
 """
-UniformBZMesh(;
+function UniformBZMesh(;
     br::Brillouin{T,DIM},
     origin::Real=-1 // 2,
-    size,
-    shift::Real=1 // 2) where {T,DIM} = UniformBZMesh{T,DIM}(
-    br, origin .* ones(T, DIM), size, shift .* ones(Int, DIM)
-)
+    size::Union{AbstractVector,Tuple},
+    shift::AbstractVector{Bool}=[true for _ in eachindex(size)]) where {T,DIM}
+
+    _shift = [s == true ? 1 // 2 : 0 for s in shift]
+
+    return UniformBZMesh{T,DIM}(
+        br, (br.recip_lattice * ones(T, DIM)) * origin, size, _shift
+    )
+end
 
 function DFTK_Monkhorst_Pack(;
     br::Brillouin{T,DIM},
     size,
-    shift::AbstractVector) where {T,DIM}
-    kshift = [(iseven(size[i]) ? shift[i] : shift[i] + 1 // 2) for i in 1:DIM]
-    return UniformBZMesh{T,DIM}(
-        br,
-        -1 // 2 .* ones(T, DIM), # origin
-        size,
-        kshift
+    shift::AbstractVector{Bool}) where {T,DIM}
+    kshift = [iseven(size[i]) ? shift[i] : !(shift[i]) for i in 1:DIM]
+    return UniformBZMesh(
+        br=br,
+        origin=-1 // 2, #origin
+        size=size,
+        shift=kshift
     )
 end
 
@@ -86,20 +89,20 @@ function Monkhorst_Pack(;
     #  - N is odd, VASP is different as DFTK: shift=0 will not include Gamma point, shift=1/2 will
     br::Brillouin{T,DIM},
     size,
-    shift::AbstractVector=[0, 0, 0]
+    shift::AbstractVector{Bool}=[0, 0, 0]
 ) where {T,DIM}
     # kshift = [(iseven(size[i]) ? shift[i] : shift[i] + 1 // 2) for i in 1:DIM]
-    return UniformBZMesh{T,DIM}(
-        br,
-        -ones(T, DIM) / 2,
-        tuple(size...),
+    return UniformBZMesh(
+        br=br,
+        origin=-1 // 2,
+        size=tuple(size...),
         shift=shift
     )
 end
 
-lattice_vector(mesh::UniformBZMesh) = mesh.br.recip_lattice
-inv_lattice_vector(mesh::UniformBZMesh) = mesh.inv_recip_lattice
-cell_volume(mesh::UniformBZMesh) = mesh.br.recip_cell_volume
+BaseMesh.lattice_vector(mesh::UniformBZMesh) = mesh.br.recip_lattice
+BaseMesh.inv_lattice_vector(mesh::UniformBZMesh) = mesh.br.inv_recip_lattice
+BaseMesh.cell_volume(mesh::UniformBZMesh) = mesh.br.recip_cell_volume
 
 function Base.show(io::IO, mesh::UniformBZMesh)
     println("UniformBZMesh with $(length(mesh)) mesh points")

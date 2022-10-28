@@ -26,88 +26,88 @@ function default_symmetries(model::Model.Brillouin{T,DIM}
 end
 
 
-function _kcoords2ind(kcoord, kgrid_size, kshift)
-    # kidx = [Int(kvec * kgrid_size[d] - kshift[d]) + kgrid_size[d] - 1 for (d, kvec) in enumerate(kcoord)]
-    # inexact convert is not allowed with Int(), use floor(Int,) instead
-    kidx = [floor(Int, (kvec + 1 / 2) * kgrid_size[d] - kshift[d]) for (d, kvec) in enumerate(kcoord)]
-    kidx = [(kidx[d] + kgrid_size[d]) % kgrid_size[d] + 1 for d in 1:length(kidx)]
-    klinearidx = AbstractMeshes._inds2ind(tuple(kgrid_size...), tuple(kidx...))
-    return klinearidx
-end
+# function _kcoords2ind(kcoord, kgrid_size, kshift)
+#     # kidx = [Int(kvec * kgrid_size[d] - kshift[d]) + kgrid_size[d] - 1 for (d, kvec) in enumerate(kcoord)]
+#     # inexact convert is not allowed with Int(), use floor(Int,) instead
+#     kidx = [floor(Int, (kvec + 1 / 2) * kgrid_size[d] - kshift[d]) for (d, kvec) in enumerate(kcoord)]
+#     kidx = [(kidx[d] + kgrid_size[d]) % kgrid_size[d] + 1 for d in 1:length(kidx)]
+#     klinearidx = AbstractMeshes._inds2ind(tuple(kgrid_size...), tuple(kidx...))
+#     return klinearidx
+# end
 
-# WARNINING: Do not support Gamma_centered: origin=0  !!!
-# Monkhorst-Pack: origin=-1/2, consistent with VASP
-# to be consistent with DFTK: 
-#  - N is even, VASP is the same as DFTK: shift=0 will include Gamma point, shift=1/2 will not
-#  - N is odd, VASP is different as DFTK: shift=0 will not include Gamma point, shift=1/2 will
-function _reduced_uniform_meshmap(model::Model.Brillouin{T,DIM}, symmetry::Bool=true;
-    kgrid_size::Vector{Int}, kshift::Bool=false,
-    tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE
-) where {T,DIM}
-    # Determine symmetry operations to use
-    if symmetry
-        symmetries = default_symmetries(model, tol_symmetry=tol_symmetry)
-    else
-        symmetries = [one(PointSymmetry.SymOp)]
-    end
-    @assert !isempty(symmetries)  # Identity has to be always present.
-    _kgrid_size = ones(Int, 3)
-    _kgrid_size[1:DIM] = kgrid_size[1:DIM]
-    _kshift = kshift ? [1 // 2, 1 // 2, 1 // 2] : [0, 0, 0]
+# # WARNINING: Do not support Gamma_centered: origin=0  !!!
+# # Monkhorst-Pack: origin=-1/2, consistent with VASP
+# # to be consistent with DFTK: 
+# #  - N is even, VASP is the same as DFTK: shift=0 will include Gamma point, shift=1/2 will not
+# #  - N is odd, VASP is different as DFTK: shift=0 will not include Gamma point, shift=1/2 will
+# function _reduced_uniform_meshmap(model::Model.Brillouin{T,DIM}, symmetry::Bool=true;
+#     kgrid_size::Vector{Int}, kshift::Bool=false,
+#     tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE
+# ) where {T,DIM}
+#     # Determine symmetry operations to use
+#     if symmetry
+#         symmetries = default_symmetries(model, tol_symmetry=tol_symmetry)
+#     else
+#         symmetries = [one(PointSymmetry.SymOp)]
+#     end
+#     @assert !isempty(symmetries)  # Identity has to be always present.
+#     _kgrid_size = ones(Int, 3)
+#     _kgrid_size[1:DIM] = kgrid_size[1:DIM]
+#     _kshift = kshift ? [1 // 2, 1 // 2, 1 // 2] : [0, 0, 0]
 
-    kcoords, kweights, symmetries = PointSymmetry.bzmesh_ir_wedge(_kgrid_size, symmetries; kshift=_kshift)
-    all_kcoords = PointSymmetry.unfold_kcoords(kcoords, symmetries)
-    Nk = reduce(*, kgrid_size)
-    @assert length(all_kcoords) == Nk
-    kindices = []
-    kmap = zeros(Int, Nk)
-    inv_kmap = Dict{Int,Vector{Int}}()
-    count = 0
-    for kpoint in kcoords
-        all_kpoint = PointSymmetry.unfold_kcoords([kpoint,], symmetries)
-        k0ind = _kcoords2ind(kpoint, kgrid_size, _kshift)
-        push!(kindices, k0ind)
-        inv_kmap[k0ind] = []
-        count += length(all_kpoint)
-        for k in all_kpoint
-            kind = _kcoords2ind(k, kgrid_size, _kshift)
-            kmap[kind] = k0ind
-            push!(inv_kmap[k0ind], kind)
-        end
-    end
+#     kcoords, kweights, symmetries = PointSymmetry.bzmesh_ir_wedge(_kgrid_size, symmetries; kshift=_kshift)
+#     all_kcoords = PointSymmetry.unfold_kcoords(kcoords, symmetries)
+#     Nk = reduce(*, kgrid_size)
+#     @assert length(all_kcoords) == Nk
+#     kindices = []
+#     kmap = zeros(Int, Nk)
+#     inv_kmap = Dict{Int,Vector{Int}}()
+#     count = 0
+#     for kpoint in kcoords
+#         all_kpoint = PointSymmetry.unfold_kcoords([kpoint,], symmetries)
+#         k0ind = _kcoords2ind(kpoint, kgrid_size, _kshift)
+#         push!(kindices, k0ind)
+#         inv_kmap[k0ind] = []
+#         count += length(all_kpoint)
+#         for k in all_kpoint
+#             kind = _kcoords2ind(k, kgrid_size, _kshift)
+#             kmap[kind] = k0ind
+#             push!(inv_kmap[k0ind], kind)
+#         end
+#     end
 
-    @assert count == Nk
+#     @assert count == Nk
 
-    return MeshMaps.MeshMap(kindices, kmap, inv_kmap)
-end
+#     return MeshMaps.MeshMap(kindices, kmap, inv_kmap)
+# end
 
 # in spglib, grid_address runs from 1-ceil(N/2) to N-ceil(N/2)
 # thus -1:2 for N=4 and -2:2 for N=5
 
-function spglib_grid_address_to_index(mesh::UMesh{T,DIM}, ga) where {T,DIM}
+function spglib_grid_address_to_index(mesh::AbstractUniformMesh{T,DIM}, ga) where {T,DIM}
     inds = ga[1:DIM] # if length(x)==3 but DIM==2, take first two
     fcoords = (inds .+ mesh.shift) ./ mesh.size #fractional coordinates as defined in spglib
     # shift fcoords, nomalize to [0, 1)
     fcoords = [(fcoords[i] < 0) ? (fcoords[i] + 1) : fcoords[i] for i in 1:DIM]
-    x = mesh.lattice * fcoords
+    x = lattice_vector(mesh) * fcoords
     return locate(mesh, x)
 end
 
 function uniform_meshmap(mesh::BZMeshes.UniformBZMesh{T,DIM},
-    symmetry::Bool=true;
+    # symmetry::Bool=true;
     is_time_reversal::Bool=true,
     tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE
 ) where {T,DIM}
     # Determine symmetry operations to use
-    if symmetry
-        symmetries = default_symmetries(mesh.br, tol_symmetry=tol_symmetry)
-    else
-        symmetries = [one(PointSymmetry.SymOp)]
-    end
-    @assert mesh.mesh.inv_lattice * mesh.mesh.origin ≈ -ones(DIM) / 2 "Uniform BZ mesh MeshMap only supports origin=[-1/2, -1/2,...]"
+    # if symmetry
+    symmetries = default_symmetries(mesh.br, tol_symmetry=tol_symmetry)
+    # else
+    #     symmetries = [one(PointSymmetry.SymOp)]
+    # end
+    @assert inv_lattice_vector(mesh) * mesh.origin ≈ -ones(DIM) / 2 "Uniform BZ mesh MeshMap only supports origin=[-1/2, -1/2,...], now got $(inv_lattice_vector(mesh) * mesh.origin)"
 
-    kgrid_size = mesh.mesh.size
-    kshift = mesh.mesh.shift
+    kgrid_size = mesh.size
+    kshift = mesh.shift
     @assert !isempty(symmetries)  # Identity has to be always present.
 
     _kgrid_size = ones(Int, 3)
@@ -203,8 +203,8 @@ function uniform_meshmap(mesh::BZMeshes.UniformBZMesh{T,DIM},
     for (i, m) in enumerate(mapping)
         grid_address = grid[i]
         mapped_grid_address = grid[m]
-        kidx = spglib_grid_address_to_index(mesh.mesh, grid_address)
-        mapped_kidx = spglib_grid_address_to_index(mesh.mesh, mapped_grid_address)
+        kidx = spglib_grid_address_to_index(mesh, grid_address)
+        mapped_kidx = spglib_grid_address_to_index(mesh, mapped_grid_address)
         new_map[kidx] = mapped_kidx
     end
 
