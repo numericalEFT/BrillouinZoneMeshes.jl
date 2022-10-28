@@ -8,11 +8,12 @@ using ..AbstractMeshes: _inds2ind, _ind2inds
 using ..Model
 using ..BaseMesh
 using ..BaseMesh: _indfloor
+using ..BaseMesh.AbstractUniformMesh
 
 export UniformBZMesh, DFTK_Monkhorst_Pack
 
 """
-    struct UniformBZMesh{T, DIM} <: AbstractMesh{T, DIM}
+    struct UniformBZMesh{T, DIM} <: AbstractUniformMesh{T, DIM}
 
 Uniformly distributed Brillouin zone mesh. Defined as a uniform mesh on 1st Brillouin zone
 with Brillouin zone information stored in mesh.br::Brillouin. 
@@ -27,9 +28,13 @@ with Brillouin zone information stored in mesh.br::Brillouin.
 - `size`: size of the uniform mesh. For Monkhorst-Pack mesh require even number.
 - `shift`: k-shift of each mesh point. Set all to be zero for Gamma-centered and all to be 1//2 for M-P mesh
 """
-struct UniformBZMesh{T,DIM} <: AbstractMesh{T,DIM}
+# struct UniformBZMesh{T,DIM} <: AbstractMesh{T,DIM}
+struct UniformBZMesh{T,DIM} <: AbstractUniformMesh{T,DIM}
     br::Brillouin{T,DIM}
-    mesh::UMesh{T,DIM}
+
+    origin::SVector{DIM,T}
+    size::NTuple{DIM,Int}
+    shift::SVector{DIM,Rational}
 end
 
 # default shift is 1/2, result in Monkhorst-Pack mesh
@@ -57,8 +62,7 @@ UniformBZMesh(;
     origin::Real=-1 // 2,
     size,
     shift::Real=1 // 2) where {T,DIM} = UniformBZMesh{T,DIM}(
-    br,
-    UMesh(br=br, origin=origin .* ones(T, DIM), size=size, shift=shift .* ones(Int, DIM))
+    br, origin .* ones(T, DIM), size, shift .* ones(Int, DIM)
 )
 
 function DFTK_Monkhorst_Pack(;
@@ -68,11 +72,18 @@ function DFTK_Monkhorst_Pack(;
     kshift = [(iseven(size[i]) ? shift[i] : shift[i] + 1 // 2) for i in 1:DIM]
     return UniformBZMesh{T,DIM}(
         br,
-        UMesh(br=br, origin=-1 // 2 .* ones(T, DIM), size=size, shift=kshift)
+        -1 // 2 .* ones(T, DIM), # origin
+        size,
+        kshift
     )
 end
 
 function Monkhorst_Pack(;
+    # Gamma_centered: origin=0, 
+    # Monkhorst-Pack: origin=-1/2, consistent with VASP
+    # to be consistent with DFTK: 
+    #  - N is even, VASP is the same as DFTK: shift=0 will include Gamma point, shift=1/2 will not
+    #  - N is odd, VASP is different as DFTK: shift=0 will not include Gamma point, shift=1/2 will
     br::Brillouin{T,DIM},
     size,
     shift::AbstractVector=[0, 0, 0]
@@ -80,73 +91,18 @@ function Monkhorst_Pack(;
     # kshift = [(iseven(size[i]) ? shift[i] : shift[i] + 1 // 2) for i in 1:DIM]
     return UniformBZMesh{T,DIM}(
         br,
-        UMesh(br=br, origin=-ones(T, DIM) / 2, size=tuple(size...), shift=shift)
+        -ones(T, DIM) / 2,
+        tuple(size...),
+        shift=shift
     )
 end
 
-# Gamma_centered: origin=0, 
-# Monkhorst-Pack: origin=-1/2, consistent with VASP
-# to be consistent with DFTK: 
-#  - N is even, VASP is the same as DFTK: shift=0 will include Gamma point, shift=1/2 will not
-#  - N is odd, VASP is different as DFTK: shift=0 will not include Gamma point, shift=1/2 will
-
-Base.length(mesh::UniformBZMesh) = length(mesh.mesh)
-Base.size(mesh::UniformBZMesh) = size(mesh.mesh)
-Base.size(mesh::UniformBZMesh, I) = size(mesh.mesh)
+lattice_vector(mesh::UniformBZMesh) = mesh.br.recip_lattice
+inv_lattice_vector(mesh::UniformBZMesh) = mesh.inv_recip_lattice
+cell_volume(mesh::UniformBZMesh) = mesh.br.recip_cell_volume
 
 function Base.show(io::IO, mesh::UniformBZMesh)
     println("UniformBZMesh with $(length(mesh)) mesh points")
 end
-
-function Base.getindex(mesh::UniformBZMesh{T,DIM}, inds...) where {T,DIM}
-    return Base.getindex(mesh.mesh, inds...)
-end
-
-function Base.getindex(mesh::UniformBZMesh, I::Int)
-    return Base.getindex(mesh, _ind2inds(size(mesh), I)...)
-end
-
-"""
-    function AbstractMeshes.locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
-
-locate mesh point in mesh that is nearest to x. Useful for Monte-Carlo algorithm.
-Could also be used for zeroth order interpolation.
-
-# Parameters
-- `mesh`: aimed mesh
-- `x`: cartesian pos to locate
-"""
-function AbstractMeshes.locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
-    # find index of nearest grid point to the point
-    return AbstractMeshes.locate(mesh.mesh, x)
-end
-
-"""
-    function AbstractMeshes.volume(mesh::UniformBZMesh, i)
-
-volume represented by mesh point i. When i is omitted return volume of the whole mesh. 
-For M-P mesh it's always volume(mesh)/length(mesh), but for others things are more complecated.
-Here we assume periodic boundary condition so for all case it's the same.
-
-# Parameters:
-- `mesh`: mesh
-- `i`: index of mesh point, if ommited return volume of whole mesh
-"""
-AbstractMeshes.volume(mesh::UniformBZMesh) = mesh.br.recip_cell_volume
-AbstractMeshes.volume(mesh::UniformBZMesh, i) = mesh.br.recip_cell_volume / length(mesh)
-
-# function AbstractMeshes.volume(mesh::UniformBZMesh{T,DIM}, i) where {T,DIM}
-#     inds = _ind2inds(mesh.size, i)
-#     cellarea = T(1.0)
-#     for j in 1:DIM
-#         if inds[j] == 1
-#             cellarea *= T(0.5) + mesh.shift[j]
-#         elseif inds[j] == mesh.size[j]
-#             cellarea *= T(1.5) - mesh.shift[j]
-#         end
-#         # else cellarea *= 1.0 so nothing
-#     end
-#     return cellarea / length(mesh) * volume(mesh)
-# end
 
 end
