@@ -7,7 +7,7 @@ using BrillouinZoneMeshes.PointSymmetry: spglib_spacegroup_number, spglib_standa
     DIM = 2
     lattice = Matrix([1.0 0; 0 1]')
     br = Brillouin(lattice=lattice)
-    @test br.inv_lattice .* 2π ≈ br.recip_lattice
+    @test br.inv_lattice .* 2π ≈ br.recip_lattice'
     @test br.unit_cell_volume ≈ abs(det(lattice))
     @test br.recip_cell_volume ≈ 1 / abs(det(lattice)) * (2π)^DIM
 
@@ -15,7 +15,7 @@ using BrillouinZoneMeshes.PointSymmetry: spglib_spacegroup_number, spglib_standa
     DIM = 2
     lattice = Matrix([2.0 0; 1 sqrt(3)]')
     br = Brillouin(lattice=lattice)
-    @test br.inv_lattice .* 2π ≈ br.recip_lattice
+    @test br.inv_lattice .* 2π ≈ br.recip_lattice'
     @test br.unit_cell_volume ≈ abs(det(lattice))
     @test br.recip_cell_volume ≈ 1 / abs(det(lattice)) * (2π)^DIM
 
@@ -23,7 +23,7 @@ using BrillouinZoneMeshes.PointSymmetry: spglib_spacegroup_number, spglib_standa
     DIM = 3
     lattice = Matrix([2.0 0 0; 1 sqrt(3) 0; 7 11 19]')
     br = Brillouin(lattice=lattice)
-    @test br.inv_lattice .* 2π ≈ br.recip_lattice
+    @test br.inv_lattice .* 2π ≈ br.recip_lattice'
     @test br.unit_cell_volume ≈ abs(det(lattice))
     @test br.recip_cell_volume ≈ 1 / abs(det(lattice)) * (2π)^DIM
 end
