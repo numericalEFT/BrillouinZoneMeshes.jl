@@ -88,8 +88,8 @@ end
 
 function Brillouin(;
     lattice::Matrix{T},
-    atoms::AbstractVector{Int}=Vector{Int}([]),
-    positions=nothing,
+    atoms::AbstractVector{Int}=Vector{Int}([1,]),
+    positions=[zeros(size(lattice, 1)),],
     G_vector=nothing) where {T}
 
     DIM = size(lattice, 1)
@@ -161,7 +161,10 @@ function standard_brillouin(;
     tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE,
     G_vector=nothing)
 
+
     DIM = size(lattice, 1)
+
+    # @assert DIM == 3 "Only 3D lattices are supported."
 
     # Atoms and terms
     if length(atoms) != length(positions)
@@ -184,6 +187,7 @@ function standard_brillouin(;
     # magnetic_moments = normalize_magnetic_moment.(std_cell.magmoms)
 
     ### truncate 3D convention to DIM
+    lattice = zeros(dtype, DIM, DIM)
     lattice[1:DIM, 1:DIM] .= _lattice[1:DIM, 1:DIM]
     positions = []
     for i in eachindex(_positions)
@@ -192,8 +196,8 @@ function standard_brillouin(;
 
     ## make sure the truncation doesn't cause error
     __lattice, __positions = PointSymmetry._make3D(lattice, positions)
-    @assert __lattice ≈ _lattice
-    @assert __positions ≈ _positions
+    @assert __lattice ≈ _lattice "lattice $_lattice is truncated to $__lattice"
+    @assert __positions ≈ _positions "position $_positions is truncated to $__position"
 
     return Brillouin(;
         lattice=lattice,

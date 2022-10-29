@@ -71,7 +71,7 @@ function UniformBZMesh(;
     _shift = [s == true ? 1 // 2 : 0 for s in shift]
 
     return UniformBZMesh{T,DIM}(
-        br, (br.recip_lattice * ones(T, DIM)) * origin, size, _shift
+        br, (br.recip_lattice * ones(T, DIM)) * origin, tuple(size...), _shift
     )
 end
 
@@ -83,7 +83,7 @@ function DFTK_Monkhorst_Pack(;
     return UniformBZMesh(
         br=br,
         origin=-1 // 2, #origin
-        size=size,
+        size=tuple(size...),
         shift=kshift
     )
 end

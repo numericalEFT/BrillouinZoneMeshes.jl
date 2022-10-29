@@ -373,7 +373,7 @@ end
     return c0 * (1 - yd) + c1 * yd
 end
 
-function interp(data, mesh::UniformMesh{3,N,MT}, x) where {T,N,MT}
+function interp(data, mesh::UniformMesh{3,N,MT}, x) where {N,MT}
     # find floor index and normalized x y z
     displacement = SVector{3,Float64}(x) - mesh.origin
     xyz = (mesh.invlatvec * displacement) .* N .+ (1 - meshshift(MT)) .* (1 + 4 * eps(N * 1.0))
@@ -382,7 +382,7 @@ function interp(data, mesh::UniformMesh{3,N,MT}, x) where {T,N,MT}
     return linear3D(data, xi, yi, zi, xyz..., N)
 end
 
-@inline function linear3D(data, xi, yi, zi, x, y, z, N) where {T}
+@inline function linear3D(data, xi, yi, zi, x, y, z, N)
     xd, yd, zd = x - xi, y - yi, z - zi
 
     c00 = data[xi+(yi-1)*N+(zi-1)*N^2] * (1 - xd) + data[xi+(yi-1)*N+(zi-1)*N^2] * xd
