@@ -11,7 +11,7 @@ export Brillouin, get_latvec
 """
 Compute the inverse of the lattice. Require lattice to be square matrix
 """
-function _compute_inverse_lattice(lattice::Matrix{T}) where {T}
+function _compute_inverse_lattice(lattice::AbstractMatrix{T}) where {T}
     @assert size(lattice, 2) == size(lattice, 2)
     return inv(lattice)
 end
@@ -21,15 +21,15 @@ Compute the reciprocal lattice.
 We use the convention that the reciprocal lattice is the set of G vectors such
 that G ⋅ R ∈ 2π ℤ for all R in the lattice.
 """
-function _compute_recip_lattice(lattice::Matrix{T}) where {T}
-    return 2T(π) * _compute_inverse_lattice(Matrix(lattice'))
+function _compute_recip_lattice(lattice::AbstractMatrix{T}) where {T}
+    return 2T(π) * _compute_inverse_lattice(lattice')
 end
 
 """
 Return I-th lattice vector of lattice.
 Lattice vectors are specified column-wise in lattice::Matrix.
 """
-function get_latvec(lattice::Matrix{T}, I::Int) where {T}
+function get_latvec(lattice::AbstractMatrix{T}, I::Int) where {T}
     return view(lattice, :, I)
 end
 
