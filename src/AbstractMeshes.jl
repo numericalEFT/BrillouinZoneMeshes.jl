@@ -3,6 +3,7 @@ module AbstractMeshes
 # define interface of AbstractMesh
 
 using ..StaticArrays
+using ..CompositeGrids
 
 export AbstractMesh, locate, volume, fractional_coordinates
 
@@ -54,5 +55,20 @@ end
 
 # optional functions
 fractional_coordinates(mesh::AbstractMesh, I::Int) = error("not implemented!")
+
+# wrapper of external functions from CompositeGrids
+locate(grid::AbstractGrid, x) = CompositeGrids.Interp.locate(grid, x[1])
+volume(grid::AbstractGrid) = CompositeGrids.Interp.volume(grid)
+volume(grid::AbstractGrid, I) = CompositeGrids.Interp.volume(grid, I)
+function interval(grid::AbstractGrid, i::Int)
+    # bounds of the inverval around I needed for volume of PolarMesh
+    if i != 1 && i != length(grid)
+        return (grid[i-1] + grid[i]) / 2, (grid[i+1] + grid[i]) / 2
+    elseif i == 1
+        return grid.bound[1], (grid[i+1] + grid[i]) / 2
+    else
+        return (grid[i] + grid[i-1]) / 2, grid.bound[2]
+    end
+end
 
 end
