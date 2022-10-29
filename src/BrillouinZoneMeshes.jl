@@ -29,27 +29,27 @@ include("BaseMesh.jl")
 using .BaseMesh
 export BaseMesh
 export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, AbstractMesh# , locate, volume
-
-include("BZMeshes.jl")
-using .BZMeshes
-export BZMeshes
-export UniformBZMesh
+export inv_lattice_vector, lattice_vector, cell_volume
+export AbstractUniformMesh
 
 include("TreeMeshes.jl")
 using .TreeMeshes
 export TreeMeshes
 export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency# , interp, integrate
 
-include("PolarMeshes.jl")
-using .PolarMeshes
-export PolarMeshes
-
 include("MeshMaps.jl")
 using .MeshMaps
 export MeshMaps
 export SymMap, MappedData, MeshMap, ReducedBZMesh
 
-include("meshes/reduced_uniform_map.jl")
+include("BZMeshes.jl")
+using .BZMeshes
+export BZMeshes
+export UniformBZMesh
+
+include("PolarMeshes.jl")
+using .PolarMeshes
+export PolarMeshes
 
 include("Visualization.jl")
 using .Visualization

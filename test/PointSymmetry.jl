@@ -94,14 +94,14 @@ end
 end
 
 @testset "Spglib grid index test" begin
-    getidx(umesh, kidx) = BrillouinZoneMeshes.spglib_grid_address_to_index(umesh, kidx)
-    function test(dim, lattice, atoms, pos, ksize, kshift)
+    getidx(umesh, kidx) = BZMeshes.spglib_grid_address_to_index(umesh, kidx)
+    function test(dim, lattice, atoms, pos, ksize, kshift::Bool)
         println("Test $dim-D grid size: ", ksize, " with a shift ", kshift)
-        _kshift = kshift ? [1 // 2, 1 // 2, 1 // 2] : [0, 0, 0]
+        _kshift = [kshift, kshift, kshift]
         _kshift = _kshift[1:dim]
         br = BrillouinZoneMeshes.Model.Brillouin(lattice=lattice, atoms=atoms, positions=pos)
         brmesh = BrillouinZoneMeshes.BZMeshes.Monkhorst_Pack(br=br, size=tuple(ksize...), shift=_kshift)
-        umesh = brmesh.mesh
+        umesh = brmesh
         @test getidx(umesh, [ksize[1] - 1, 0, 0]) == getidx(umesh, [-1, 0, 0])
         @test getidx(umesh, [0, ksize[2] - 1, 0]) == getidx(umesh, [0, -1, 0])
         if dim == 3
