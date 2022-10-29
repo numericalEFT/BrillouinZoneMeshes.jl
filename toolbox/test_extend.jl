@@ -6,10 +6,10 @@ import Brillouin:
     basis
 using Brillouin.KPaths: Bravais
 using StaticArrays
-
+using BrillouinZoneMeshes
 using PyCall
 const PySpatial = PyNULL()
-
+using BrillouinZoneMeshes.LinearAlgebra
 include("default_colors.jl")
 include("plotlyjs_wignerseitz.jl") 
 function wignerseitz_ext(basis::AVec{<:SVector{D,<:Real}};
@@ -78,20 +78,19 @@ end
 
 
 # Wigner-Seitz cells visualization
-# 3D
+# 2D
 Rs = [[1.0, 0.0], [-0.5, √3/2]]
-#Rs = 2π.*[[-1.0, 1.0, 1.0], [1.0, -1.0, 1.0], [1.0, 1.0, -1.0]]
-clist,idx_center = wignerseitz_ext(Rs;merge = false)
-#P0=plot(clist[idx_center])
-#display(P0)
-#readline()
-v=[1.0,1.0]
-vc = cartesianize(v,Rs)
-#println(vc[1:1],vc[2:2])
-linspace = range(0,1,length=30)
-lin2 = collect(Iterators.product(linspace,linspace))
+N, DIM = 4, 2
+origin = [0.0 0.0]
+lattice =Matrix([2 0; 1 sqrt(3)]')
+msize = (3,3)
+# latvec = [1 0; 0 1]'
+br = BZMeshes.Brillouin(lattice = lattice)
+bzmesh = UniformBZMesh(br=br, size=msize)
+latvec = mapslices(x->[x],lattice_vector(bzmesh),dims=1)[:]
+clist,idx_center = wignerseitz_ext(latvec;merge = false)
 P=plot(clist,idx_center)
-addtraces!(P, scatter(x=[vc[1].*lin2[i][1] for i in 1:length(lin2)],y=[vc[2].*lin2[i][2] for i in 1:length(lin2)],mode="markers"))
+addtraces!(P, scatter(x=[bzmesh[i][1] for i in 1:length(bzmesh)],y=[bzmesh[i][2] for i in 1:length(bzmesh)],mode="markers"))
 display(P)
 readline()
 

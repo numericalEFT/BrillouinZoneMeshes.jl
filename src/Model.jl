@@ -22,7 +22,7 @@ We use the convention that the reciprocal lattice is the set of G vectors such
 that G ⋅ R ∈ 2π ℤ for all R in the lattice.
 """
 function _compute_recip_lattice(lattice::Matrix{T}) where {T}
-    return 2T(π) * _compute_inverse_lattice(lattice)
+    return 2T(π) * _compute_inverse_lattice(Matrix(lattice'))
 end
 
 """
