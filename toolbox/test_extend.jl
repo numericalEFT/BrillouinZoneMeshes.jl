@@ -13,8 +13,8 @@ using BrillouinZoneMeshes.LinearAlgebra
 include("default_colors.jl")
 include("plotlyjs_wignerseitz.jl") 
 function wignerseitz_ext(basis::AVec{<:SVector{D,<:Real}};
-            merge::Bool = true,
-            Nmax::Integer = 3, cut = Nmax-1) where D
+            merge::Bool = false,
+            Nmax::Integer = 3, cut = Nmax/2) where D
     # bringing in SciPy's Spatial module (for `Voronoi` and `ConvexHull`)
     if PyCall.conda
         copy!(PySpatial, pyimport_conda("scipy.spatial", "scipy"))
@@ -54,8 +54,8 @@ function wignerseitz_ext(basis::AVec{<:SVector{D,<:Real}};
                 c    = WignerSeitz.reorient_normals!(c)
 
                 # return either raw simplices or "merged" polygons
-                if merge
-                    latticize!(merge_coplanar!(c))
+                if merge || D > 2
+                    latticize!(WignerSeitz.merge_coplanar!(c))
                 else
                     latticize!(c)
                 end
@@ -79,18 +79,30 @@ end
 
 # Wigner-Seitz cells visualization
 # 2D
-Rs = [[1.0, 0.0], [-0.5, √3/2]]
-N, DIM = 4, 2
-origin = [0.0 0.0]
-lattice =Matrix([2 0; 1 sqrt(3)]')
-msize = (3,3)
+#Rs = [[1.0, 0.0], [-0.5, √3/2]]
+#N, DIM = 4, 2
+#origin = [0.0 0.0]
+#lattice =Matrix([2 0; 1 sqrt(3)]')
+#msize = (3,3)
+#br = BZMeshes.Brillouin(lattice = lattice)
+
 # latvec = [1 0; 0 1]'
-br = BZMeshes.Brillouin(lattice = lattice)
+# 3D
+
+lattice = [[0 1 1.0]; [1 0 1.0]; [1 1 0.0]]
+atoms = [1, 1]
+positions = [ones(3) / 8, -ones(3) / 8]
+br = BZMeshes.Brillouin(lattice=lattice, atoms=atoms, positions=positions)
+#lattice = [[1.0 0.0 0.0]; [0.0 1.0 0.0]; [0.0 0.0 1.0]]
+#br = BZMeshes.Brillouin(lattice=lattice)
+msize = (5, 5, 5)
+
 bzmesh = UniformBZMesh(br=br, size=msize)
 latvec = mapslices(x->[x],lattice_vector(bzmesh),dims=1)[:]
-clist,idx_center = wignerseitz_ext(latvec;merge = false)
+clist,idx_center = wignerseitz_ext(latvec)
 P=plot(clist,idx_center)
-addtraces!(P, scatter(x=[bzmesh[i][1] for i in 1:length(bzmesh)],y=[bzmesh[i][2] for i in 1:length(bzmesh)],mode="markers"))
+#addtraces!(P, scatter(x=[bzmesh[i][1] for i in 1:length(bzmesh)],y=[bzmesh[i][2] for i in 1:length(bzmesh)],mode="markers"))
+addtraces!(P, scatter3d(x=[bzmesh[i][1] for i in 1:length(bzmesh)],y=[bzmesh[i][2] for i in 1:length(bzmesh)],z=[bzmesh[i][3] for i in 1:length(bzmesh)],mode="markers", marker = attr(size=3)))
 display(P)
 readline()
 
