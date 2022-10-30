@@ -124,14 +124,6 @@ d = Dict(
             buttons=[
                 attr(
                     args=[
-                        # 33, attr(visible=false)
-                        "visible", allinvis
-                    ],
-                    label="No Mesh",
-                    method="restyle"
-                ),
-                attr(
-                    args=[
                         # 33, attr(visible=true)
                         "visible", vis1
                     ],
@@ -144,6 +136,14 @@ d = Dict(
                         "visible", vis2
                     ],
                     label="Reduced Mesh",
+                    method="restyle"
+                ),
+                attr(
+                    args=[
+                        # 33, attr(visible=false)
+                        "visible", allinvis
+                    ],
+                    label="No Mesh",
                     method="restyle"
                 )
             ],
