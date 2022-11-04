@@ -2,8 +2,7 @@ using .PlotlyJS
 import .PlotlyJS: plot
 using LinearAlgebra: norm, dot
 using StaticArrays
-
-using .WignerSeitz: face_normal
+using .WignerSeitz: face_normal, merge_coplanar!
 # ---------------------------------------------------------------------------------------- #
 # CONSTANTS
 
@@ -118,8 +117,8 @@ function plot(c::Cell{3}, layout::Layout=Layout();
     ts = vcat(tbz, tgs, tgtips, taxs, taxtips)
     return PlotlyJS.plot(ts, layout; config=config)
 end
-
-function plot(clist::Array{Cell{3}}, idx_center::Int, layout::Layout=Layout();
+ 
+function plot(clist::Array{Cell{3}}, idx_center::Int, layout::Layout=Layout(); ibz=nothing,
     config::PlotConfig=PlotConfig(responsive=true, displaylogo=false))
 
     layout = merge(DEFAULT_PLOTLY_LAYOUT_3D, layout)
@@ -134,7 +133,38 @@ function plot(clist::Array{Cell{3}}, idx_center::Int, layout::Layout=Layout();
     taxs = Vector{GenericTrace{Dict{Symbol,Any}}}(undef, 6)
     taxtips = Vector{GenericTrace{Dict{Symbol,Any}}}(undef, 3)
 
-
+    if !isnothing(ibz)
+        facecolor = repeat([
+    	      "rgb(50, 200, 200)",
+    	      "rgb(100, 200, 255)",
+    	      "rgb(150, 200, 115)",
+    	      "rgb(200, 200, 50)",
+    	      "rgb(230, 200, 10)",
+    	      "rgb(255, 140, 0)"
+        ], inner=[2])
+        setting(ibz) !== CARTESIAN && (ibz = cartesianize(ibz))        
+        faces = PlotlyJS.mesh3d(x=[ibz.verts[i][1] for i in 1:length(ibz.verts)],
+                       y=[ibz.verts[i][2] for i in 1:length(ibz.verts)],
+                       z=[ibz.verts[i][3] for i in 1:length(ibz.verts)],
+                       i=[ibz.faces[i][1]-1 for i in 1:length(ibz.faces)],
+                       j=[ibz.faces[i][2]-1 for i in 1:length(ibz.faces)],
+                       k=[ibz.faces[i][3]-1 for i in 1:length(ibz.faces)],
+                       facecolor = facecolor, opacity=0.7                               
+                       )
+        merge_coplanar!(ibz) # Coplanar triangles have to be merged after calling mesh3d.
+        # BZ
+        tbz = Vector{GenericTrace{Dict{Symbol,Any}}}(undef, length(ibz)+1)
+        for (i, poly) in enumerate(ibz)
+            tbz[i] = PlotlyJS.scatter3d(
+                x=push!(getindex.(poly, 1), poly[1][1]),
+                y=push!(getindex.(poly, 2), poly[1][2]),
+                z=push!(getindex.(poly, 3), poly[1][3]);
+                mode="lines", hovertext="Cell", hoverinfo="text+x+y+z",
+                line=attr(color=BZ_COL[], width=3))
+        end
+        tbz[length(ibz)+1] = faces
+        push!(tbz_list, tbz)
+    end
     for (ci, c) in enumerate(clist)
         if (!isnothing(c))
             setting(c) !== CARTESIAN && (c = cartesianize(c))
@@ -207,6 +237,7 @@ function plot(clist::Array{Cell{3}}, idx_center::Int, layout::Layout=Layout();
             end
         end
     end
+
     # combine traces and plot
     ts = tbz_list[1]
     for i in 2:length(tbz_list)
@@ -333,7 +364,7 @@ function plot(c::Cell{2}, layout::Layout=Layout();
     return PlotlyJS.plot(ts, layout; config=config)
 end
 
-function plot(clist::Array{Cell{2}}, idx_center::Int, layout::Layout=Layout();
+function plot(clist::Array{Cell{2}}, idx_center::Int, layout::Layout=Layout(); ibz =nothing,
     config::PlotConfig=PlotConfig(responsive=true, displaylogo=false))
 
     layout = merge(DEFAULT_PLOTLY_LAYOUT_2D, layout)
@@ -349,6 +380,25 @@ function plot(clist::Array{Cell{2}}, idx_center::Int, layout::Layout=Layout();
     max_x, max_y = maximum(v -> abs(v[1]), basis(c_center)), maximum(v -> abs(v[2]), basis(c_center))
     get!(layout[:xaxis], :range, [-max_x - scale / 15, max_x + scale / 15])
     get!(layout[:yaxis], :range, [-max_y - scale / 15, max_y + scale / 15])
+
+
+    if !isnothing(ibz)
+        setting(ibz) !== CARTESIAN && (ibz = cartesianize(ibz))        
+        # merge_coplanar!(ibz) # Coplanar triangles have to be merged after calling mesh3d.
+        # BZ
+        merge_coplanar!(ibz)
+        tbz = Vector{GenericTrace{Dict{Symbol,Any}}}(undef, length(ibz))
+        for (i, poly) in enumerate(ibz)
+            tbz[i] = PlotlyJS.scatter(
+                x=push!(getindex.(poly, 1), poly[1][1]),
+                y=push!(getindex.(poly, 2), poly[1][2]);
+                mode="lines", hovertext="Cell", hoverinfo="text+x+y",
+                line=attr(color=BZ_COL[], width=3 ), fill = "toself", fillcolor = "rgb(50, 200, 200)"
+            )
+        end
+        push!(tbz_list, tbz)
+    end
+
     for (ci, c) in enumerate(clist)
         if (!isnothing(c))
             # Cell boundaries
