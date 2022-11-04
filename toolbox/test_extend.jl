@@ -14,7 +14,7 @@ using PyCall
 const PySpatial = PyNULL()
 using BrillouinZoneMeshes.LinearAlgebra
 using SymmetryReduceBZ
-using SymmetryReduceBZ.Symmetry: calc_ibz, inhull
+using SymmetryReduceBZ.Symmetry: calc_ibz, inhull, calc_pointgroup, complete_orbit
 import SymmetryReduceBZ.Utilities: get_uniquefacets
 import QHull
 include("default_colors.jl")
@@ -132,9 +132,9 @@ convention = "ordinary"
 
 br = BZMeshes.Brillouin(lattice=lattice, atoms=atoms, positions=positions)
 #br = BZMeshes.Brillouin(lattice=lattice)
-msize = (8, 8, 8)
+msize = (4, 4, 4)
 
-bzmesh = UniformBZMesh(br=br, size=msize, shift=[false, false, false])
+bzmesh = UniformBZMesh(br=br, size=msize, shift=[true, true, true])
 meshmap = MeshMap(bzmesh)
 
 recip_lattice = lattice_vector(bzmesh)
@@ -168,10 +168,15 @@ println(fullmesh)
 reducedmesh = [fullmesh[i] for i in meshmap.irreducible_indices]
 
 reducedmesh = []
+pointgroup = calc_pointgroup(Matrix{Float64}(lattice_vector(bzmesh)))
+points = [ibz.points[i, :] for i in 1:size(ibz.points, 1)]
 for idx in meshmap.irreducible_indices
-    sym_points = [fullmesh[pidx] for pidx in meshmap.inv_map[idx]]
-    points = [ibz.points[i, :] for i in 1:size(ibz.points, 1)]
-    point = get_closest_point(points, sym_points)
+    # sym_points = [fullmesh[pidx] for pidx in meshmap.inv_map[idx]]
+    orbit = complete_orbit(fullmesh[idx], Matrix{Float64}.(pointgroup))
+    orbit = [orbit[:, i] for  i in 1:size(orbit, 2)]
+    # println(size(orbit))
+    point = get_closest_point(points, orbit)
+    # println(sym_points, " -> ", point)
     push!(reducedmesh, point)
 end
 
