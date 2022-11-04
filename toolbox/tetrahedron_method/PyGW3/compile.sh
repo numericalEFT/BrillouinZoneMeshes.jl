@@ -1,0 +1,1 @@
+ifort for_tetrahedra.f90 for_tetrahedra2.f90 for_tetrahedra3.f90 -o tetra.so -shared -fPIC
