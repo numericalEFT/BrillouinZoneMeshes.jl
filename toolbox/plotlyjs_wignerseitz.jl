@@ -364,7 +364,7 @@ function plot(c::Cell{2}, layout::Layout=Layout();
     return PlotlyJS.plot(ts, layout; config=config)
 end
 
-function plot(clist::Array{Cell{2}}, idx_center::Int, layout::Layout=Layout();
+function plot(clist::Array{Cell{2}}, idx_center::Int, layout::Layout=Layout(); ibz =nothing,
     config::PlotConfig=PlotConfig(responsive=true, displaylogo=false))
 
     layout = merge(DEFAULT_PLOTLY_LAYOUT_2D, layout)
@@ -380,6 +380,25 @@ function plot(clist::Array{Cell{2}}, idx_center::Int, layout::Layout=Layout();
     max_x, max_y = maximum(v -> abs(v[1]), basis(c_center)), maximum(v -> abs(v[2]), basis(c_center))
     get!(layout[:xaxis], :range, [-max_x - scale / 15, max_x + scale / 15])
     get!(layout[:yaxis], :range, [-max_y - scale / 15, max_y + scale / 15])
+
+
+    if !isnothing(ibz)
+        setting(ibz) !== CARTESIAN && (ibz = cartesianize(ibz))        
+        # merge_coplanar!(ibz) # Coplanar triangles have to be merged after calling mesh3d.
+        # BZ
+        merge_coplanar!(ibz)
+        tbz = Vector{GenericTrace{Dict{Symbol,Any}}}(undef, length(ibz))
+        for (i, poly) in enumerate(ibz)
+            tbz[i] = PlotlyJS.scatter(
+                x=push!(getindex.(poly, 1), poly[1][1]),
+                y=push!(getindex.(poly, 2), poly[1][2]);
+                mode="lines", hovertext="Cell", hoverinfo="text+x+y",
+                line=attr(color=BZ_COL[], width=3 ), fill = "toself", fillcolor = "rgb(50, 200, 200)"
+            )
+        end
+        push!(tbz_list, tbz)
+    end
+
     for (ci, c) in enumerate(clist)
         if (!isnothing(c))
             # Cell boundaries
