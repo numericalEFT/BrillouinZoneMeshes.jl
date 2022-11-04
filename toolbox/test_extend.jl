@@ -1,7 +1,10 @@
 using Brillouin, PlotlyJS
 using Brillouin:
     AVec,
-    CARTESIAN
+    CARTESIAN,
+    cartesianize,
+    reduce_to_wignerseitz
+
 import Brillouin:
     basis
 using Brillouin.KPaths: Bravais
@@ -10,11 +13,13 @@ using BrillouinZoneMeshes
 using PyCall
 const PySpatial = PyNULL()
 using BrillouinZoneMeshes.LinearAlgebra
-using SymmetryReduceBZ.Symmetry:calc_ibz
+using SymmetryReduceBZ
+using SymmetryReduceBZ.Symmetry: calc_ibz, inhull
 import SymmetryReduceBZ.Utilities: get_uniquefacets
 import QHull
 include("default_colors.jl")
 include("plotlyjs_wignerseitz.jl")
+include("cluster.jl")
 function wignerseitz_ext(basis::AVec{<:SVector{D,<:Real}};
     merge::Bool=false,
     Nmax::Integer=3, cut=Nmax / 2) where {D}
@@ -73,16 +78,16 @@ function wignerseitz_ext(basis::AVec{<:SVector{D,<:Real}};
     return clist, idx_center_final
 end
 
-function convert_to_cell(hull::QHull.Chull{Float64}, basis::AVec{<:SVector{D,<:Real}}) where D
+function convert_to_cell(hull::QHull.Chull{Float64}, basis::AVec{<:SVector{D,<:Real}}) where {D}
     # The QHull julia package is used by SymmetryReduceBZ, whereas Brillouin package use Qhull from
     # SciPy instead. Therefore we have to reload this function for julia QHull object.
     vs′ = hull.points         # vertices
-    simp = hvcat(size(hull.simplices,1),hull.simplices...)'
+    simp = hvcat(size(hull.simplices, 1), hull.simplices...)'
     fs′ = simp # faces
 
-    vs = SVector{D, Float64}.(eachrow(vs′))
+    vs = SVector{D,Float64}.(eachrow(vs′))
     fs = Vector{Int}.(eachrow(fs′))
-    return Cell(vs, fs, SVector{D, SVector{D, Float64}}(basis), Ref(CARTESIAN))
+    return Cell(vs, fs, SVector{D,SVector{D,Float64}}(basis), Ref(CARTESIAN))
 end
 
 
@@ -91,6 +96,10 @@ function wignerseitz_ext(basis::AVec{<:AVec{<:Real}}; kwargs...)
     all(V -> length(V) == D, @view basis[2:end]) || error(DomainError(basis, "provided `basis` must have identical dimensions"))
 
     return wignerseitz_ext(SVector{D,Float64}.(basis); kwargs...)
+end
+
+function reduce_to_wignerseitz_ext(v, latvec, bzmesh)
+    return cartesianize(reduce_to_wignerseitz(inv_lattice_vector(bzmesh) * v, latvec), latvec)
 end
 
 
@@ -115,7 +124,7 @@ lattice = [[0 0.5 0.5]; [0.5 0 0.5]; [0.5 0.5 0.0]]
 atoms = [1]
 positions = [zeros(3)]
 
-atom_pos = hvcat(size(positions,1),positions...)
+atom_pos = hvcat(size(positions, 1), positions...)
 ibzformat = "convex hull"
 coordinates = "Cartesian"
 makeprim = true
@@ -123,18 +132,18 @@ convention = "ordinary"
 
 br = BZMeshes.Brillouin(lattice=lattice, atoms=atoms, positions=positions)
 #br = BZMeshes.Brillouin(lattice=lattice)
-msize = (4, 4, 4)
+msize = (8, 8, 8)
 
-bzmesh = UniformBZMesh(br=br, size=msize)
+bzmesh = UniformBZMesh(br=br, size=msize, shift=[false, false, false])
 meshmap = MeshMap(bzmesh)
 
-recip_lattice=lattice_vector(bzmesh)
+recip_lattice = lattice_vector(bzmesh)
 #latvec = mapslices(x -> [x],recip_lattice , dims=1)[:]
-latvec = mapslices(x -> [x], recip_lattice , dims=1)[:]
+latvec = mapslices(x -> [x], recip_lattice, dims=1)[:]
 
 #generate irreducible brillouin zone
-ibz = calc_ibz(lattice./2/π,atoms, atom_pos, coordinates,ibzformat,
-               makeprim,convention)
+ibz = calc_ibz(lattice ./ 2 / π, atoms, atom_pos, coordinates, ibzformat,
+    makeprim, convention)
 #The 1/2π here is due to the convention difference between packages. SymmetryReduceBZ has a \dot a_recip = 1 instead of 2π
 
 c = convert_to_cell(ibz, SVector{length(latvec[1]),Float64}.(latvec))
@@ -142,10 +151,33 @@ c = WignerSeitz.reorient_normals!(c)
 latticize!(c) # Do not merge coplanar triangles for reduced mesh. This must be done within plot.
 
 clist, idx_center = wignerseitz_ext(latvec, cut=1)
-P = plot(clist, idx_center, ibz=c)
 
-fullmesh = [bzmesh[i] for i in 1:length(bzmesh)]
-reducedmesh = [bzmesh[i] for i in meshmap.irreducible_indices]
+fullmesh = []
+for i in 1:length(bzmesh)
+    v = bzmesh[i]
+    vv = reduce_to_wignerseitz_ext(v, latvec, bzmesh)
+    for (gi, g) in enumerate(fullmesh)
+        @assert (vv ≈ g) == false "$(bzmesh[i]) and $(bzmesh[gi]) are the same point $(vv) and $(g)"
+    end
+    push!(fullmesh, vv)
+end
+println(fullmesh)
+
+# fullmesh = [reduce_to_wignerseitz_ext(bzmesh[i], latvec, bzmesh) for i in 1:length(bzmesh)]
+
+reducedmesh = [fullmesh[i] for i in meshmap.irreducible_indices]
+
+reducedmesh = []
+for idx in meshmap.irreducible_indices
+    sym_points = [fullmesh[pidx] for pidx in meshmap.inv_map[idx]]
+    points = [ibz.points[i, :] for i in 1:size(ibz.points, 1)]
+    point = get_closest_point(points, sym_points)
+    push!(reducedmesh, point)
+end
+
+# remappedmesh = reducedmesh
+
+P = plot(clist, idx_center, ibz=c)
 
 addtraces!(P, scatter3d(x=[r[1] for r in fullmesh], y=[r[2] for r in fullmesh], z=[r[3] for r in fullmesh], mode="markers", marker=attr(size=3)))
 addtraces!(P, scatter3d(x=[r[1] for r in reducedmesh], y=[r[2] for r in reducedmesh], z=[r[3] for r in reducedmesh], mode="markers", marker=attr(size=3)))
@@ -199,5 +231,5 @@ d = Dict(
 relayout!(P, d)
 
 display(P)
-readline()
+# readline()
 
