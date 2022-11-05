@@ -106,23 +106,22 @@ end
 
 # Wigner-Seitz cells visualization
 # 2D
-#Rs = [[1.0, 0.0], [-0.5, √3/2]]
 #N, DIM = 4, 2
 #origin = [0.0 0.0]
-#lattice =Matrix([2 0; 1 sqrt(3)]')
-#msize = (3,3)
+lattice =Matrix([2 0; 1 sqrt(3)]')
 #br = BZMeshes.Brillouin(lattice = lattice)
 
 # latvec = [1 0; 0 1]'
 # 3D
 
-lattice = [[0 0.5 0.5]; [0.5 0 0.5]; [0.5 0.5 0.0]]
+#lattice = [[0 0.5 0.5]; [0.5 0 0.5]; [0.5 0.5 0.0]]
 #atoms = [1,1]
 #positions = [ones(3) / 8, -ones(3) / 8]
 
 #lattice = [[1.0 0.0 0.0]; [0.0 1.0 0.0]; [0.0 0.0 1.0]]
 atoms = [1]
-positions = [zeros(3)]
+#positions = [zeros(3)]
+positions = [zeros(2)]
 
 atom_pos = hvcat(size(positions, 1), positions...)
 ibzformat = "convex hull"
@@ -132,13 +131,15 @@ convention = "ordinary"
 
 br = BZMeshes.Brillouin(lattice=lattice, atoms=atoms, positions=positions)
 #br = BZMeshes.Brillouin(lattice=lattice)
-msize = (4, 4, 4)
 
-bzmesh = UniformBZMesh(br=br, size=msize, shift=[true, true, true])
+msize = (3,3)
+bzmesh = UniformBZMesh(br=br, size=msize, shift=[false, false])
+
+#msize = (4, 4, 4)
+#bzmesh = UniformBZMesh(br=br, size=msize, shift=[true, true, true])
 meshmap = MeshMap(bzmesh)
 
 recip_lattice = lattice_vector(bzmesh)
-#latvec = mapslices(x -> [x],recip_lattice , dims=1)[:]
 latvec = mapslices(x -> [x], recip_lattice, dims=1)[:]
 
 #generate irreducible brillouin zone
@@ -184,8 +185,11 @@ end
 
 P = plot(clist, idx_center, ibz=c)
 
-addtraces!(P, scatter3d(x=[r[1] for r in fullmesh], y=[r[2] for r in fullmesh], z=[r[3] for r in fullmesh], mode="markers", marker=attr(size=3)))
-addtraces!(P, scatter3d(x=[r[1] for r in reducedmesh], y=[r[2] for r in reducedmesh], z=[r[3] for r in reducedmesh], mode="markers", marker=attr(size=3)))
+addtraces!(P, scatter(x=[r[1] for r in fullmesh], y=[r[2] for r in fullmesh], mode="markers", marker=attr(size=5)))
+addtraces!(P, scatter(x=[r[1] for r in reducedmesh], y=[r[2] for r in reducedmesh], mode="markers", marker=attr(size=5)))
+
+#addtraces!(P, scatter3d(x=[r[1] for r in fullmesh], y=[r[2] for r in fullmesh], z=[r[3] for r in fullmesh], mode="markers", marker=attr(size=3)))
+#addtraces!(P, scatter3d(x=[r[1] for r in reducedmesh], y=[r[2] for r in reducedmesh], z=[r[3] for r in reducedmesh], mode="markers", marker=attr(size=3)))
 
 n = length(P.plot.data) # number of traces, the last two are the full and reduced meshes
 allinvis, vis1, vis2 = [true for i in 1:n], [true for i in 1:n], [true for i in 1:n]
@@ -236,5 +240,5 @@ d = Dict(
 relayout!(P, d)
 
 display(P)
-# readline()
+readline()
 
