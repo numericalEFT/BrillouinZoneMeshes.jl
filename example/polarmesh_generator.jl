@@ -190,7 +190,7 @@ end
 
             DIM = 2
             lattice = Matrix([1.0 0; 0 1]')
-            br = BZMeshes.Brillouin(lattice=lattice)
+            br = BZMeshes.Cell(lattice=lattice)
             bzmesh = PolarMesh(br, CompositeMesh(theta, [rrg for i in 1:length(theta)]))
             for (i, p) in enumerate(bzmesh)
                 println(p, AbstractMeshes.volume(bzmesh, i))
