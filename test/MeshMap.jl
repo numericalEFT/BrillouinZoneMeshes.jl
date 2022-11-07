@@ -22,7 +22,7 @@
     @testset "ReducedBZMesh" begin
         DIM = 2
         lattice = Matrix([1.0 0; 0 1]')
-        br = BZMeshes.Brillouin(lattice=lattice)
+        br = BZMeshes.Cell(lattice=lattice)
         umesh = BZMeshes.UniformBZMesh(br=br, size=(4, 4))
 
         # hand-made map

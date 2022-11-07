@@ -1,7 +1,7 @@
 using BrillouinZoneMeshes.PointSymmetry: spglib_spacegroup_number, spglib_standardize_cell
 
 @testset "Brillouin" begin
-    Brillouin = BrillouinZoneMeshes.Model.Brillouin
+    Brillouin = BrillouinZoneMeshes.Model.Cell
     get_latvec = BrillouinZoneMeshes.Model.get_latvec
     # square lattice
     DIM = 2
@@ -43,7 +43,7 @@ end
     lattice = a / 2 * [[0 -1 -1.0]; [1 0 1.0]; [1 1 0.0]]
     atoms = [Si, Si]
     positions = [ones(3) / 8, -ones(3) / 8]
-    model = BrillouinZoneMeshes.Model.standard_brillouin(lattice=lattice, atoms=atoms, positions=positions, primitive=false)
+    model = BrillouinZoneMeshes.Model.standard_cell(lattice=lattice, atoms=atoms, positions=positions, primitive=false)
     println(model)
     display(model)
 
@@ -54,7 +54,7 @@ end
     lattice = a / 2 * [[0 1 1.0]; [-1 0 1.0]; [-1 1 0.0]]
     atoms = [Si, Ge]
     positions = [[-1, 1, 1] / 8, -[-1, 1, 1] / 8]
-    model = BrillouinZoneMeshes.Model.standard_brillouin(lattice=lattice, atoms=atoms, positions=positions, primitive=false)
+    model = BrillouinZoneMeshes.Model.standard_cell(lattice=lattice, atoms=atoms, positions=positions, primitive=false)
     @test spglib_spacegroup_number(model) == 216
     @test model.lattice ≈ a * I(3)
 
@@ -62,6 +62,6 @@ end
     lattice = [[1.0 0.0]; [0.0 1.0]]
     atoms = [Si,]
     positions = [[0.0, 0.0],]
-    model = BrillouinZoneMeshes.Model.standard_brillouin(lattice=lattice, atoms=atoms, positions=positions, primitive=true)
+    model = BrillouinZoneMeshes.Model.standard_cell(lattice=lattice, atoms=atoms, positions=positions, primitive=true)
     @test model.lattice ≈ lattice
 end

@@ -13,7 +13,7 @@
             N1, N2 = 3, 5
             lattice = Matrix([1/N1/2 0; 0 1.0/N2/2]') .* 2π
             # so that bzmesh[i,j] = (2i-1,2j-1)
-            br = BZMeshes.Brillouin(lattice=lattice)
+            br = BZMeshes.Cell(lattice=lattice)
             bzmesh = BZMeshes.UniformBZMesh(br=br, size=(N1, N2), origin=0)
 
             println(bzmesh)
@@ -30,7 +30,7 @@
         @testset "lattice vector and inverse lattice vector" begin
             lattice = Matrix([2.0 0 0; 1 sqrt(3) 0; 7 11 19]')
             msize = (3, 5, 7)
-            br = BZMeshes.Brillouin(lattice=lattice)
+            br = BZMeshes.Cell(lattice=lattice)
             bzmesh = BZMeshes.UniformBZMesh(br=br, size=msize)
 
             @test lattice_vector(bzmesh, 1) ≈ br.recip_lattice[:, 1]
@@ -49,7 +49,7 @@
             lattice = Matrix([2.0 0 0; 1 sqrt(3) 0; 7 11 19]')
             # size = (3, 5)
             # lattice = Matrix([2.3 0; 0 7.0]')
-            br = BZMeshes.Brillouin(lattice=lattice)
+            br = BZMeshes.Cell(lattice=lattice)
             bzmesh = BZMeshes.UniformBZMesh(br=br, size=msize)
             vol = 0.0
             for (i, p) in enumerate(bzmesh)
@@ -66,7 +66,7 @@
         @testset "origin and shift convention" begin
             DIM = 2
             lattice = Matrix([1.0 0; 0 1]')
-            br = BZMeshes.Brillouin(lattice=lattice)
+            br = BZMeshes.Cell(lattice=lattice)
 
             # even numbers
             size = (4, 4)

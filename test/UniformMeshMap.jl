@@ -3,7 +3,7 @@
         println("Test $dim-D grid size: ", ksize, " with a shift ", kshift)
         _kshift = [kshift, kshift, kshift]
         _kshift = _kshift[1:dim]
-        br = BrillouinZoneMeshes.Model.Brillouin(lattice=lattice, atoms=atoms, positions=pos)
+        br = BrillouinZoneMeshes.Model.Cell(lattice=lattice, atoms=atoms, positions=pos)
         brmesh = BrillouinZoneMeshes.BZMeshes.Monkhorst_Pack(br=br, size=tuple(ksize...), shift=_kshift)
 
         meshmap = MeshMap(brmesh)

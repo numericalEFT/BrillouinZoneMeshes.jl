@@ -20,12 +20,12 @@ _extract(r::Polar{T,A}) where {T,A} = SVector{2,T}(r.r, r.ϕ)
 _extract(r::Spherical{T,A}) where {T,A} = SVector{3,T}(r.r, r.θ, r.ϕ)
 
 struct PolarMesh{T,DIM,MT<:CompositeMesh} <: AbstractMesh{T,DIM}
-    br::Brillouin{T,DIM}
+    br::Cell{T,DIM}
     mesh::MT # actual mesh. assume order as (r,θ,ϕ...)
     volume::T
 end
 
-function PolarMesh(br::Brillouin{T,2}, mesh::MT) where {T,MT}
+function PolarMesh(br::Cell{T,2}, mesh::MT) where {T,MT}
     vol = 0.0
     for j in 1:size(mesh)[2]
         for i in 1:size(mesh)[1]
@@ -35,7 +35,7 @@ function PolarMesh(br::Brillouin{T,2}, mesh::MT) where {T,MT}
     end
     return PolarMesh{T,2,MT}(br, mesh, vol)
 end
-function PolarMesh(br::Brillouin{T,3}, mesh::MT) where {T,MT}
+function PolarMesh(br::Cell{T,3}, mesh::MT) where {T,MT}
     vol = 0.0
     for k in 1:size(mesh)[3]
         for j in 1:size(mesh)[2]

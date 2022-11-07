@@ -6,7 +6,7 @@ using ..LinearAlgebra
 import ..showfieldln
 using Printf
 
-export Brillouin, get_latvec
+export Cell, get_latvec
 
 """
 Compute the inverse of the lattice. Require lattice to be square matrix
@@ -61,7 +61,7 @@ where ``𝐚``, ``𝐛``, and ``𝐜`` are given as __columns__.
 
 - `G_vector`: a list of G vectors in extended Brillouin zone
 """
-struct Brillouin{T,DIM}
+struct Cell{T,DIM}
     # Lattice and reciprocal lattice vectors in columns
     lattice::Matrix{T}
     recip_lattice::Matrix{T}
@@ -86,7 +86,7 @@ struct Brillouin{T,DIM}
     G_vector::Vector{SVector{DIM,Int}}
 end
 
-function Brillouin(;
+function Cell(;
     lattice::Matrix{T},
     atoms::AbstractVector{Int}=Vector{Int}([1,]),
     positions=[zeros(size(lattice, 1)),],
@@ -117,10 +117,10 @@ function Brillouin(;
         G_vector = [SVector{DIM,Int}(zeros(DIM)),]
     end
 
-    return Brillouin{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, cell_volume, recip_cell_volume, atoms, positions, atom_groups, G_vector)
+    return Cell{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, cell_volume, recip_cell_volume, atoms, positions, atom_groups, G_vector)
 end
 
-function get_latvec(br::Brillouin, I::Int; isrecip=true)
+function get_latvec(br::Cell, I::Int; isrecip=true)
     if isrecip
         return get_latvec(br.recip_lattice, I)
     else
@@ -133,7 +133,7 @@ end
 # normalize_magnetic_moment(mm::AbstractVector)::Vec3{Float64} = mm
 
 """
-    function standard_brillouin(;
+    function standard_cell(;
         dtype=Float64,
         lattice::AbstractMatrix,
         atoms::AbstractVector=[1,],
@@ -144,13 +144,13 @@ end
         tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE,
         G_vector=nothing)
     
-Returns a `Brillouin` object with crystallographic conventional cell according to the International Table of
+Returns a `Cell` object with crystallographic conventional cell according to the International Table of
 Crystallography Vol A (ITA) in case `primitive=false`. If `primitive=true`
 the primitive lattice is returned in the convention of the reference work of
 Cracknell, Davies, Miller, and Love (CDML). Of note this has minor differences to
 the primitive setting choice made in the ITA.
 """
-function standard_brillouin(;
+function standard_cell(;
     dtype=Float64,
     lattice::AbstractMatrix,
     atoms::AbstractVector=[1,],
@@ -199,7 +199,7 @@ function standard_brillouin(;
     @assert __lattice ≈ _lattice "lattice $_lattice is truncated to $__lattice"
     @assert __positions ≈ _positions "position $_positions is truncated to $__position"
 
-    return Brillouin(;
+    return Cell(;
         lattice=lattice,
         atoms=_atoms,
         positions=positions,
@@ -209,7 +209,7 @@ end
 """
 Default logic to determine the symmetry operations to be used in the model.
 """
-function default_symmetries(model::Brillouin{T,DIM}
+function default_symmetries(model::Cell{T,DIM}
     ; tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE) where {T,DIM}
 
     lattice = zeros(T, 3, 3)
@@ -276,11 +276,11 @@ end
 
 # Implementation of the show function for Model
 
-function Base.show(io::IO, model::Brillouin{T,DIM}) where {T,DIM}
+function Base.show(io::IO, model::Cell{T,DIM}) where {T,DIM}
     print(io, "Cell (", DIM, "D) with lattice vectors $(model.lattice))")
 end
 
-function Base.show(io::IO, ::MIME"text/plain", model::Brillouin{T,DIM}) where {T,DIM}
+function Base.show(io::IO, ::MIME"text/plain", model::Cell{T,DIM}) where {T,DIM}
     println(io, "Cell (", DIM, "D)")
     for i = 1:DIM
         header = i == 1 ? "lattice" : ""

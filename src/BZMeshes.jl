@@ -20,21 +20,21 @@ export UniformBZMesh, DFTK_Monkhorst_Pack, Monkhorst_Pack
     struct UniformBZMesh{T, DIM} <: AbstractUniformMesh{T, DIM}
 
 Uniformly distributed Brillouin zone mesh. Defined as a uniform mesh on 1st Brillouin zone
-with Brillouin zone information stored in mesh.br::Brillouin. 
+with Brillouin zone information stored in mesh.br::Cell. 
 
 # Parameters:
 - `T`: type of data
 - `DIM`: dimension of the Brillouin zone
 
 # Members:
-- `br`: Brillouin zone information including lattice info, atom pos and allowed G vectors
+- `br`: Cell information including lattice info, atom pos and allowed G vectors
 - `origin`: origin of the uniform mesh, related to convention of 1st Brillouin zone. Commonly set to either (0,0,0) or such that (0,0,0) is at the center
 - `size`: size of the uniform mesh. For Monkhorst-Pack mesh require even number.
 - `shift`: k-shift of each mesh point. Set all to be zero for Gamma-centered and all to be 1//2 for M-P mesh
 """
 # struct UniformBZMesh{T,DIM} <: AbstractMesh{T,DIM}
 struct UniformBZMesh{T,DIM} <: AbstractUniformMesh{T,DIM}
-    br::Brillouin{T,DIM}
+    br::Cell{T,DIM}
 
     origin::SVector{DIM,T}
     size::NTuple{DIM,Int}
@@ -46,13 +46,13 @@ end
 # can also customize with shift::SVector by calling default constructor
 # \Gamma=(0,0,0) is at center by default, can be set at corner by setting origin to it
 """
-    function UniformBZMesh(; br::Brillouin, origin, size, shift)
+    function UniformBZMesh(; br::Cell, origin, size, shift)
 
 customized constructor for UniformBZMesh. The parameters origin and shift is provided to customize
 the mesh as Gamma-centered or M-P mesh. 
 
 # Parameters:
-- `br`: Brillouin zone info
+- `br`: Cell info
 - `origin`: a number indicating shift of origin. 
     the actuall origin becomes origin*(b1+b2+b3)
     default value origin=-1/2 takes (0,0,0) to center of 1st BZ, origin=0 makes mesh[1,1,1]=(0,0,0)+shift
@@ -62,7 +62,7 @@ the mesh as Gamma-centered or M-P mesh.
     for even N, shift=1/2 avoids high symmetry points while preserve symmetry.
 """
 function UniformBZMesh(;
-    br::Brillouin{T,DIM},
+    br::Cell{T,DIM},
     origin::Real=-1 // 2,
     size::Union{AbstractVector,Tuple},
     shift::Union{AbstractVector{Bool},AbstractVector{Int}}=[true for _ in eachindex(size)]
@@ -76,7 +76,7 @@ function UniformBZMesh(;
 end
 
 function DFTK_Monkhorst_Pack(;
-    br::Brillouin{T,DIM},
+    br::Cell{T,DIM},
     size,
     shift::AbstractVector{Bool}=[false, false, false]) where {T,DIM}
     kshift = [iseven(size[i]) ? shift[i] : !(shift[i]) for i in 1:DIM]
@@ -94,7 +94,7 @@ function Monkhorst_Pack(;
     # to be consistent with DFTK: 
     #  - N is even, VASP is the same as DFTK: shift=0 will include Gamma point, shift=1/2 will not
     #  - N is odd, VASP is different as DFTK: shift=0 will not include Gamma point, shift=1/2 will
-    br::Brillouin{T,DIM},
+    br::Cell{T,DIM},
     size,
     shift::AbstractVector=[false, false, false]
 ) where {T,DIM}
@@ -118,7 +118,7 @@ BaseMesh.cell_volume(mesh::UniformBZMesh) = mesh.br.recip_cell_volume
 # end
 
 function Base.show(io::IO, mesh::UniformBZMesh)
-    print(io, "Uniform BZ mesh (Brillouin = ", mesh.br)
+    print(io, "Uniform BZ mesh (Cell = ", mesh.br)
     print(io, ", origin = ", inv_lattice_vector(mesh) * mesh.origin)
     print(io, ", size = ", mesh.size)
     print(io, ", shift = ", mesh.shift)
@@ -290,7 +290,7 @@ end
 # # to be consistent with DFTK: 
 # #  - N is even, VASP is the same as DFTK: shift=0 will include Gamma point, shift=1/2 will not
 # #  - N is odd, VASP is different as DFTK: shift=0 will not include Gamma point, shift=1/2 will
-# function _reduced_uniform_meshmap(model::Model.Brillouin{T,DIM}, symmetry::Bool=true;
+# function _reduced_uniform_meshmap(model::Model.Cell{T,DIM}, symmetry::Bool=true;
 #     kgrid_size::Vector{Int}, kshift::Bool=false,
 #     tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE
 # ) where {T,DIM}
