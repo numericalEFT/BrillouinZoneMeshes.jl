@@ -6,8 +6,8 @@ using ..CompositeGrids
 
 using ..BaryCheb
 using ..AbstractMeshes
-using ..Model
-using ..Model: get_latvec
+using ..Cells
+using ..Cells: get_latvec
 
 
 export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, UMesh, CompositeMesh
@@ -94,7 +94,7 @@ struct UMesh{T,DIM} <: AbstractUniformMesh{T,DIM}
 end
 
 # UMesh(;
-#     br::Brillouin{T,DIM},
+#     br::Cell{T,DIM},
 #     origin::Real,
 #     size,
 #     shift::Real) where {T,DIM} = UMesh{T,DIM}(
@@ -107,7 +107,7 @@ end
 # )
 
 UMesh(;
-    br::Brillouin{T,DIM},
+    br::Cell{T,DIM},
     origin,
     size,
     shift) where {T,DIM} = UMesh{T,DIM}(

@@ -21,9 +21,9 @@ include("printing.jl")
 include("symmetry/PointSymmetry.jl")
 export PointSymmetry
 
-include("Model.jl")
-using .Model
-export Brillouin
+include("Cells.jl")
+using .Cells
+export Cells
 
 include("BaseMesh.jl")
 using .BaseMesh

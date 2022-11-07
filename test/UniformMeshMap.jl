@@ -3,7 +3,7 @@
         println("Test $dim-D grid size: ", ksize, " with a shift ", kshift)
         _kshift = [kshift, kshift, kshift]
         _kshift = _kshift[1:dim]
-        br = BrillouinZoneMeshes.Model.Brillouin(lattice=lattice, atoms=atoms, positions=pos)
+        br = BrillouinZoneMeshes.Cells.Cell(lattice=lattice, atoms=atoms, positions=pos)
         brmesh = BrillouinZoneMeshes.BZMeshes.Monkhorst_Pack(br=br, size=tuple(ksize...), shift=_kshift)
 
         meshmap = MeshMap(brmesh)
@@ -13,7 +13,7 @@
         # for kpoint in meshmap.irreducible_indices
         #     kvec = brmesh.mesh.inv_lattice * brmesh[kpoint]
         #     println(kvec)
-        #     # _kvec = BrillouinZoneMeshes.Model.recip_vector_red_to_cart(br, meshmap.kcoords_global[kpoint])
+        #     # _kvec = BrillouinZoneMeshes.Cells.recip_vector_red_to_cart(br, meshmap.kcoords_global[kpoint])
         #     # @test kvec ≈ _kvec
         # end
         klist = Vector{Int}()

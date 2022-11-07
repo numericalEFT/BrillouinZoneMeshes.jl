@@ -1,4 +1,4 @@
-module Model
+module Cells
 
 using ..PointSymmetry
 using ..StaticArrays
@@ -6,7 +6,7 @@ using ..LinearAlgebra
 import ..showfieldln
 using Printf
 
-export Brillouin, get_latvec
+export Cell, get_latvec
 
 """
 Compute the inverse of the lattice. Require lattice to be square matrix
@@ -52,7 +52,7 @@ where ``𝐚``, ``𝐛``, and ``𝐜`` are given as __columns__.
 - `inv_lattice`: inverse of lattice vector
 - `inv_recip_lattice`: inverse of reciprocal lattice vector
 
-- `unit_cell_volume`: volume of lattice unit cell
+- `cell_volume`: volume of lattice unit cell
 - `recip_cell_volume`: volume of reciprocal lattice unit cell
 
 - `atoms`: list of integers representing atom types
@@ -61,7 +61,7 @@ where ``𝐚``, ``𝐛``, and ``𝐜`` are given as __columns__.
 
 - `G_vector`: a list of G vectors in extended Brillouin zone
 """
-struct Brillouin{T,DIM}
+struct Cell{T,DIM}
     # Lattice and reciprocal lattice vectors in columns
     lattice::Matrix{T}
     recip_lattice::Matrix{T}
@@ -69,13 +69,13 @@ struct Brillouin{T,DIM}
     inv_lattice::Matrix{T}
     inv_recip_lattice::Matrix{T}
 
-    unit_cell_volume::T
+    cell_volume::T
     recip_cell_volume::T
 
     # Particle types (elements) and particle positions and in fractional coordinates.
     # Possibly empty. It's up to the `term_types` to make use of this (or not).
     # `atom_groups` contains the groups of indices into atoms and positions, which
-    # point to identical atoms. It is computed automatically on Model construction and may
+    # point to identical atoms. It is computed automatically on Cell construction and may
     # be used to optimise the term instantiation.
     atoms::Vector{Int}
     positions::Vector{SVector{DIM,T}}  # positions[i] is the location of atoms[i] in fract. coords
@@ -86,7 +86,7 @@ struct Brillouin{T,DIM}
     G_vector::Vector{SVector{DIM,Int}}
 end
 
-function Brillouin(;
+function Cell(;
     lattice::Matrix{T},
     atoms::AbstractVector{Int}=Vector{Int}([1,]),
     positions=[zeros(size(lattice, 1)),],
@@ -109,7 +109,7 @@ function Brillouin(;
     recip_lattice = _compute_recip_lattice(lattice)
     inv_lattice = _compute_inverse_lattice(lattice)
     inv_recip_lattice = _compute_inverse_lattice(recip_lattice)
-    unit_cell_volume = abs(det(lattice))
+    cell_volume = abs(det(lattice))
     recip_cell_volume = abs(det(recip_lattice))
 
     # G vector default (0,0,0)
@@ -117,10 +117,10 @@ function Brillouin(;
         G_vector = [SVector{DIM,Int}(zeros(DIM)),]
     end
 
-    return Brillouin{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, unit_cell_volume, recip_cell_volume, atoms, positions, atom_groups, G_vector)
+    return Cell{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, cell_volume, recip_cell_volume, atoms, positions, atom_groups, G_vector)
 end
 
-function get_latvec(br::Brillouin, I::Int; isrecip=true)
+function get_latvec(br::Cell, I::Int; isrecip=true)
     if isrecip
         return get_latvec(br.recip_lattice, I)
     else
@@ -133,7 +133,7 @@ end
 # normalize_magnetic_moment(mm::AbstractVector)::Vec3{Float64} = mm
 
 """
-    function standard_brillouin(;
+    function standard_cell(;
         dtype=Float64,
         lattice::AbstractMatrix,
         atoms::AbstractVector=[1,],
@@ -144,13 +144,13 @@ end
         tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE,
         G_vector=nothing)
     
-Returns a `Brillouin` object with crystallographic conventional cell according to the International Table of
+Returns a `Cell` object with crystallographic conventional cell according to the International Table of
 Crystallography Vol A (ITA) in case `primitive=false`. If `primitive=true`
 the primitive lattice is returned in the convention of the reference work of
 Cracknell, Davies, Miller, and Love (CDML). Of note this has minor differences to
 the primitive setting choice made in the ITA.
 """
-function standard_brillouin(;
+function standard_cell(;
     dtype=Float64,
     lattice::AbstractMatrix,
     atoms::AbstractVector=[1,],
@@ -199,7 +199,7 @@ function standard_brillouin(;
     @assert __lattice ≈ _lattice "lattice $_lattice is truncated to $__lattice"
     @assert __positions ≈ _positions "position $_positions is truncated to $__position"
 
-    return Brillouin(;
+    return Cell(;
         lattice=lattice,
         atoms=_atoms,
         positions=positions,
@@ -209,7 +209,7 @@ end
 """
 Default logic to determine the symmetry operations to be used in the model.
 """
-function default_symmetries(model::Brillouin{T,DIM}
+function default_symmetries(model::Cell{T,DIM}
     ; tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE) where {T,DIM}
 
     lattice = zeros(T, 3, 3)
@@ -274,14 +274,14 @@ end
 # comatrix_red_to_cart(model::Brillouin, Bred) = model.inv_lattice' * Bred * model.lattice'
 # comatrix_cart_to_red(model::Brillouin, Bcart) = model.lattice' * Bcart * model.inv_lattice'
 
-# Implementation of the show function for Model
+# Implementation of the show function for Cell
 
-function Base.show(io::IO, model::Brillouin{T,DIM}) where {T,DIM}
-    print(io, "Brillouin Zone (", DIM, "D) with lattice vectors $(model.lattice))")
+function Base.show(io::IO, model::Cell{T,DIM}) where {T,DIM}
+    print(io, "Cell (", DIM, "D) with lattice vectors $(model.lattice))")
 end
 
-function Base.show(io::IO, ::MIME"text/plain", model::Brillouin{T,DIM}) where {T,DIM}
-    println(io, "Brillouin Zone (", DIM, "D)")
+function Base.show(io::IO, ::MIME"text/plain", model::Cell{T,DIM}) where {T,DIM}
+    println(io, "Cell (", DIM, "D)")
     for i = 1:DIM
         header = i == 1 ? "lattice" : ""
         if DIM == 1
@@ -294,7 +294,7 @@ function Base.show(io::IO, ::MIME"text/plain", model::Brillouin{T,DIM}) where {T
             showfieldln(io, header, ("$(model.lattice[i, :]...)"))
         end
     end
-    showfieldln(io, "unit cell volume", @sprintf "%.5g" model.unit_cell_volume)
+    showfieldln(io, "unit cell volume", @sprintf "%.5g" model.cell_volume)
 
     if !isempty(model.atoms)
         println(io)
