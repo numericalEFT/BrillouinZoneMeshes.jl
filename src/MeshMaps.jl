@@ -2,7 +2,7 @@ module MeshMaps
 # symmetry reduce map for meshes
 
 using ..AbstractMeshes
-using ..Model
+using ..Cells
 using ..TreeMeshes
 using ..BaseMesh
 # using ..BZMeshes

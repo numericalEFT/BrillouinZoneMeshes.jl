@@ -53,7 +53,7 @@
 
             DIM = 2
             lattice = Matrix([1.0 0; 0 1]')
-            br = BZMeshes.Brillouin(lattice=lattice)
+            br = BZMeshes.Cell(lattice=lattice)
 
             pm = PolarMesh(br, cm)
             vol = 0.0
@@ -94,7 +94,7 @@
 
             DIM = 3
             lattice = Matrix([1.0 0 0; 0 1 0; 0 0 1]')
-            br = BZMeshes.Brillouin(lattice=lattice)
+            br = BZMeshes.Cell(lattice=lattice)
 
             pm = PolarMesh(br, cm)
             println(typeof(size(pm)))

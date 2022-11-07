@@ -22,7 +22,7 @@ end
     lattice = a / 2 * [[0 1 1.0]; [1 0 1.0]; [1 1 0.0]]
     atoms = [Si, Si]
     positions = [ones(3) / 8, -ones(3) / 8]
-    model = BrillouinZoneMeshes.BaseMesh.Brillouin(lattice=lattice, atoms=atoms, positions=positions)
+    model = BrillouinZoneMeshes.Cell(lattice=lattice, atoms=atoms, positions=positions)
     @test spglib_spacegroup_number(model) == 227
     @test spglib_standardize_cell(model).lattice ≈ a * I(3)
 
@@ -30,7 +30,7 @@ end
     lattice = a / 2 * [[0 -1 -1.0]; [1 0 1.0]; [1 1 0.0]]
     atoms = [Si, Si]
     positions = [ones(3) / 8, -ones(3) / 8]
-    model = BrillouinZoneMeshes.BaseMesh.Brillouin(lattice=lattice, atoms=atoms, positions=positions)
+    model = BrillouinZoneMeshes.Cell(lattice=lattice, atoms=atoms, positions=positions)
     @test spglib_spacegroup_number(model) == 227
     @test spglib_standardize_cell(model).lattice ≈ a * I(3)
 
@@ -38,7 +38,7 @@ end
     lattice = a / 2 * [[0 1 1.0]; [-1 0 1.0]; [-1 1 0.0]]
     atoms = [Si, Si]
     positions = [[-1, 1, 1] / 8, -[-1, 1, 1] / 8]
-    model = BrillouinZoneMeshes.BaseMesh.Brillouin(lattice=lattice, atoms=atoms, positions=positions)
+    model = BrillouinZoneMeshes.Cell(lattice=lattice, atoms=atoms, positions=positions)
     @test spglib_spacegroup_number(model) == 227
     @test spglib_standardize_cell(model).lattice ≈ a * I(3)
 
@@ -46,7 +46,7 @@ end
     lattice = a / 2 * [[0 1 1.0]; [1 0 1.0]; [1 1 0.0]]
     atoms = [Si, Ge]
     positions = [ones(3) / 8, -ones(3) / 8]
-    model = BrillouinZoneMeshes.BaseMesh.Brillouin(lattice=lattice, atoms=atoms, positions=positions)
+    model = BrillouinZoneMeshes.Cell(lattice=lattice, atoms=atoms, positions=positions)
     @test spglib_spacegroup_number(model) == 216
     @test spglib_standardize_cell(model).lattice ≈ a * I(3)
 
@@ -54,7 +54,7 @@ end
     lattice = a / 2 * [[0 -1 -1.0]; [1 0 1.0]; [1 1 0.0]]
     atoms = [Si, Ge]
     positions = [ones(3) / 8, -ones(3) / 8]
-    model = BrillouinZoneMeshes.BaseMesh.Brillouin(lattice=lattice, atoms=atoms, positions=positions)
+    model = BrillouinZoneMeshes.Cell(lattice=lattice, atoms=atoms, positions=positions)
     @test spglib_spacegroup_number(model) == 216
     @test spglib_standardize_cell(model).lattice ≈ a * I(3)
 
@@ -62,7 +62,7 @@ end
     lattice = a / 2 * [[0 1 1.0]; [-1 0 1.0]; [-1 1 0.0]]
     atoms = [Si, Ge]
     positions = [[-1, 1, 1] / 8, -[-1, 1, 1] / 8]
-    model = BrillouinZoneMeshes.BaseMesh.Brillouin(lattice=lattice, atoms=atoms, positions=positions)
+    model = BrillouinZoneMeshes.Cell(lattice=lattice, atoms=atoms, positions=positions)
     @test spglib_spacegroup_number(model) == 216
     @test spglib_standardize_cell(model).lattice ≈ a * I(3)
 
@@ -70,7 +70,7 @@ end
     lattice = a * [[1.0 -1 / 2 0.0]; [0.0 sqrt(3) / 2 0.0]; [0.0 0.0 sqrt(8 / 3)]]
     atoms = [Si, Si]
     positions = [[0, 0, 0], [1 / 3, 2 / 3, 1 / 2]]
-    model = BrillouinZoneMeshes.BaseMesh.Brillouin(lattice=lattice, atoms=atoms, positions=positions)
+    model = BrillouinZoneMeshes.Cell(lattice=lattice, atoms=atoms, positions=positions)
     @test spglib_spacegroup_number(model) == 194
     @test spglib_standardize_cell(model).lattice ≈ lattice
 
@@ -78,7 +78,7 @@ end
     lattice = a * [[-1.0 1 / 2 0.0]; [0.0 sqrt(3) / 2 0.0]; [0.0 0.0 sqrt(8 / 3)]]
     atoms = [Si, Si]
     positions = [[0, 0, 0], [1 / 3, 2 / 3, 1 / 2]]
-    model = BrillouinZoneMeshes.BaseMesh.Brillouin(lattice=lattice, atoms=atoms, positions=positions)
+    model = BrillouinZoneMeshes.Cell(lattice=lattice, atoms=atoms, positions=positions)
     @test spglib_spacegroup_number(model) == 194
     @test !(spglib_standardize_cell(model).lattice ≈ lattice)
 
@@ -86,7 +86,7 @@ end
     lattice = a * [[-1.0 -1 / 2 0.0]; [0.0 sqrt(3) / 2 0.0]; [0.0 0.0 sqrt(8 / 3)]]
     atoms = [Si, Si]
     positions = [[0, 0, 0], [-1 / 3, 2 / 3, 1 / 2]]
-    model = BrillouinZoneMeshes.BaseMesh.Brillouin(lattice=lattice, atoms=atoms, positions=positions)
+    model = BrillouinZoneMeshes.Cell(lattice=lattice, atoms=atoms, positions=positions)
     @test spglib_spacegroup_number(model) == 194
     @test (spglib_standardize_cell(model).lattice
            ≈
@@ -99,7 +99,7 @@ end
         println("Test $dim-D grid size: ", ksize, " with a shift ", kshift)
         _kshift = [kshift, kshift, kshift]
         _kshift = _kshift[1:dim]
-        br = BrillouinZoneMeshes.Model.Brillouin(lattice=lattice, atoms=atoms, positions=pos)
+        br = BrillouinZoneMeshes.Cells.Cell(lattice=lattice, atoms=atoms, positions=pos)
         brmesh = BrillouinZoneMeshes.BZMeshes.Monkhorst_Pack(br=br, size=tuple(ksize...), shift=_kshift)
         umesh = brmesh
         @test getidx(umesh, [ksize[1] - 1, 0, 0]) == getidx(umesh, [-1, 0, 0])

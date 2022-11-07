@@ -20,12 +20,12 @@ _extract(r::Polar{T,A}) where {T,A} = SVector{2,T}(r.r, r.ϕ)
 _extract(r::Spherical{T,A}) where {T,A} = SVector{3,T}(r.r, r.θ, r.ϕ)
 
 struct PolarMesh{T,DIM,MT<:CompositeMesh} <: AbstractMesh{T,DIM}
-    br::Brillouin{T,DIM}
+    cell::Cell{T,DIM}
     mesh::MT # actual mesh. assume order as (r,θ,ϕ...)
     volume::T
 end
 
-function PolarMesh(br::Brillouin{T,2}, mesh::MT) where {T,MT}
+function PolarMesh(br::Cell{T,2}, mesh::MT) where {T,MT}
     vol = 0.0
     for j in 1:size(mesh)[2]
         for i in 1:size(mesh)[1]
@@ -35,7 +35,7 @@ function PolarMesh(br::Brillouin{T,2}, mesh::MT) where {T,MT}
     end
     return PolarMesh{T,2,MT}(br, mesh, vol)
 end
-function PolarMesh(br::Brillouin{T,3}, mesh::MT) where {T,MT}
+function PolarMesh(br::Cell{T,3}, mesh::MT) where {T,MT}
     vol = 0.0
     for k in 1:size(mesh)[3]
         for j in 1:size(mesh)[2]
@@ -104,8 +104,8 @@ function AbstractMeshes.volume(mesh::PolarMesh{T,3,MT}, I::Int) where {T,MT}
     return (r2^3 - r1^3) / 3 * (sin(θ2) - sin(θ1)) * volume(mesh.mesh.mesh.mesh, k)
 end
 
-BaseMesh.lattice_vector(mesh::PolarMesh) = mesh.br.recip_lattice
-BaseMesh.inv_lattice_vector(mesh::PolarMesh) = mesh.br.inv_recip_lattice
-BaseMesh.lattice_vector(mesh::PolarMesh, i::Int) = Model.get_latvec(mesh.br.recip_lattice, i)
-BaseMesh.inv_lattice_vector(mesh::PolarMesh, i::Int) = Model.get_latvec(mesh.br.inv_recip_lattice, i)
-BaseMesh.cell_volume(mesh::PolarMesh) = mesh.br.recip_cell_volume
+BaseMesh.lattice_vector(mesh::PolarMesh) = mesh.cell.recip_lattice
+BaseMesh.inv_lattice_vector(mesh::PolarMesh) = mesh.cell.inv_recip_lattice
+BaseMesh.lattice_vector(mesh::PolarMesh, i::Int) = Cells.get_latvec(mesh.cell.recip_lattice, i)
+BaseMesh.inv_lattice_vector(mesh::PolarMesh, i::Int) = Cells.get_latvec(mesh.cell.inv_recip_lattice, i)
+BaseMesh.cell_volume(mesh::PolarMesh) = mesh.cell.recip_cell_volume

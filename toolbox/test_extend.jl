@@ -129,7 +129,7 @@ coordinates = "Cartesian"
 makeprim = true
 convention = "ordinary"
 
-br = BZMeshes.Brillouin(lattice=lattice, atoms=atoms, positions=positions)
+br = BZMeshes.Cell(lattice=lattice, atoms=atoms, positions=positions)
 #br = BZMeshes.Brillouin(lattice=lattice)
 
 msize = (3,3)
