@@ -20,7 +20,7 @@ _extract(r::Polar{T,A}) where {T,A} = SVector{2,T}(r.r, r.ϕ)
 _extract(r::Spherical{T,A}) where {T,A} = SVector{3,T}(r.r, r.θ, r.ϕ)
 
 struct PolarMesh{T,DIM,MT<:CompositeMesh} <: AbstractMesh{T,DIM}
-    br::Cell{T,DIM}
+    cell::Cell{T,DIM}
     mesh::MT # actual mesh. assume order as (r,θ,ϕ...)
     volume::T
 end

@@ -73,7 +73,7 @@ end
         # cm = CompositeMesh(theta, grids)
         DIM = 2
         lattice = Matrix([1.0 0; 0 1]')
-        br = BZMeshes.Brillouin(lattice=lattice)
+        br = BZMeshes.Cell(lattice=lattice)
 
         pm = PolarMesh(dispersion=dispersion, anglemesh=theta, br=br, kmax=2.0)
         @test AbstractMeshes.volume(pm) ≈ 4π
@@ -104,7 +104,7 @@ end
 
         DIM = 3
         lattice = Matrix([1.0 1.0 0; 1 0 1; 0 1 1]')
-        br = BZMeshes.Brillouin(lattice=lattice)
+        br = BZMeshes.Cell(lattice=lattice)
 
         pm = PolarMesh(dispersion=dispersion, anglemesh=am, br=br, kmax=2.0)
         @test AbstractMeshes.volume(pm) ≈ 32π / 3
