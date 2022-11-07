@@ -99,7 +99,7 @@ end
         println("Test $dim-D grid size: ", ksize, " with a shift ", kshift)
         _kshift = [kshift, kshift, kshift]
         _kshift = _kshift[1:dim]
-        br = BrillouinZoneMeshes.Model.Cell(lattice=lattice, atoms=atoms, positions=pos)
+        br = BrillouinZoneMeshes.Cells.Cell(lattice=lattice, atoms=atoms, positions=pos)
         brmesh = BrillouinZoneMeshes.BZMeshes.Monkhorst_Pack(br=br, size=tuple(ksize...), shift=_kshift)
         umesh = brmesh
         @test getidx(umesh, [ksize[1] - 1, 0, 0]) == getidx(umesh, [-1, 0, 0])

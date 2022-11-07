@@ -104,8 +104,8 @@ function AbstractMeshes.volume(mesh::PolarMesh{T,3,MT}, I::Int) where {T,MT}
     return (r2^3 - r1^3) / 3 * (sin(θ2) - sin(θ1)) * volume(mesh.mesh.mesh.mesh, k)
 end
 
-BaseMesh.lattice_vector(mesh::PolarMesh) = mesh.br.recip_lattice
-BaseMesh.inv_lattice_vector(mesh::PolarMesh) = mesh.br.inv_recip_lattice
-BaseMesh.lattice_vector(mesh::PolarMesh, i::Int) = Model.get_latvec(mesh.br.recip_lattice, i)
-BaseMesh.inv_lattice_vector(mesh::PolarMesh, i::Int) = Model.get_latvec(mesh.br.inv_recip_lattice, i)
-BaseMesh.cell_volume(mesh::PolarMesh) = mesh.br.recip_cell_volume
+BaseMesh.lattice_vector(mesh::PolarMesh) = mesh.cell.recip_lattice
+BaseMesh.inv_lattice_vector(mesh::PolarMesh) = mesh.cell.inv_recip_lattice
+BaseMesh.lattice_vector(mesh::PolarMesh, i::Int) = Cells.get_latvec(mesh.cell.recip_lattice, i)
+BaseMesh.inv_lattice_vector(mesh::PolarMesh, i::Int) = Cells.get_latvec(mesh.cell.inv_recip_lattice, i)
+BaseMesh.cell_volume(mesh::PolarMesh) = mesh.cell.recip_cell_volume

@@ -6,8 +6,8 @@ using ..CompositeGrids
 
 using ..BaryCheb
 using ..AbstractMeshes
-using ..Model
-using ..Model: get_latvec
+using ..Cells
+using ..Cells: get_latvec
 
 
 export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, UMesh, CompositeMesh

@@ -1,4 +1,4 @@
-module Model
+module Cells
 
 using ..PointSymmetry
 using ..StaticArrays
@@ -75,7 +75,7 @@ struct Cell{T,DIM}
     # Particle types (elements) and particle positions and in fractional coordinates.
     # Possibly empty. It's up to the `term_types` to make use of this (or not).
     # `atom_groups` contains the groups of indices into atoms and positions, which
-    # point to identical atoms. It is computed automatically on Model construction and may
+    # point to identical atoms. It is computed automatically on Cell construction and may
     # be used to optimise the term instantiation.
     atoms::Vector{Int}
     positions::Vector{SVector{DIM,T}}  # positions[i] is the location of atoms[i] in fract. coords
@@ -274,7 +274,7 @@ end
 # comatrix_red_to_cart(model::Brillouin, Bred) = model.inv_lattice' * Bred * model.lattice'
 # comatrix_cart_to_red(model::Brillouin, Bcart) = model.lattice' * Bcart * model.inv_lattice'
 
-# Implementation of the show function for Model
+# Implementation of the show function for Cell
 
 function Base.show(io::IO, model::Cell{T,DIM}) where {T,DIM}
     print(io, "Cell (", DIM, "D) with lattice vectors $(model.lattice))")
