@@ -52,7 +52,7 @@ where ``𝐚``, ``𝐛``, and ``𝐜`` are given as __columns__.
 - `inv_lattice`: inverse of lattice vector
 - `inv_recip_lattice`: inverse of reciprocal lattice vector
 
-- `unit_cell_volume`: volume of lattice unit cell
+- `cell_volume`: volume of lattice unit cell
 - `recip_cell_volume`: volume of reciprocal lattice unit cell
 
 - `atoms`: list of integers representing atom types
@@ -69,7 +69,7 @@ struct Brillouin{T,DIM}
     inv_lattice::Matrix{T}
     inv_recip_lattice::Matrix{T}
 
-    unit_cell_volume::T
+    cell_volume::T
     recip_cell_volume::T
 
     # Particle types (elements) and particle positions and in fractional coordinates.
@@ -109,7 +109,7 @@ function Brillouin(;
     recip_lattice = _compute_recip_lattice(lattice)
     inv_lattice = _compute_inverse_lattice(lattice)
     inv_recip_lattice = _compute_inverse_lattice(recip_lattice)
-    unit_cell_volume = abs(det(lattice))
+    cell_volume = abs(det(lattice))
     recip_cell_volume = abs(det(recip_lattice))
 
     # G vector default (0,0,0)
@@ -117,7 +117,7 @@ function Brillouin(;
         G_vector = [SVector{DIM,Int}(zeros(DIM)),]
     end
 
-    return Brillouin{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, unit_cell_volume, recip_cell_volume, atoms, positions, atom_groups, G_vector)
+    return Brillouin{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, cell_volume, recip_cell_volume, atoms, positions, atom_groups, G_vector)
 end
 
 function get_latvec(br::Brillouin, I::Int; isrecip=true)
@@ -277,11 +277,11 @@ end
 # Implementation of the show function for Model
 
 function Base.show(io::IO, model::Brillouin{T,DIM}) where {T,DIM}
-    print(io, "Brillouin Zone (", DIM, "D) with lattice vectors $(model.lattice))")
+    print(io, "Cell (", DIM, "D) with lattice vectors $(model.lattice))")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", model::Brillouin{T,DIM}) where {T,DIM}
-    println(io, "Brillouin Zone (", DIM, "D)")
+    println(io, "Cell (", DIM, "D)")
     for i = 1:DIM
         header = i == 1 ? "lattice" : ""
         if DIM == 1
@@ -294,7 +294,7 @@ function Base.show(io::IO, ::MIME"text/plain", model::Brillouin{T,DIM}) where {T
             showfieldln(io, header, ("$(model.lattice[i, :]...)"))
         end
     end
-    showfieldln(io, "unit cell volume", @sprintf "%.5g" model.unit_cell_volume)
+    showfieldln(io, "unit cell volume", @sprintf "%.5g" model.cell_volume)
 
     if !isempty(model.atoms)
         println(io)
