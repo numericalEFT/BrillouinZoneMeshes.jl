@@ -26,6 +26,23 @@
         end
         @test sort(klist) == sort(meshmap.irreducible_indices)
 
+        ##### test home-made irreducible_kcoord ##############
+        kidxmap = PointSymmetry.irreducible_kcoord(br.symmetry, [inv_lattice_vector(brmesh) * brmesh[i] for i in 1:length(brmesh)])
+        ir_klist = sort(unique(kidxmap))
+
+        # for kpoint in ir_klist
+        #     kvec = inv_lattice_vector(brmesh) * brmesh[kpoint]
+        #     println(kvec)
+        #     # _kvec = BrillouinZoneMeshes.Cells.recip_vector_red_to_cart(br, meshmap.kcoords_global[kpoint])
+        #     # @test kvec ≈ _kvec
+        # end
+
+        @test length(ir_klist) == length(meshmap.irreducible_indices)
+        for (idx, ir_idx) in enumerate(kidxmap)
+            # println(idx, ": ", fractional_coordinates(brmesh, idx), " -> ", ir_idx, " : ", fractional_coordinates(brmesh, ir_idx))
+            @test meshmap.map[idx] == meshmap.map[ir_idx]
+        end
+
         return meshmap, brmesh
     end
     size, shift = [4, 4, 4], false
@@ -40,6 +57,7 @@
     kweights = [0.015625, 0.125, 0.0625, 0.09375, 0.375, 0.1875, 0.046875, 0.09375]
     test(3, silicon.lattice, silicon.atoms, silicon.positions, size, shift;
         kcoords=kcoords, kweights=kweights)
+    exit(0)
 
     size, shift = [4, 4, 4], true
     kcoords = [

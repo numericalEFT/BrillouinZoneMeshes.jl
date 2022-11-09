@@ -127,15 +127,17 @@ function spglib_get_symmetry(lattice::AbstractMatrix{<:AbstractFloat}, atom_grou
         end
     end
 
-    Ws, ws
+    return Ws, ws
 end
 
-
+# The irreducible k-points are searched from unique k-point mesh grids from direct (real space) basis vectors 
+# and a set of rotation parts of symmetry operations in direct space with one or multiple stabilizers.
 function spglib_get_stabilized_reciprocal_mesh(kgrid_size, rotations::Vector;
     is_shift=Vec3(0, 0, 0),
     is_time_reversal=false,
     qpoints=[Vec3(0.0, 0.0, 0.0)])
     spg_rotations = cat([copy(Cint.(S')) for S in rotations]..., dims=3)
+
     nkpt = prod(kgrid_size)
     mapping = Vector{Cint}(undef, nkpt)
     grid_address = Matrix{Cint}(undef, 3, nkpt)

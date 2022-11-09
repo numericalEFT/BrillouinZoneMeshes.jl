@@ -17,6 +17,18 @@ const Mat3{T} = SMatrix{3,3,T,9} where {T}
 const Vec3{T} = SVector{3,T} where {T}
 const AbstractArray3{T} = AbstractArray{T,3}
 
+function _makeVec3(kcoord::AbstractVector{T}) where {T}
+    if length(kcoord) == 3
+        return Vec3{T}(kcoord)
+    elseif length(kcoord) == 2
+        return Vec3{T}(kcoord[1], kcoord[2], 0)
+    elseif length(kcoord) == 1
+        return Vec3{T}(kcoord[1], 0, 0)
+    else
+        error("illegal kcoord dimension!")
+    end
+end
+
 function _make3D(lattice::AbstractMatrix{T}, position::AbstractVector) where {T}
     @assert size(lattice, 1) == size(lattice, 2)
     DIM = size(lattice, 1)

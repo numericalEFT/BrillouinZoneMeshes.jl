@@ -21,7 +21,7 @@ const SYMMETRY_TOLERANCE = 1e-5
 
 is_approx_integer(r; tol=SYMMETRY_TOLERANCE) = all(ri -> abs(ri - round(ri)) ≤ tol, r)
 
-struct SymOp{T <: Real}
+struct SymOp{T<:Real}
     # (Uu)(x) = u(W x + w) in real space
     W::Mat3{Int}
     w::Vec3{T}
@@ -37,7 +37,7 @@ function SymOp(W, w::AbstractVector{T}) where {T}
     SymOp{T}(W, w, S, τ)
 end
 
-function Base.convert(::Type{SymOp{T}}, S::SymOp{U}) where {U <: Real, T <: Real}
+function Base.convert(::Type{SymOp{T}}, S::SymOp{U}) where {U<:Real,T<:Real}
     SymOp{T}(S.W, T.(S.w), S.S, T.(S.τ))
 end
 
@@ -56,7 +56,7 @@ function Base.:*(op1::SymOp, op2::SymOp)
     w = op1.w + op1.W * op2.w
     SymOp(W, w)
 end
-Base.inv(op::SymOp) = SymOp(inv(op.W), -op.W\op.w)
+Base.inv(op::SymOp) = SymOp(inv(op.W), -op.W \ op.w)
 
 function check_group(symops::Vector; kwargs...)
     is_approx_in_symops(s1) = any(s -> isapprox(s, s1; kwargs...), symops)
@@ -66,10 +66,16 @@ function check_group(symops::Vector; kwargs...)
             error("check_group: symop $s with inverse $(inv(s)) is not in the group")
         end
         for s2 in symops
-            if !is_approx_in_symops(s*s2) || !is_approx_in_symops(s2*s)
+            if !is_approx_in_symops(s * s2) || !is_approx_in_symops(s2 * s)
                 error("check_group: product is not stable")
             end
         end
     end
     symops
 end
+
+# Get the rotation axis of a symmetry operation
+# https://en.wikipedia.org/w/index.php?title=Rotation_matrix&action=edit&section=11
+# function axis(r::Mat3)
+
+# end
