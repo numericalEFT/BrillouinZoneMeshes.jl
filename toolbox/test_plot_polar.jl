@@ -154,8 +154,10 @@ phi = SimpleGrid.Uniform(bound, 12; isperiodic=true)
 bound = [-π / 2, π / 2]
 theta = SimpleGrid.Uniform(bound, 8; isperiodic=true)
 am = CompositeMesh(phi, [theta for i in 1:length(phi)])
-bzmesh = PolarMesh(dispersion=dispersion, anglemesh=am, br=br, kmax=2.0)
-
+bzmesh = PolarMesh(dispersion=dispersion, anglemesh=am, br=br, kmax=2.0 * π, Nloggrid=4, Nbasegrid=2)
+# N = 12
+# rgrid = SimpleG.Arbitrary([cbrt(i / N * π^3) for i in 1:N], bound=[0.0, π])
+# bzmesh = PolarMesh(br, CompositeMesh(am, [rgrid for i in 1:length(am)]))
 recip_lattice = lattice_vector(bzmesh)
 latvec = mapslices(x -> [x], recip_lattice, dims=1)[:]
 

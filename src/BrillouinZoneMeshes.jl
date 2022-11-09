@@ -6,6 +6,7 @@ using Statistics
 using LinearAlgebra
 using CompositeGrids
 using Printf
+using Roots
 # using CoordinateTransformations
 
 # Write your package code here.

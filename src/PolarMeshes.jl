@@ -3,7 +3,7 @@
 include("utilities/coordinatesystems.jl")
 using .Coordinates
 
-export PolarMesh, Angular
+export PolarMesh, Angular, RescaledGrid, RescaledLogDensedGrid
 
 const Angular = Union{Polar,Spherical}
 
@@ -109,3 +109,108 @@ BaseMesh.inv_lattice_vector(mesh::PolarMesh) = mesh.cell.inv_recip_lattice
 BaseMesh.lattice_vector(mesh::PolarMesh, i::Int) = Cells.get_latvec(mesh.cell.recip_lattice, i)
 BaseMesh.inv_lattice_vector(mesh::PolarMesh, i::Int) = Cells.get_latvec(mesh.cell.inv_recip_lattice, i)
 BaseMesh.cell_volume(mesh::PolarMesh) = mesh.cell.recip_cell_volume
+
+###
+# Generate PolarMesh with rescaled log densed grid
+###
+
+struct RescaledGrid{T,GT,FT,IFT} <: AbstractGrid{T}
+    # rescaled grid with function func()
+    bound::SVector{2,T}
+    size::Int
+    grid::Vector{T} # grid == func.(basegrid.grid)
+
+    #additional info
+    basegrid::GT
+    func::FT
+    invfunc::IFT
+    function RescaledGrid(basegrid::GT,
+        func::FT, invfunc::IFT) where {GT,FT,IFT}
+
+        T = eltype(GT)
+        bound = func.(basegrid.bound)
+        size = length(basegrid)
+        grid = func.(basegrid.grid)
+
+        return new{T,GT,FT,IFT}(bound, size, grid, basegrid, func, invfunc)
+    end
+end
+
+# many interface could simply inherit from AbstractGrid
+# the following need new implementation
+Base.floor(grid::RescaledGrid, x) = floor(grid.basegrid, grid.invfunc(x))
+CompositeGrids.Interp.locate(grid::RescaledGrid, x) = CompositeGrids.Interp.locate(grid.basegrid, grid.invfunc(x))
+
+function radial_rescale(; grid::AbstractGrid, DIM::Int)
+    if DIM == 2
+        func = sqrt
+        invfunc = x -> x^2
+    elseif DIM == 3
+        func = cbrt
+        invfunc = x -> x^3
+    else
+        error("DIM=$DIM not implemented!")
+    end
+
+    return RescaledGrid(grid, func, invfunc)
+end
+
+function find_kFermi(dispersion, angle; kinit=0.0)
+    if length(angle) == 1
+        return find_zero(k -> dispersion(BZMeshes._polar2cart(Polar(k, angle...))), kinit)
+    elseif length(angle) == 2
+        return find_zero(k -> dispersion(BZMeshes._spherical2cart(Spherical(k, angle...))), kinit)
+    else
+        error("dimension $(length(angle)+1) not implemented!")
+    end
+end
+
+function RescaledLogDensedGrid(type, bound, densepoints, Nlog, minterval, Nbase, DIM)
+    if DIM == 2
+        func = sqrt
+        invfunc = x -> x^2
+    elseif DIM == 3
+        func = cbrt
+        invfunc = x -> x^3
+    else
+        error("DIM=$DIM not implemented!")
+    end
+    rbound = invfunc.(bound)
+    rdp = invfunc.(densepoints)
+    g = CompositeGrid.LogDensedGrid(type, rbound, rdp, Nlog, minterval, Nbase)
+    return radial_rescale(grid=g, DIM=DIM)
+end
+
+function kF_densed_kgrids(; dispersion,
+    anglemesh,
+    bound,
+    basegridtype=:cheb,
+    Nloggrid=3,
+    minterval=0.01,
+    Nbasegrid=2,
+    DIM=2)
+    # assume dispersion==0 has one root for each angle
+    k1 = find_kFermi(dispersion, anglemesh[1])
+    # g1 = CompositeGrid.LogDensedGrid(basegridtype, bound, [k1,], Nloggrid, minterval, Nbasegrid)
+    g1 = RescaledLogDensedGrid(basegridtype, bound, [k1,], Nloggrid, minterval, Nbasegrid, DIM)
+    grids = [g1,]
+    for i in 2:length(anglemesh)
+        kF = find_kFermi(dispersion, anglemesh[i])
+        # g = CompositeGrid.LogDensedGrid(basegridtype, bound, [kF,], Nloggrid, minterval, Nbasegrid)
+        g = RescaledLogDensedGrid(basegridtype, bound, [kF,], Nloggrid, minterval, Nbasegrid, DIM)
+        push!(grids, g)
+    end
+    return grids
+end
+
+
+function BZMeshes.PolarMesh(; dispersion, anglemesh, br, kmax,
+    kwargs...)
+
+    DIM = size(br.lattice, 1)
+    bound = [0.0, kmax]
+    grids = kF_densed_kgrids(dispersion=dispersion, anglemesh=anglemesh, bound=bound, DIM=DIM, kwargs...)
+    cm = CompositeMesh(anglemesh, grids)
+    pm = PolarMesh(br, cm)
+    return pm
+end

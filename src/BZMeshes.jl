@@ -9,10 +9,13 @@ using ..Cells
 using ..BaseMesh
 using ..MeshMaps
 using ..PointSymmetry
+using ..CompositeGrids
+using ..Roots
 # using ..BaseMesh.AbstractUniformMesh
 import ..showfieldln
 import ..showfield
 import ..SHOWINDENTION
+
 
 export UniformBZMesh, DFTK_Monkhorst_Pack, Monkhorst_Pack
 
