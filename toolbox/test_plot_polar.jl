@@ -142,7 +142,10 @@ br = BZMeshes.Cell(lattice=lattice, atoms=atoms, positions=positions)
 #bzmesh = UniformBZMesh(br=br, size=msize, shift=[true, true, true])
 # meshmap = MeshMap(bzmesh)
 
-dispersion(k) = dot(k, k) - 1.0
+# dispersion(k) = dot(k, k) - 1.0
+function dispersion(k)
+    return -1.0 * sum(cos.(k / 2)) + length(k) - 1.8
+end
 
 # N = 12
 # bound = [-π, π]
