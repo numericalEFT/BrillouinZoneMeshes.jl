@@ -16,6 +16,7 @@ BaryCheb = CompositeGrids.BaryChebTools
 include("AbstractMeshes.jl")
 using .AbstractMeshes
 export AbstractMeshes, AbstractMesh
+export fractional_coordinates
 
 include("printing.jl")
 

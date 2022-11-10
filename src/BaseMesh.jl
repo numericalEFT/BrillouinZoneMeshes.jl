@@ -16,6 +16,7 @@ export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, UMesh, CompositeMesh
 abstract type AbstractUniformMesh{T,DIM} <: AbstractMesh{T,DIM} end
 export AbstractUniformMesh
 export inv_lattice_vector, lattice_vector, cell_volume
+export fractional_coordinates, cartesian_coordinates
 
 Base.length(mesh::AbstractUniformMesh) = prod(mesh.size)
 Base.size(mesh::AbstractUniformMesh) = mesh.size

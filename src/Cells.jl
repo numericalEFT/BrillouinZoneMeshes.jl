@@ -72,11 +72,6 @@ struct Cell{T,DIM}
     cell_volume::T
     recip_cell_volume::T
 
-    # Particle types (elements) and particle positions and in fractional coordinates.
-    # Possibly empty. It's up to the `term_types` to make use of this (or not).
-    # `atom_groups` contains the groups of indices into atoms and positions, which
-    # point to identical atoms. It is computed automatically on Cell construction and may
-    # be used to optimise the term instantiation.
     atoms::Vector{Int}
     positions::Vector{SVector{DIM,T}}  # positions[i] is the location of atoms[i] in fract. coords
     atom_groups::Vector{Vector{Int}}  # atoms[i] == atoms[j] for all i, j in atom_group[α]
@@ -84,6 +79,7 @@ struct Cell{T,DIM}
 
     # collection of all allowed G vectors
     G_vector::Vector{SVector{DIM,Int}}
+    symmetry::Vector{PointSymmetry.SymOp}
 end
 
 function Cell(;
@@ -117,7 +113,11 @@ function Cell(;
         G_vector = [SVector{DIM,Int}(zeros(DIM)),]
     end
 
-    return Cell{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, cell_volume, recip_cell_volume, atoms, positions, atom_groups, G_vector)
+    cell = Cell{T,DIM}(lattice, recip_lattice, inv_lattice, inv_recip_lattice, cell_volume, recip_cell_volume, atoms, positions, atom_groups, G_vector, [])
+    for symop in default_symmetries(cell)
+        push!(cell.symmetry, symop)
+    end
+    return cell
 end
 
 function get_latvec(br::Cell, I::Int; isrecip=true)
@@ -127,10 +127,6 @@ function get_latvec(br::Cell, I::Int; isrecip=true)
         return get_latvec(br.lattice, I)
     end
 end
-
-# normalize_magnetic_moment(::Nothing)::Vec3{Float64} = (0, 0, 0)
-# normalize_magnetic_moment(mm::Number)::Vec3{Float64} = (0, 0, mm)
-# normalize_magnetic_moment(mm::AbstractVector)::Vec3{Float64} = mm
 
 """
     function standard_cell(;
@@ -203,7 +199,8 @@ function standard_cell(;
         lattice=lattice,
         atoms=_atoms,
         positions=positions,
-        G_vector=G_vector)
+        G_vector=G_vector
+        )
 end
 
 """

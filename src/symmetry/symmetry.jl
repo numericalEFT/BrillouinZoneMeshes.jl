@@ -24,18 +24,20 @@
 # (Uu)(G) = e^{-i G τ} u(S^-1 G)
 # In particular, we can choose the eigenvectors at Sk as u_{Sk} = U u_k
 
-# We represent then the BZ as a set of irreducible points `kpoints`,
-# and a set of weights `kweights` (summing to 1). The value of
-# observables is given by a weighted sum over the irreducible kpoints,
-# plus a symmetrization operation (which depends on the particular way
-# the observable transforms under the symmetry).
-
 # There is by decreasing cardinality
 # - The group of symmetry operations of the lattice
-# - The group of symmetry operations of the crystal (model.symmetries)
-# - The group of symmetry operations of the crystal that preserves the BZ mesh (basis.symmetries)
+# - The group of symmetry operations of the crystal (cell.symmetry)
+# - The group of symmetry operations of the crystal that preserves the BZ mesh (mesh.symmetry)
 
 # See https://juliamolsim.github.io/DFTK.jl/stable/advanced/symmetries for details.
+
+"""Bring ``k``-point coordinates into the range [-0.5, 0.5)"""
+function normalize_kpoint_coordinate(x::Real)
+    x = x - round(Int, x, RoundNearestTiesUp)
+    @assert -0.5 ≤ x < 0.5
+    x
+end
+normalize_kpoint_coordinate(k::AbstractVector) = normalize_kpoint_coordinate.(k)
 
 @doc raw"""
 Return the ``k``-point symmetry operations associated to a lattice and atoms.
@@ -50,41 +52,24 @@ function symmetry_operations(lattice, atoms, positions, magnetic_moments=[];
     @assert length(atoms) == length(positions)
     atom_groups = [findall(Ref(pot) .== atoms) for pot in Set(atoms)]
     Ws, ws = spglib_get_symmetry(lattice, atom_groups, positions, magnetic_moments; tol_symmetry)
-    [SymOp(W, w) for (W, w) in zip(Ws, ws)]
+    return [SymOp(W, w) for (W, w) in zip(Ws, ws)]
 end
 
 # Approximate in; can be performance-critical, so we optimize in case of rationals
 is_approx_in_(x::AbstractArray{<:Rational}, X) = any(isequal(x), X)
 is_approx_in_(x::AbstractArray{T}, X) where {T} = any(y -> isapprox(x, y; atol=sqrt(eps(T))), X)
 
-"""
-Filter out the symmetry operations that don't respect the symmetries of the discrete BZ grid
-"""
-function symmetries_preserving_kgrid(symmetries, kcoords)
-    kcoords_normalized = normalize_kpoint_coordinate.(kcoords)
-    function preserves_grid(symop)
-        all(is_approx_in_(normalize_kpoint_coordinate(symop.S * k), kcoords_normalized)
-            for k in kcoords_normalized)
-    end
-    filter(preserves_grid, symmetries)
-end
-
-"""
-Filter out the symmetry operations that don't respect the symmetries of the discrete real-space grid
-"""
-function symmetries_preserving_rgrid(symmetries, fft_size)
-    is_in_grid(r) =
-        all(zip(r, fft_size)) do (ri, size)
-            abs(ri * size - round(ri * size)) / size ≤ SYMMETRY_TOLERANCE
-        end
-
-    onehot3(i) = (x = zeros(Bool, 3); x[i] = true; Vec3(x))
-    function preserves_grid(symop)
-        all(is_in_grid(symop.W * onehot3(i) .// fft_size[i] + symop.w) for i = 1:3)
-    end
-
-    filter(preserves_grid, symmetries)
-end
+# """
+# Filter out the symmetry operations that don't respect the symmetries of the discrete BZ grid
+# """
+# function symmetries_preserving_kgrid(symmetries, kcoords)
+#     kcoords_normalized = normalize_kpoint_coordinate.(kcoords)
+#     function preserves_grid(symop)
+#         all(is_approx_in_(normalize_kpoint_coordinate(symop.S * k), kcoords_normalized)
+#             for k in kcoords_normalized)
+#     end
+#     filter(preserves_grid, symmetries)
+# end
 
 @doc raw"""
 Apply various standardisations to a lattice and a list of atoms. It uses spglib to detect
@@ -101,71 +86,47 @@ function standardize_atoms(lattice, atoms, positions, magnetic_moments=[]; kwarg
     (; ret.lattice, atoms, ret.positions, ret.magnetic_moments)
 end
 
-# find where in the irreducible basis `basis_irred` the k-point `kpt_unfolded` is handled
-function unfold_mapping(basis_irred, kpt_unfolded)
-    for ik_irred = 1:length(basis_irred.kpoints)
-        kpt_irred = basis_irred.kpoints[ik_irred]
-        for symop in basis_irred.symmetries
-            Sk_irred = normalize_kpoint_coordinate(symop.S * kpt_irred.coordinate)
-            k_unfolded = normalize_kpoint_coordinate(kpt_unfolded.coordinate)
-            if (Sk_irred ≈ k_unfolded) && (kpt_unfolded.spin == kpt_irred.spin)
-                return ik_irred, symop
+# """"
+# Convert a `kcoords` into one that doesn't use BZ symmetry.
+# This is mainly useful for debug purposes (e.g. in cases we don't want to
+# bother thinking about symmetries).
+# """
+# function unfold_kcoords(kcoords, symmetries)
+#     all_kcoords = [normalize_kpoint_coordinate(symop.S * kcoord)
+#                    for kcoord in kcoords, symop in symmetries]
+
+#     # the above multiplications introduce an error
+#     unique(all_kcoords) do k
+#         digits = ceil(Int, -log10(SYMMETRY_TOLERANCE))
+#         normalize_kpoint_coordinate(round.(k; digits))
+#     end
+# end
+
+"""
+Filter out the kcoords that are irreducible under the given symmetries
+"""
+function irreducible_kcoord(symmetries::AbstractVector{SymOp}, kcoords::AbstractVector)
+    kcoords = _makeVec3.(kcoords)
+    kidxmap = [i for i in 1:length(kcoords)]
+    for (ki, k) in enumerate(kcoords)
+        if kidxmap[ki] != ki # already mapped to a symmetry equivalent
+            continue
+        end
+        symk = [symop.S * k for symop in symmetries]
+        for kj in ki+1:length(kcoords)
+            if kidxmap[kj] != kj # already mapped to a symmetry equivalent
+                continue
+            end
+            for s in 1:length(symmetries)
+                # If the difference between kred and W' * k == W^{-1} * k
+                # is only integer in fractional reciprocal-space coordinates, then
+                # kred and S' * k are equivalent k-points
+                if all(isinteger, kcoords[kj] - symk[s])
+                    kidxmap[kj] = ki
+                end
             end
         end
     end
-    error("Invalid unfolding of BZ")
+    return kidxmap
 end
 
-function unfold_array_(basis_irred, basis_unfolded, data, is_ψ)
-    if basis_irred == basis_unfolded
-        return data
-    end
-    if !(basis_irred.comm_kpts == basis_irred.comm_kpts == MPI.COMM_WORLD)
-        error("Brillouin zone symmetry unfolding not supported with MPI yet")
-    end
-    data_unfolded = similar(data, length(basis_unfolded.kpoints))
-    for ik_unfolded in 1:length(basis_unfolded.kpoints)
-        kpt_unfolded = basis_unfolded.kpoints[ik_unfolded]
-        ik_irred, symop = unfold_mapping(basis_irred, kpt_unfolded)
-        if is_ψ
-            # transform ψ_k from data into ψ_Sk in data_unfolded
-            kunfold_coord = kpt_unfolded.coordinate
-            @assert normalize_kpoint_coordinate(kunfold_coord) ≈ kunfold_coord
-            _, ψSk = apply_symop(symop, basis_irred,
-                basis_irred.kpoints[ik_irred], data[ik_irred])
-            data_unfolded[ik_unfolded] = ψSk
-        else
-            # simple copy
-            data_unfolded[ik_unfolded] = data[ik_irred]
-        end
-    end
-    data_unfolded
-end
-
-function unfold_bz(scfres)
-    basis_unfolded = unfold_bz(scfres.basis)
-    ψ = unfold_array_(scfres.basis, basis_unfolded, scfres.ψ, true)
-    eigenvalues = unfold_array_(scfres.basis, basis_unfolded, scfres.eigenvalues, false)
-    occupation = unfold_array_(scfres.basis, basis_unfolded, scfres.occupation, false)
-    E, ham = energy_hamiltonian(basis_unfolded, ψ, occupation;
-        scfres.ρ, eigenvalues, scfres.εF)
-    @assert E.total ≈ scfres.energies.total
-    new_scfres = (; basis=basis_unfolded, ψ, ham, eigenvalues, occupation)
-    merge(scfres, new_scfres)
-end
-
-""""
-Convert a `kcoords` into one that doesn't use BZ symmetry.
-This is mainly useful for debug purposes (e.g. in cases we don't want to
-bother thinking about symmetries).
-"""
-function unfold_kcoords(kcoords, symmetries)
-    all_kcoords = [normalize_kpoint_coordinate(symop.S * kcoord)
-                   for kcoord in kcoords, symop in symmetries]
-
-    # the above multiplications introduce an error
-    unique(all_kcoords) do k
-        digits = ceil(Int, -log10(SYMMETRY_TOLERANCE))
-        normalize_kpoint_coordinate(round.(k; digits))
-    end
-end
