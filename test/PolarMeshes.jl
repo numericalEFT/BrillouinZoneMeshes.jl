@@ -140,7 +140,7 @@
             lattice = Matrix([1.0 0; 0 1]')
             br = BZMeshes.Cell(lattice=lattice)
 
-            pm = PolarMesh(dispersion=dispersion, anglemesh=theta, br=br, kmax=2.0)
+            pm = PolarMesh(dispersion=dispersion, anglemesh=theta, cell=br, kmax=2.0)
             @test AbstractMeshes.volume(pm) ≈ 4π
 
         end
@@ -171,7 +171,7 @@
             lattice = Matrix([1.0 1.0 0; 1 0 1; 0 1 1]')
             br = BZMeshes.Cell(lattice=lattice)
 
-            pm = PolarMesh(dispersion=dispersion, anglemesh=am, br=br, kmax=2.0)
+            pm = PolarMesh(dispersion=dispersion, anglemesh=am, cell=br, kmax=2.0)
             @test AbstractMeshes.volume(pm) ≈ 32π / 3
 
         end

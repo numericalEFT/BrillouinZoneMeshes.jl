@@ -4,7 +4,10 @@
         _kshift = [kshift, kshift, kshift]
         _kshift = _kshift[1:dim]
         br = BrillouinZoneMeshes.Cells.Cell(lattice=lattice, atoms=atoms, positions=pos)
-        brmesh = BrillouinZoneMeshes.BZMeshes.Monkhorst_Pack(br=br, size=tuple(ksize...), shift=_kshift)
+
+        PointSymmetry.check_group(br.symmetry)
+
+        brmesh = BrillouinZoneMeshes.BZMeshes.Monkhorst_Pack(cell=br, size=tuple(ksize...), shift=_kshift)
 
         meshmap = MeshMap(brmesh)
         # println(meshmap.irreducible_indices)

@@ -108,7 +108,7 @@ end
 # 2D
 #N, DIM = 4, 2
 #origin = [0.0 0.0]
-lattice =Matrix([2 0; 1 sqrt(3)]')
+lattice = Matrix([2 0; 1 sqrt(3)]')
 #br = BZMeshes.Brillouin(lattice = lattice)
 
 # latvec = [1 0; 0 1]'
@@ -132,11 +132,11 @@ convention = "ordinary"
 br = BZMeshes.Cell(lattice=lattice, atoms=atoms, positions=positions)
 #br = BZMeshes.Brillouin(lattice=lattice)
 
-msize = (3,3)
-bzmesh = UniformBZMesh(br=br, size=msize, shift=[false, false])
+msize = (3, 3)
+bzmesh = UniformBZMesh(cell=br, size=msize, shift=[false, false])
 
 #msize = (4, 4, 4)
-#bzmesh = UniformBZMesh(br=br, size=msize, shift=[true, true, true])
+#bzmesh = UniformBZMesh(cell=br, size=msize, shift=[true, true, true])
 meshmap = MeshMap(bzmesh)
 
 recip_lattice = lattice_vector(bzmesh)
@@ -174,7 +174,7 @@ points = [ibz.points[i, :] for i in 1:size(ibz.points, 1)]
 for idx in meshmap.irreducible_indices
     # sym_points = [fullmesh[pidx] for pidx in meshmap.inv_map[idx]]
     orbit = complete_orbit(fullmesh[idx], Matrix{Float64}.(pointgroup))
-    orbit = [orbit[:, i] for  i in 1:size(orbit, 2)]
+    orbit = [orbit[:, i] for i in 1:size(orbit, 2)]
     # println(size(orbit))
     point = get_closest_point(points, orbit)
     # println(sym_points, " -> ", point)

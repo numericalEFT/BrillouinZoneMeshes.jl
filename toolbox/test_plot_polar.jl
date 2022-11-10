@@ -17,6 +17,7 @@ using SymmetryReduceBZ
 using SymmetryReduceBZ.Symmetry: calc_ibz, inhull, calc_pointgroup, complete_orbit
 import SymmetryReduceBZ.Utilities: get_uniquefacets
 import QHull
+using CompositeGrids
 include("default_colors.jl")
 include("plotlyjs_wignerseitz.jl")
 include("cluster.jl")
@@ -102,7 +103,7 @@ function reduce_to_wignerseitz_ext(v, latvec, bzmesh)
     return cartesianize(reduce_to_wignerseitz(inv_lattice_vector(bzmesh) * v, latvec), latvec)
 end
 
-include("../example/polarmesh_generator.jl")
+# include("../example/polarmesh_generator.jl")
 
 # Wigner-Seitz cells visualization
 # 2D
@@ -133,13 +134,13 @@ makeprim = true
 convention = "ordinary"
 
 br = BZMeshes.Cell(lattice=lattice, atoms=atoms, positions=positions)
-#br = BZMeshes.Brillouin(lattice=lattice)
+# br = BZMeshes.Brillouin(lattice=lattice)
 
 # msize = (3,3)
-# bzmesh = UniformBZMesh(br=br, size=msize, shift=[false, false])
+# bzmesh = UniformBZMesh(cell=br, size=msize, shift=[false, false])
 
 #msize = (4, 4, 4)
-#bzmesh = UniformBZMesh(br=br, size=msize, shift=[true, true, true])
+#bzmesh = UniformBZMesh(cell=br, size=msize, shift=[true, true, true])
 # meshmap = MeshMap(bzmesh)
 
 dispersion(k) = dot(k, k) - 1.0
@@ -147,14 +148,14 @@ dispersion(k) = dot(k, k) - 1.0
 # N = 12
 # bound = [-π, π]
 # theta = SimpleGrid.Uniform(bound, N; isperiodic=true)
-# bzmesh = PolarMesh(dispersion=dispersion, anglemesh=theta, br=br, kmax=2.0)
+# bzmesh = PolarMesh(dispersion=dispersion, anglemesh=theta, cell=br, kmax=2.0)
 
 bound = [-π, π]
 phi = SimpleGrid.Uniform(bound, 12; isperiodic=true)
 bound = [-π / 2, π / 2]
 theta = SimpleGrid.Uniform(bound, 8; isperiodic=true)
-am = CompositeMesh(phi, [theta for i in 1:length(phi)])
-bzmesh = PolarMesh(dispersion=dispersion, anglemesh=am, br=br, kmax=2.0 * π, Nloggrid=4, Nbasegrid=2)
+am = BaseMesh.CompositeMesh(phi, [theta for i in 1:length(phi)])
+bzmesh = BZMeshes.PolarMesh(dispersion=dispersion, anglemesh=am, cell=br, kmax=2.0 * π, Nloggrid=4, Nbasegrid=2)
 # N = 12
 # rgrid = SimpleG.Arbitrary([cbrt(i / N * π^3) for i in 1:N], bound=[0.0, π])
 # bzmesh = PolarMesh(br, CompositeMesh(am, [rgrid for i in 1:length(am)]))

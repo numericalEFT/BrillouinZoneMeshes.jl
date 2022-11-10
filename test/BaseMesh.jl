@@ -14,7 +14,7 @@
             lattice = Matrix([1/N1/2 0; 0 1.0/N2/2]') .* 2π
             # so that bzmesh[i,j] = (2i-1,2j-1)
             br = BZMeshes.Cell(lattice=lattice)
-            bzmesh = BZMeshes.UniformBZMesh(br=br, size=(N1, N2), origin=0)
+            bzmesh = BZMeshes.UniformBZMesh(cell=br, size=(N1, N2), origin=0)
 
             println(bzmesh)
             display(bzmesh)
@@ -31,7 +31,7 @@
             lattice = Matrix([2.0 0 0; 1 sqrt(3) 0; 7 11 19]')
             msize = (3, 5, 7)
             br = BZMeshes.Cell(lattice=lattice)
-            bzmesh = BZMeshes.UniformBZMesh(br=br, size=msize)
+            bzmesh = BZMeshes.UniformBZMesh(cell=br, size=msize)
 
             @test lattice_vector(bzmesh, 1) ≈ br.recip_lattice[:, 1]
             @test lattice_vector(bzmesh, 2) ≈ br.recip_lattice[:, 2]
@@ -50,7 +50,7 @@
             # size = (3, 5)
             # lattice = Matrix([2.3 0; 0 7.0]')
             br = BZMeshes.Cell(lattice=lattice)
-            bzmesh = BZMeshes.UniformBZMesh(br=br, size=msize)
+            bzmesh = BZMeshes.UniformBZMesh(cell=br, size=msize)
             vol = 0.0
             for (i, p) in enumerate(bzmesh)
                 @test bzmesh[i] ≈ p # linear index
@@ -71,19 +71,19 @@
             # even numbers
             size = (4, 4)
             # Gamma-centered, no shift
-            bzmesh = BZMeshes.UniformBZMesh(br=br, size=size, origin=0, shift=[false, false])
+            bzmesh = BZMeshes.UniformBZMesh(cell=br, size=size, origin=0, shift=[false, false])
             @test bzmesh[1, 1] ≈ BZMeshes.SVector{DIM,eltype(lattice)}([0.0, 0.0])
             # M-P, no shift
-            bzmesh = BZMeshes.UniformBZMesh(br=br, size=size, origin=-1 / 2, shift=[false, false])
+            bzmesh = BZMeshes.UniformBZMesh(cell=br, size=size, origin=-1 / 2, shift=[false, false])
             @test bzmesh[3, 3] ≈ BZMeshes.SVector{DIM,eltype(lattice)}([0.0, 0.0])
 
             # odd numbers
             size = (5, 5)
             # Gamma-centered, no shift
-            bzmesh = BZMeshes.UniformBZMesh(br=br, size=size, origin=0, shift=[false, false])
+            bzmesh = BZMeshes.UniformBZMesh(cell=br, size=size, origin=0, shift=[false, false])
             @test bzmesh[1, 1] ≈ BZMeshes.SVector{DIM,eltype(lattice)}([0.0, 0.0])
             # M-P, 1/2 shift
-            bzmesh = BZMeshes.UniformBZMesh(br=br, size=size, origin=-1 / 2, shift=[true, true])
+            bzmesh = BZMeshes.UniformBZMesh(cell=br, size=size, origin=-1 / 2, shift=[true, true])
             @test bzmesh[3, 3] ≈ BZMeshes.SVector{DIM,eltype(lattice)}([0.0, 0.0])
 
         end

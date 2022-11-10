@@ -25,7 +25,7 @@ struct PolarMesh{T,DIM,MT<:CompositeMesh} <: AbstractMesh{T,DIM}
     volume::T
 end
 
-function PolarMesh(br::Cell{T,2}, mesh::MT) where {T,MT}
+function PolarMesh(cell::Cell{T,2}, mesh::MT) where {T,MT}
     vol = 0.0
     for j in 1:size(mesh)[2]
         for i in 1:size(mesh)[1]
@@ -33,9 +33,9 @@ function PolarMesh(br::Cell{T,2}, mesh::MT) where {T,MT}
             vol += T(0.5) * (r2^2 - r1^2) * volume(mesh.mesh, j)
         end
     end
-    return PolarMesh{T,2,MT}(br, mesh, vol)
+    return PolarMesh{T,2,MT}(cell, mesh, vol)
 end
-function PolarMesh(br::Cell{T,3}, mesh::MT) where {T,MT}
+function PolarMesh(cell::Cell{T,3}, mesh::MT) where {T,MT}
     vol = 0.0
     for k in 1:size(mesh)[3]
         for j in 1:size(mesh)[2]
@@ -48,7 +48,7 @@ function PolarMesh(br::Cell{T,3}, mesh::MT) where {T,MT}
             end
         end
     end
-    return PolarMesh{T,3,MT}(br, mesh, vol)
+    return PolarMesh{T,3,MT}(cell, mesh, vol)
 end
 
 Base.length(mesh::PolarMesh) = length(mesh.mesh)
@@ -204,13 +204,14 @@ function kF_densed_kgrids(; dispersion,
 end
 
 
-function BZMeshes.PolarMesh(; dispersion, anglemesh, br, kmax,
+function BZMeshes.PolarMesh(; dispersion, anglemesh, cell, kmax,
     kwargs...)
 
-    DIM = size(br.lattice, 1)
+    DIM = size(cell.lattice, 1)
     bound = [0.0, kmax]
-    grids = kF_densed_kgrids(dispersion=dispersion, anglemesh=anglemesh, bound=bound, DIM=DIM, kwargs...)
+    println(typeof(dispersion))
+    grids = kF_densed_kgrids(; dispersion=dispersion, anglemesh=anglemesh, bound=bound, DIM=DIM, kwargs...)
     cm = CompositeMesh(anglemesh, grids)
-    pm = PolarMesh(br, cm)
+    pm = PolarMesh(cell, cm)
     return pm
 end

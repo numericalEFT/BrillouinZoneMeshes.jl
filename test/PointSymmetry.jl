@@ -100,7 +100,7 @@ end
         _kshift = [kshift, kshift, kshift]
         _kshift = _kshift[1:dim]
         br = BrillouinZoneMeshes.Cells.Cell(lattice=lattice, atoms=atoms, positions=pos)
-        brmesh = BrillouinZoneMeshes.BZMeshes.Monkhorst_Pack(br=br, size=tuple(ksize...), shift=_kshift)
+        brmesh = BrillouinZoneMeshes.BZMeshes.Monkhorst_Pack(cell=br, size=tuple(ksize...), shift=_kshift)
         umesh = brmesh
         @test getidx(umesh, [ksize[1] - 1, 0, 0]) == getidx(umesh, [-1, 0, 0])
         @test getidx(umesh, [0, ksize[2] - 1, 0]) == getidx(umesh, [0, -1, 0])

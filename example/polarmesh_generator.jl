@@ -100,14 +100,14 @@ function kF_densed_kgrids(; dispersion,
 end
 
 
-function BZMeshes.PolarMesh(; dispersion, anglemesh, br, kmax,
+function BZMeshes.PolarMesh(; dispersion, anglemesh, cell, kmax,
     kwargs...)
 
-    DIM = size(br.lattice, 1)
+    DIM = size(cell.lattice, 1)
     bound = [0.0, kmax]
     grids = kF_densed_kgrids(dispersion=dispersion, anglemesh=anglemesh, bound=bound, DIM=DIM, kwargs...)
     cm = CompositeMesh(anglemesh, grids)
-    pm = PolarMesh(br, cm)
+    pm = PolarMesh(cell, cm)
     return pm
 end
 
@@ -138,7 +138,7 @@ end
         lattice = Matrix([1.0 0; 0 1]')
         br = BZMeshes.Cell(lattice=lattice)
 
-        pm = PolarMesh(dispersion=dispersion, anglemesh=theta, br=br, kmax=2.0)
+        pm = PolarMesh(dispersion=dispersion, anglemesh=theta, cell=br, kmax=2.0)
         @test AbstractMeshes.volume(pm) ≈ 4π
 
     end
@@ -169,7 +169,7 @@ end
         lattice = Matrix([1.0 1.0 0; 1 0 1; 0 1 1]')
         br = BZMeshes.Cell(lattice=lattice)
 
-        pm = PolarMesh(dispersion=dispersion, anglemesh=am, br=br, kmax=2.0)
+        pm = PolarMesh(dispersion=dispersion, anglemesh=am, cell=br, kmax=2.0)
         @test AbstractMeshes.volume(pm) ≈ 32π / 3
 
     end
