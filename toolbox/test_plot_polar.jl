@@ -17,7 +17,7 @@ using SymmetryReduceBZ
 using SymmetryReduceBZ.Symmetry: calc_ibz, inhull, calc_pointgroup, complete_orbit
 import SymmetryReduceBZ.Utilities: get_uniquefacets
 import QHull
-using CompositeGrids
+using BrillouinZoneMeshes.CompositeGrids
 include("default_colors.jl")
 include("plotlyjs_wignerseitz.jl")
 include("cluster.jl")
@@ -152,19 +152,19 @@ dispersion(k) = -sum(cos.(k)) + 0.1
 N = 12
 bound = [-π, π]
 theta = SimpleGrid.Uniform(bound, N; isperiodic=true)
-bzmesh = PolarMesh(dispersion=dispersion, anglemesh=theta, br=br,
+bzmesh = BZMeshes.PolarMesh(dispersion=dispersion, anglemesh=theta, cell=br,
     kmax=π, Nloggrid=5, Nbasegrid=4, minterval=0.001)
 
 # bound = [-π, π]
 # theta = SimpleGrid.Uniform(bound, N; isperiodic=true)
 # bzmesh = PolarMesh(dispersion=dispersion, anglemesh=theta, br=br, kmax=2.0)
 
-bound = [-π, π]
-phi = SimpleGrid.Uniform(bound, 12; isperiodic=true)
-bound = [-π / 2, π / 2]
-theta = SimpleGrid.Uniform(bound, 8; isperiodic=true)
-am = BaseMesh.CompositeMesh(phi, [theta for i in 1:length(phi)])
-bzmesh = BZMeshes.PolarMesh(dispersion=dispersion, anglemesh=am, cell=br, kmax=2.0 * π, Nloggrid=4, Nbasegrid=2)
+# bound = [-π, π]
+# phi = SimpleGrid.Uniform(bound, 12; isperiodic=true)
+# bound = [-π / 2, π / 2]
+# theta = SimpleGrid.Uniform(bound, 8; isperiodic=true)
+# am = BaseMesh.CompositeMesh(phi, [theta for i in 1:length(phi)])
+# bzmesh = BZMeshes.PolarMesh(dispersion=dispersion, anglemesh=am, cell=br, kmax=2.0 * π, Nloggrid=4, Nbasegrid=2)
 # N = 12
 # rgrid = SimpleG.Arbitrary([cbrt(i / N * π^3) for i in 1:N], bound=[0.0, π])
 # bzmesh = PolarMesh(br, CompositeMesh(am, [rgrid for i in 1:length(am)]))
