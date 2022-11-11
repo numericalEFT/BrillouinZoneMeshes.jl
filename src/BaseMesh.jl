@@ -24,12 +24,12 @@ Base.size(mesh::AbstractUniformMesh, I) = mesh.size[I]
 
 function AbstractMeshes.fractional_coordinates(mesh::AbstractUniformMesh{T,DIM}, I::Int) where {T,DIM}
     n = SVector{DIM,Int}(AbstractMeshes._ind2inds(mesh.size, I))
-    return (n .- 1 .+ mesh.shift) ./ mesh.size
+    return inv_lattice_vector(mesh) * mesh.origin + (n .- 1 .+ mesh.shift) ./ mesh.size
 end
 
 function AbstractMeshes.fractional_coordinates(mesh::AbstractUniformMesh{T,DIM}, x::AbstractVector) where {T,DIM}
-    displacement = SVector{DIM,T}(x)
-    return (inv_lattice_vector(mesh) * displacement)
+    v = SVector{DIM,T}(x)
+    return (inv_lattice_vector(mesh) * v)
 end
 
 function Base.getindex(mesh::AbstractUniformMesh{T,DIM}, inds...) where {T,DIM}

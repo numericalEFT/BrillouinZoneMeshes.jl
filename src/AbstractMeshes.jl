@@ -54,7 +54,17 @@ end
 end
 
 # optional functions
-fractional_coordinates(mesh::AbstractMesh, I::Int) = error("not implemented!")
+function fractional_coordinates(mesh::AbstractMesh, I::Int)
+    # WARNINING: this default implementation could be type instable
+    # for efficiency use specialized implementation
+    if hasproperty(mesh, :cell)
+        # if mesh has cell, then use lattice info from cell
+        return mesh.cell.inv_recip_lattice * mesh[I]
+    else
+        # other cases require specialized implementation
+        error("not implemented!")
+    end
+end
 
 # wrapper of external functions from CompositeGrids
 locate(grid::AbstractGrid, x) = CompositeGrids.Interp.locate(grid, x[1])
