@@ -1,3 +1,5 @@
+#Adapted from DFTK.jl: https://github.com/JuliaMolSim/DFTK.jl/blob/master/src/symmetry.jl
+
 # This file contains functions to handle the symetries.
 # The type SymOp is defined in Symop.jl
 
@@ -31,13 +33,13 @@
 
 # See https://juliamolsim.github.io/DFTK.jl/stable/advanced/symmetries for details.
 
-"""Bring ``k``-point coordinates into the range [-0.5, 0.5)"""
-function normalize_kpoint_coordinate(x::Real)
-    x = x - round(Int, x, RoundNearestTiesUp)
-    @assert -0.5 ≤ x < 0.5
-    x
-end
-normalize_kpoint_coordinate(k::AbstractVector) = normalize_kpoint_coordinate.(k)
+# """Bring ``k``-point coordinates into the range [-0.5, 0.5)"""
+# function normalize_kpoint_coordinate(x::Real)
+#     x = x - round(Int, x, RoundNearestTiesUp)
+#     @assert -0.5 ≤ x < 0.5
+#     x
+# end
+# normalize_kpoint_coordinate(k::AbstractVector) = normalize_kpoint_coordinate.(k)
 
 @doc raw"""
 Return the ``k``-point symmetry operations associated to a lattice and atoms.
@@ -56,8 +58,8 @@ function symmetry_operations(lattice, atoms, positions, magnetic_moments=[];
 end
 
 # Approximate in; can be performance-critical, so we optimize in case of rationals
-is_approx_in_(x::AbstractArray{<:Rational}, X) = any(isequal(x), X)
-is_approx_in_(x::AbstractArray{T}, X) where {T} = any(y -> isapprox(x, y; atol=sqrt(eps(T))), X)
+# is_approx_in_(x::AbstractArray{<:Rational}, X) = any(isequal(x), X)
+# is_approx_in_(x::AbstractArray{T}, X) where {T} = any(y -> isapprox(x, y; atol=sqrt(eps(T))), X)
 
 # """
 # Filter out the symmetry operations that don't respect the symmetries of the discrete BZ grid

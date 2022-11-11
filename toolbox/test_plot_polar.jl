@@ -17,6 +17,7 @@ using SymmetryReduceBZ
 using SymmetryReduceBZ.Symmetry: calc_ibz, inhull, calc_pointgroup, complete_orbit
 import SymmetryReduceBZ.Utilities: get_uniquefacets
 import QHull
+using BrillouinZoneMeshes.CompositeGrids
 include("default_colors.jl")
 include("plotlyjs_wignerseitz.jl")
 include("cluster.jl")
@@ -102,18 +103,18 @@ function reduce_to_wignerseitz_ext(v, latvec, bzmesh)
     return cartesianize(reduce_to_wignerseitz(inv_lattice_vector(bzmesh) * v, latvec), latvec)
 end
 
-include("../example/polarmesh_generator.jl")
+# include("../example/polarmesh_generator.jl")
 
 # Wigner-Seitz cells visualization
 # 2D
 # N, DIM = 4, 2
 # origin = [0.0 0.0]
-# lattice = Matrix([2 0; 1 sqrt(3)]')
+lattice = Matrix([2 0; 1 sqrt(3)]')
 # br = BZMeshes.Brillouin(lattice=lattice)
 
 # lattice = [1 0; 0 1]'
-# atoms = [1]
-# positions = [zeros(2)]
+atoms = [1]
+positions = [zeros(2)]
 
 # 3D
 
@@ -121,9 +122,9 @@ include("../example/polarmesh_generator.jl")
 # atoms = [1, 1]
 # positions = [ones(3) / 8, -ones(3) / 8]
 
-lattice = [[1.0 0.0 0.0]; [0.0 1.0 0.0]; [0.0 0.0 1.0]]
-atoms = [1]
-positions = [zeros(3)]
+# lattice = [[1.0 0.0 0.0]; [0.0 1.0 0.0]; [0.0 0.0 1.0]]
+# atoms = [1]
+# positions = [zeros(3)]
 
 
 atom_pos = hvcat(size(positions, 1), positions...)
@@ -133,28 +134,37 @@ makeprim = true
 convention = "ordinary"
 
 br = BZMeshes.Cell(lattice=lattice, atoms=atoms, positions=positions)
-#br = BZMeshes.Brillouin(lattice=lattice)
+# br = BZMeshes.Brillouin(lattice=lattice)
 
 # msize = (3,3)
-# bzmesh = UniformBZMesh(br=br, size=msize, shift=[false, false])
+# bzmesh = UniformBZMesh(cell=br, size=msize, shift=[false, false])
 
 #msize = (4, 4, 4)
-#bzmesh = UniformBZMesh(br=br, size=msize, shift=[true, true, true])
+#bzmesh = UniformBZMesh(cell=br, size=msize, shift=[true, true, true])
 # meshmap = MeshMap(bzmesh)
 
-dispersion(k) = dot(k, k) - 1.0
+# dispersion(k) = dot(k, k) - 1.0
+dispersion(k) = -sum(cos.(k)) + 0.1
+# function dispersion(k)
+#     return -1.0 * sum(cos.(k / 2)) + length(k) - 1.8
+# end
 
-# N = 12
+N = 12
+bound = [-π, π]
+theta = SimpleGrid.Uniform(bound, N; isperiodic=true)
+bzmesh = BZMeshes.PolarMesh(dispersion=dispersion, anglemesh=theta, cell=br,
+    kmax=π, Nloggrid=5, Nbasegrid=4, minterval=0.001)
+
 # bound = [-π, π]
 # theta = SimpleGrid.Uniform(bound, N; isperiodic=true)
 # bzmesh = PolarMesh(dispersion=dispersion, anglemesh=theta, br=br, kmax=2.0)
 
-bound = [-π, π]
-phi = SimpleGrid.Uniform(bound, 12; isperiodic=true)
-bound = [-π / 2, π / 2]
-theta = SimpleGrid.Uniform(bound, 8; isperiodic=true)
-am = CompositeMesh(phi, [theta for i in 1:length(phi)])
-bzmesh = PolarMesh(dispersion=dispersion, anglemesh=am, br=br, kmax=2.0 * π, Nloggrid=4, Nbasegrid=2)
+# bound = [-π, π]
+# phi = SimpleGrid.Uniform(bound, 12; isperiodic=true)
+# bound = [-π / 2, π / 2]
+# theta = SimpleGrid.Uniform(bound, 8; isperiodic=true)
+# am = BaseMesh.CompositeMesh(phi, [theta for i in 1:length(phi)])
+# bzmesh = BZMeshes.PolarMesh(dispersion=dispersion, anglemesh=am, cell=br, kmax=2.0 * π, Nloggrid=4, Nbasegrid=2)
 # N = 12
 # rgrid = SimpleG.Arbitrary([cbrt(i / N * π^3) for i in 1:N], bound=[0.0, π])
 # bzmesh = PolarMesh(br, CompositeMesh(am, [rgrid for i in 1:length(am)]))
@@ -205,10 +215,10 @@ println(fullmesh)
 
 P = plot(clist, idx_center, ibz=c)
 
-# addtraces!(P, scatter(x=[r[1] for r in fullmesh], y=[r[2] for r in fullmesh], mode="markers", marker=attr(size=5)))
+addtraces!(P, scatter(x=[r[1] for r in fullmesh], y=[r[2] for r in fullmesh], mode="markers", marker=attr(size=5)))
 # addtraces!(P, scatter(x=[r[1] for r in reducedmesh], y=[r[2] for r in reducedmesh], mode="markers", marker=attr(size=5)))
 
-addtraces!(P, scatter3d(x=[r[1] for r in fullmesh], y=[r[2] for r in fullmesh], z=[r[3] for r in fullmesh], mode="markers", marker=attr(size=3)))
+# addtraces!(P, scatter3d(x=[r[1] for r in fullmesh], y=[r[2] for r in fullmesh], z=[r[3] for r in fullmesh], mode="markers", marker=attr(size=3)))
 #addtraces!(P, scatter3d(x=[r[1] for r in reducedmesh], y=[r[2] for r in reducedmesh], z=[r[3] for r in reducedmesh], mode="markers", marker=attr(size=3)))
 
 n = length(P.plot.data) # number of traces, the last two are the full and reduced meshes

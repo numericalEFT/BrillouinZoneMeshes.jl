@@ -1,3 +1,5 @@
+# Copied from DFTK.jl: https://github.com/JuliaMolSim/DFTK.jl/blob/master/src/SymOp.jl
+
 # A symmetry operation (SymOp) is a couple (W, w) of a
 # unitary (in cartesian coordinates, but not in reduced coordinates)
 # matrix W and a translation w such that, for each atom of
