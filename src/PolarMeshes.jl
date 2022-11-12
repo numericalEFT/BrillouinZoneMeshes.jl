@@ -155,11 +155,16 @@ function radial_rescale(; grid::AbstractGrid, DIM::Int)
     return RescaledGrid(grid, func, invfunc)
 end
 
-function find_kFermi(dispersion, angle; kinit=0.0)
+function find_kFermi(dispersion, angle; kinit=0.0, krange=nothing)
+    if isnothing(krange)
+        k0 = kinit
+    else
+        k0 = krange
+    end
     if length(angle) == 1
-        return find_zero(k -> dispersion(BZMeshes._polar2cart(Polar(k, angle...))), kinit)
+        return find_zero(k -> dispersion(BZMeshes._polar2cart(Polar(k, angle...))), k0)
     elseif length(angle) == 2
-        return find_zero(k -> dispersion(BZMeshes._spherical2cart(Spherical(k, angle...))), kinit)
+        return find_zero(k -> dispersion(BZMeshes._spherical2cart(Spherical(k, angle...))), k0)
     else
         error("dimension $(length(angle)+1) not implemented!")
     end
@@ -190,12 +195,12 @@ function kF_densed_kgrids(; dispersion,
     Nbasegrid=2,
     DIM=2)
     # assume dispersion==0 has one root for each angle
-    k1 = find_kFermi(dispersion, anglemesh[1])
+    k1 = find_kFermi(dispersion, anglemesh[1]; krange=bound)
     # g1 = CompositeGrid.LogDensedGrid(basegridtype, bound, [k1,], Nloggrid, minterval, Nbasegrid)
     g1 = RescaledLogDensedGrid(basegridtype, bound, [k1,], Nloggrid, minterval, Nbasegrid, DIM)
     grids = [g1,]
     for i in 2:length(anglemesh)
-        kF = find_kFermi(dispersion, anglemesh[i])
+        kF = find_kFermi(dispersion, anglemesh[i]; krange=bound)
         # g = CompositeGrid.LogDensedGrid(basegridtype, bound, [kF,], Nloggrid, minterval, Nbasegrid)
         g = RescaledLogDensedGrid(basegridtype, bound, [kF,], Nloggrid, minterval, Nbasegrid, DIM)
         push!(grids, g)
