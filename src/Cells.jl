@@ -200,7 +200,7 @@ function standard_cell(;
         atoms=_atoms,
         positions=positions,
         G_vector=G_vector
-        )
+    )
 end
 
 """
@@ -246,13 +246,19 @@ end
 # additional factor of 2π in their definition, so they transform rather with 2π times the
 # inverse lattice transpose: q_cart = 2π lattice' \ q_red = recip_lattice * q_red.
 # =#
-# vector_red_to_cart(model::Brillouin, rred) = model.lattice * rred
-# vector_cart_to_red(model::Brillouin, rcart) = model.inv_lattice * rcart
-# covector_red_to_cart(model::Brillouin, fred) = model.inv_lattice' * fred
-# covector_cart_to_red(model::Brillouin, fcart) = model.lattice' * fcart
-# recip_vector_red_to_cart(model::Brillouin, qred) = model.recip_lattice * qred
-# recip_vector_cart_to_red(model::Brillouin, qcart) = model.inv_recip_lattice * qcart
 
+# TODO: define following funcs for cells
+
+vector_frac_to_cart(cell::Cell, rfrac) = cell.lattice * rfrac
+vector_cart_to_frac(cell::Cell, rcart) = cell.inv_lattice * rcart
+covector_frac_to_cart(cell::Cell, ffrac) = cell.inv_lattice' * ffrac
+covector_cart_to_frac(cell::Cell, fcart) = cell.lattice' * fcart
+recip_vector_frac_to_cart(cell::Cell, qfrac) = cell.recip_lattice * qfrac
+recip_vector_cart_to_frac(cell::Cell, qcart) = cell.inv_recip_lattice * qcart
+
+export vector_cart_to_frac, vector_frac_to_cart
+export covector_cart_to_frac, covector_frac_to_cart
+export recip_vector_cart_to_frac, recip_vector_frac_to_cart
 # #=
 # Transformations on vectors and covectors are matrices and comatrices.
 

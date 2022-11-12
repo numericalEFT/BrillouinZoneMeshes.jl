@@ -5,10 +5,12 @@ module AbstractMeshes
 using ..StaticArrays
 using ..CompositeGrids
 
-export AbstractMesh, locate, volume, fractional_coordinates
+export AbstractMesh, locate, volume#, fractional_coordinates
+export FracCoords, frac_to_cart, cart_to_frac
 
 # the return value of AbstractMesh should be a SVector{T,DIM}
 abstract type AbstractMesh{T,DIM} <: AbstractArray{SVector{T,DIM},DIM} end
+struct FracCoords end
 
 Base.IteratorSize(::Type{AbstractMesh{T,DIM}}) where {T,DIM} = Base.HasLength()
 Base.IteratorEltype(::Type{AbstractMesh{T,DIM}}) where {T,DIM} = Base.HasEltype()
@@ -30,6 +32,11 @@ Base.show(io::IO, mesh::AbstractMesh) = error("not implemented!")
 
 Base.getindex(mesh::AbstractMesh, inds...) = error("not implemented!")
 Base.getindex(mesh::AbstractMesh, I) = error("not implemented!")
+Base.getindex(mesh::AbstractMesh, ::Type{<:FracCoords}, inds...) = error("not implemented")
+Base.getindex(mesh::AbstractMesh, ::Type{<:FracCoords}, I) = error("not implemented")
+
+frac_to_cart(mesh::AbstractMesh, frac) = error("not implemented!")
+cart_to_frac(mesh::AbstractMesh, cart) = error("not implemented!")
 
 locate(mesh::AbstractMesh, x) = error("not implemented!")
 volume(mesh::AbstractMesh) = error("not implemented!")
@@ -54,17 +61,17 @@ end
 end
 
 # optional functions
-function fractional_coordinates(mesh::AbstractMesh, I::Int)
-    # WARNINING: this default implementation could be type instable
-    # for efficiency use specialized implementation
-    if hasproperty(mesh, :cell)
-        # if mesh has cell, then use lattice info from cell
-        return mesh.cell.inv_recip_lattice * mesh[I]
-    else
-        # other cases require specialized implementation
-        error("not implemented!")
-    end
-end
+# function fractional_coordinates(mesh::AbstractMesh, I::Int)
+#     # WARNINING: this default implementation could be type instable
+#     # for efficiency use specialized implementation
+#     if hasproperty(mesh, :cell)
+#         # if mesh has cell, then use lattice info from cell
+#         return mesh.cell.inv_recip_lattice * mesh[I]
+#     else
+#         # other cases require specialized implementation
+#         error("not implemented!")
+#     end
+# end
 
 # wrapper of external functions from CompositeGrids
 locate(grid::AbstractGrid, x) = CompositeGrids.Interp.locate(grid, x[1])

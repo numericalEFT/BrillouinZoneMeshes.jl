@@ -15,8 +15,8 @@
 
         vol = 0.0
         for (i, x) in enumerate(mesh)
-            fracx = AbstractMeshes.fractional_coordinates(mesh, i)
-            @test fracx ≈ AbstractMeshes.fractional_coordinates(mesh, x)
+            fracx = mesh[AbstractMeshes.FracCoords, i]
+            @test fracx ≈ AbstractMeshes.cart_to_frac(mesh, x)
             @test AbstractMeshes.locate(mesh, x) == i
             vol += AbstractMeshes.volume(mesh, i)
         end
