@@ -128,11 +128,14 @@ UMesh(;
     SVector{DIM,Rational}(shift)
 )
 
-lattice_vector(mesh::UMesh) = mesh.lattice
-inv_lattice_vector(mesh::UMesh) = mesh.inv_lattice
-lattice_vector(mesh::UMesh, i::Int) = get_latvec(mesh.lattice, i)
-inv_lattice_vector(mesh::UMesh, i::Int) = get_latvec(mesh.inv_lattice, i)
-cell_volume(mesh::UMesh) = mesh.cell_volume
+struct HasLatAndInv <: AbstractMeshes.LatVecStyle end
+AbstractMeshes.LatVecStyle(::Type{<:UMesh{T,DIM}}) where {T,DIM} = HasLatAndInv()
+
+AbstractMeshes.lattice_vector(::HasLatAndInv, mesh) = mesh.lattice
+AbstractMeshes.inv_lattice_vector(::HasLatAndInv, mesh) = mesh.inv_lattice
+AbstractMeshes.lattice_vector(::HasLatAndInv, mesh, i::Int) = get_latvec(mesh.lattice, i)
+AbstractMeshes.inv_lattice_vector(::HasLatAndInv, mesh, i::Int) = get_latvec(mesh.inv_lattice, i)
+AbstractMeshes.cell_volume(::HasLatAndInv, mesh) = mesh.cell_volume
 
 function Base.show(io::IO, mesh::UMesh)
     println("UMesh with $(length(mesh)) mesh points")

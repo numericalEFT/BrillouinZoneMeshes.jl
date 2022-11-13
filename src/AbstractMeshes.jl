@@ -7,6 +7,7 @@ using ..CompositeGrids
 
 export AbstractMesh, locate, volume#, fractional_coordinates
 export FracCoords, frac_to_cart, cart_to_frac
+export LatVecStyle, lattice_vector, inv_lattice_vector, cell_volume
 
 # the return value of AbstractMesh should be a SVector{T,DIM}
 abstract type AbstractMesh{T,DIM} <: AbstractArray{SVector{T,DIM},DIM} end
@@ -87,5 +88,24 @@ function interval(grid::AbstractGrid, i::Int)
         return (grid[i] + grid[i-1]) / 2, grid.bound[2]
     end
 end
+
+# lattice vector information
+abstract type LatVecStyle end # dispatch type for lattice vector functions
+struct NoLat <: LatVecStyle end # no info by default
+
+LatVecStyle(::Type) = NoLat()
+
+lattice_vector(mesh::MT) where {MT} = lattice_vector(LatVecStyle(MT), mesh)
+lattice_vector(mesh::MT, i::Int) where {MT} = lattice_vector(LatVecStyle(MT), mesh, i)
+inv_lattice_vector(mesh::MT) where {MT} = inv_lattice_vector(LatVecStyle(MT), mesh)
+inv_lattice_vector(mesh::MT, i::Int) where {MT} = inv_lattice_vector(LatVecStyle(MT), mesh, i)
+cell_volume(mesh::MT) where {MT} = cell_volume(LatVecStyle(MT), mesh)
+
+# by default return error
+lattice_vector(::NoLat, mesh) = error("no lattice information!")
+lattice_vector(::NoLat, mesh, i::Int) = error("no lattice information!")
+inv_lattice_vector(::NoLat, mesh) = error("no lattice information!")
+inv_lattice_vector(::NoLat, mesh, i::Int) = error("no lattice information!")
+cell_volume(::NoLat, mesh) = error("no lattice information!")
 
 end
