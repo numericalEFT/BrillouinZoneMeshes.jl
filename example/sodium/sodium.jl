@@ -2,10 +2,12 @@ using DFTK
 using Unitful
 using UnitfulAtomic
 using Plots
-using PlotlyJS
+# using PlotlyJS
 using Printf
 using PyCall
 using BrillouinZoneMeshes
+
+include("interpolation.jl")
 
 # Setup a sodium lattice, see the following link for more information
 # http://lampx.tugraz.at/~hadley/ss1/crystalstructure/structures/bcc/bcc.php
@@ -24,7 +26,7 @@ temperature = 0.02u"Ry"
 model = model_PBE(lattice, atoms, positions; temperature, smearing)
 
 Ecut = 80.0u"Ry"
-kgrid = [8, 8, 8]
+kgrid = [16, 16, 16]
 
 basis = PlaneWaveBasis(model; Ecut, kgrid=kgrid)
 
@@ -60,9 +62,25 @@ end
 band = Dict{Int,Float64}()
 bandix = 5 # the fifth band is the valence band
 for (ki, kpoints) in enumerate(basis.kpoints)
-    idx = AbstractMeshes.locate(bzmesh, basis.kpoints[ki].coordinate)
-    band[idx] = scfres.eigenvalues[ki][bandix] - scfres.εF
+    idx = AbstractMeshes.locate(bzmesh, lattice_vector(bzmesh) * basis.kpoints[ki].coordinate)
+    band[meshmap.map[idx]] = scfres.eigenvalues[ki][bandix] - scfres.εF
 end
 
 # band fourier transform
+bandarray = zeros(kgrid...);
 
+for kx in 1:kgrid[1]
+    for ky in 1:kgrid[2]
+        for kz in 1:kgrid[3]
+            idx = AbstractMeshes._inds2ind(tuple(kgrid...), [kx, ky, kz])
+            # idx = AbstractMeshes.locate(bzmesh, bzmesh[kx, ky, kz])
+            bandarray[kx, ky, kz] = band[meshmap.map[idx]]
+        end
+    end
+end
+
+Kfine = 100
+band_interpolate = fourier_interpolate(bandarray, Kfine);
+Plots.plot()
+Plots.plot!((0:kgrid[1]-1) / kgrid[1], bandarray[:, 1, 1], label="band", markershape=:circle)
+Plots.plot!((0:Kfine-1) / Kfine, band_interpolate[:, 1, 1], label="band interpolation")
