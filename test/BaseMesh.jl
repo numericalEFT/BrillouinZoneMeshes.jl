@@ -1,6 +1,28 @@
 @testset "Base Mesh" begin
     rng = MersenneTwister(1234)
 
+
+    @testset "UMesh" begin
+        DIM = 2
+        N1, N2 = 3, 5
+        lattice = Matrix([1/N1/2 0; 0 1.0/N2/2]') .* 2π
+        # so that bzmesh[i,j] = (2i-1,2j-1)
+        cell = BZMeshes.Cell(lattice=lattice)
+        mesh = BaseMesh.UMesh(br=cell, origin=ones(DIM) ./ 2, size=(N1, N2), shift=zeros(DIM))
+
+        @test length(mesh) == N1 * N2
+        @test size(mesh) == (N1, N2)
+
+        vol = 0.0
+        for (i, x) in enumerate(mesh)
+            fracx = mesh[AbstractMeshes.FracCoords, i]
+            @test fracx ≈ AbstractMeshes.cart_to_frac(mesh, x)
+            @test AbstractMeshes.locate(mesh, x) == i
+            vol += AbstractMeshes.volume(mesh, i)
+        end
+        @test AbstractMeshes.volume(mesh) ≈ vol
+    end
+
     @testset "UniformBZMesh" begin
         @testset "Indexing" begin
             size = (3, 4, 5)

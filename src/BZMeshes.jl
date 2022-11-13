@@ -110,11 +110,14 @@ function Monkhorst_Pack(;
     )
 end
 
-BaseMesh.lattice_vector(mesh::UniformBZMesh) = mesh.cell.recip_lattice
-BaseMesh.inv_lattice_vector(mesh::UniformBZMesh) = mesh.cell.inv_recip_lattice
-BaseMesh.lattice_vector(mesh::UniformBZMesh, i::Int) = Cells.get_latvec(mesh.cell.recip_lattice, i)
-BaseMesh.inv_lattice_vector(mesh::UniformBZMesh, i::Int) = Cells.get_latvec(mesh.cell.inv_recip_lattice, i)
-BaseMesh.cell_volume(mesh::UniformBZMesh) = mesh.cell.recip_cell_volume
+struct HasCell <: LatVecStyle end # has cell::Cell as 
+AbstractMeshes.LatVecStyle(::Type{<:UniformBZMesh}) = HasCell()
+
+AbstractMeshes.lattice_vector(::HasCell, mesh) = mesh.cell.recip_lattice
+AbstractMeshes.inv_lattice_vector(::HasCell, mesh) = mesh.cell.inv_recip_lattice
+AbstractMeshes.lattice_vector(::HasCell, mesh, i::Int) = Cells.get_latvec(mesh.cell.recip_lattice, i)
+AbstractMeshes.inv_lattice_vector(::HasCell, mesh, i::Int) = Cells.get_latvec(mesh.cell.inv_recip_lattice, i)
+AbstractMeshes.cell_volume(::HasCell, mesh) = mesh.cell.recip_cell_volume
 
 # function Base.show(io::IO, mesh::UniformBZMesh)
 #     println("UniformBZMesh with $(length(mesh)) mesh points")

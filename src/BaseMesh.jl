@@ -22,15 +22,15 @@ Base.length(mesh::AbstractUniformMesh) = prod(mesh.size)
 Base.size(mesh::AbstractUniformMesh) = mesh.size
 Base.size(mesh::AbstractUniformMesh, I) = mesh.size[I]
 
-function AbstractMeshes.fractional_coordinates(mesh::AbstractUniformMesh{T,DIM}, I::Int) where {T,DIM}
-    n = SVector{DIM,Int}(AbstractMeshes._ind2inds(mesh.size, I))
-    return (n .- 1 .+ mesh.shift) ./ mesh.size
-end
+# function AbstractMeshes.fractional_coordinates(mesh::AbstractUniformMesh{T,DIM}, I::Int) where {T,DIM}
+#     n = SVector{DIM,Int}(AbstractMeshes._ind2inds(mesh.size, I))
+#     return inv_lattice_vector(mesh) * mesh.origin + (n .- 1 .+ mesh.shift) ./ mesh.size
+# end
 
-function AbstractMeshes.fractional_coordinates(mesh::AbstractUniformMesh{T,DIM}, x::AbstractVector) where {T,DIM}
-    displacement = SVector{DIM,T}(x)
-    return (inv_lattice_vector(mesh) * displacement)
-end
+# function AbstractMeshes.fractional_coordinates(mesh::AbstractUniformMesh{T,DIM}, x::AbstractVector) where {T,DIM}
+#     v = SVector{DIM,T}(x)
+#     return (inv_lattice_vector(mesh) * v)
+# end
 
 function Base.getindex(mesh::AbstractUniformMesh{T,DIM}, inds...) where {T,DIM}
     n = SVector{DIM,Int}(inds)
@@ -40,6 +40,14 @@ end
 function Base.getindex(mesh::AbstractUniformMesh, I::Int)
     return Base.getindex(mesh, AbstractMeshes._ind2inds(mesh.size, I)...)
 end
+
+function Base.getindex(mesh::AbstractUniformMesh{T,DIM}, ::Type{<:FracCoords}, I::Int) where {T,DIM}
+    n = SVector{DIM,Int}(AbstractMeshes._ind2inds(mesh.size, I))
+    return inv_lattice_vector(mesh) * mesh.origin + (n .- 1 .+ mesh.shift) ./ mesh.size
+end
+
+# AbstractMeshes.frac_to_cart(mesh::AbstractUniformMesh, fx) = lattice_vector(mesh) * fx
+# AbstractMeshes.cart_to_frac(mesh::AbstractUniformMesh, cx) = inv_lattice_vector(mesh) * cx
 
 """
     function AbstractMeshes.locate(mesh::AbstractUniformMesh{T,DIM}, x) where {T,DIM}
@@ -54,7 +62,7 @@ Could also be used for zeroth order interpolation.
 function AbstractMeshes.locate(mesh::AbstractUniformMesh{T,DIM}, x) where {T,DIM}
     # find index of nearest grid point to the point
     svx = SVector{DIM,T}(x)
-    inds = fractional_coordinates(mesh, svx - mesh.origin) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
+    inds = cart_to_frac(mesh, svx - mesh.origin) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
     indexall = 1
     # println((mesh.invlatvec * displacement))
     # println(inds)
@@ -120,11 +128,14 @@ UMesh(;
     SVector{DIM,Rational}(shift)
 )
 
-lattice_vector(mesh::UMesh) = mesh.lattice
-inv_lattice_vector(mesh::UMesh) = mesh.inv_lattice
-lattice_vector(mesh::UMesh, i::Int) = get_latvec(mesh.lattice, i)
-inv_lattice_vector(mesh::UMesh, i::Int) = get_latvec(mesh.inv_lattice, i)
-cell_volume(mesh::UMesh) = mesh.cell_volume
+struct HasLatAndInv <: AbstractMeshes.LatVecStyle end
+AbstractMeshes.LatVecStyle(::Type{<:UMesh{T,DIM}}) where {T,DIM} = HasLatAndInv()
+
+AbstractMeshes.lattice_vector(::HasLatAndInv, mesh) = mesh.lattice
+AbstractMeshes.inv_lattice_vector(::HasLatAndInv, mesh) = mesh.inv_lattice
+AbstractMeshes.lattice_vector(::HasLatAndInv, mesh, i::Int) = get_latvec(mesh.lattice, i)
+AbstractMeshes.inv_lattice_vector(::HasLatAndInv, mesh, i::Int) = get_latvec(mesh.inv_lattice, i)
+AbstractMeshes.cell_volume(::HasLatAndInv, mesh) = mesh.cell_volume
 
 function Base.show(io::IO, mesh::UMesh)
     println("UMesh with $(length(mesh)) mesh points")
