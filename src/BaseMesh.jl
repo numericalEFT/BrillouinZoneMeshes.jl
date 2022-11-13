@@ -46,8 +46,8 @@ function Base.getindex(mesh::AbstractUniformMesh{T,DIM}, ::Type{<:FracCoords}, I
     return inv_lattice_vector(mesh) * mesh.origin + (n .- 1 .+ mesh.shift) ./ mesh.size
 end
 
-AbstractMeshes.frac_to_cart(mesh::AbstractUniformMesh, fx) = lattice_vector(mesh) * fx
-AbstractMeshes.cart_to_frac(mesh::AbstractUniformMesh, cx) = inv_lattice_vector(mesh) * cx
+# AbstractMeshes.frac_to_cart(mesh::AbstractUniformMesh, fx) = lattice_vector(mesh) * fx
+# AbstractMeshes.cart_to_frac(mesh::AbstractUniformMesh, cx) = inv_lattice_vector(mesh) * cx
 
 """
     function AbstractMeshes.locate(mesh::AbstractUniformMesh{T,DIM}, x) where {T,DIM}

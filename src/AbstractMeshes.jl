@@ -36,9 +36,6 @@ Base.getindex(mesh::AbstractMesh, I) = error("not implemented!")
 Base.getindex(mesh::AbstractMesh, ::Type{<:FracCoords}, inds...) = error("not implemented")
 Base.getindex(mesh::AbstractMesh, ::Type{<:FracCoords}, I) = error("not implemented")
 
-frac_to_cart(mesh::AbstractMesh, frac) = error("not implemented!")
-cart_to_frac(mesh::AbstractMesh, cart) = error("not implemented!")
-
 locate(mesh::AbstractMesh, x) = error("not implemented!")
 volume(mesh::AbstractMesh) = error("not implemented!")
 volume(mesh::AbstractMesh, I) = error("not implemented!")
@@ -107,5 +104,10 @@ lattice_vector(::NoLat, mesh, i::Int) = error("no lattice information!")
 inv_lattice_vector(::NoLat, mesh) = error("no lattice information!")
 inv_lattice_vector(::NoLat, mesh, i::Int) = error("no lattice information!")
 cell_volume(::NoLat, mesh) = error("no lattice information!")
+
+# conversion between fractional and cartesian 
+frac_to_cart(mesh::AbstractMesh, frac) = lattice_vector(mesh) * frac
+cart_to_frac(mesh::AbstractMesh, cart) = inv_lattice_vector(mesh) * cart
+
 
 end
