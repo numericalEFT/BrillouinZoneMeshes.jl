@@ -1,3 +1,5 @@
+#Adapted from DFTK.jl: https://github.com/JuliaMolSim/DFTK.jl/blob/master/src/external/spglib.jl
+
 # Routines for interaction with spglib
 # Note: spglib/C uses the row-major convention, thus we need to perform transposes
 #       between julia and spglib (https://spglib.github.io/spglib/variable.html)

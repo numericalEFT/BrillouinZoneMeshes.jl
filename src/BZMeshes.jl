@@ -55,7 +55,7 @@ customized constructor for UniformBZMesh. The parameters origin and shift is pro
 the mesh as Gamma-centered or M-P mesh. 
 
 # Parameters:
-- `br`: Cell info
+- `cell`: Cell info
 - `origin`: a number indicating shift of origin. 
     the actuall origin becomes origin*(b1+b2+b3)
     default value origin=-1/2 takes (0,0,0) to center of 1st BZ, origin=0 makes mesh[1,1,1]=(0,0,0)+shift
@@ -65,7 +65,7 @@ the mesh as Gamma-centered or M-P mesh.
     for even N, shift=1/2 avoids high symmetry points while preserve symmetry.
 """
 function UniformBZMesh(;
-    br::Cell{T,DIM},
+    cell::Cell{T,DIM},
     origin::Real=-1 // 2,
     size::Union{AbstractVector,Tuple},
     shift::Union{AbstractVector{Bool},AbstractVector{Int}}=[true for _ in eachindex(size)]
@@ -74,17 +74,17 @@ function UniformBZMesh(;
     _shift = [s == true ? 1 // 2 : 0 for s in shift]
 
     return UniformBZMesh{T,DIM}(
-        br, (br.recip_lattice * ones(T, DIM)) * origin, tuple(size...), _shift
+        cell, (cell.recip_lattice * ones(T, DIM)) * origin, tuple(size...), _shift
     )
 end
 
 function DFTK_Monkhorst_Pack(;
-    br::Cell{T,DIM},
+    cell::Cell{T,DIM},
     size,
     shift::AbstractVector{Bool}=[false, false, false]) where {T,DIM}
     kshift = [iseven(size[i]) ? shift[i] : !(shift[i]) for i in 1:DIM]
     return UniformBZMesh(
-        br=br,
+        cell=cell,
         origin=-1 // 2, #origin
         size=tuple(size...),
         shift=kshift
@@ -97,13 +97,13 @@ function Monkhorst_Pack(;
     # to be consistent with DFTK: 
     #  - N is even, VASP is the same as DFTK: shift=0 will include Gamma point, shift=1/2 will not
     #  - N is odd, VASP is different as DFTK: shift=0 will not include Gamma point, shift=1/2 will
-    br::Cell{T,DIM},
+    cell::Cell{T,DIM},
     size,
     shift::AbstractVector=[false, false, false]
 ) where {T,DIM}
     # kshift = [(iseven(size[i]) ? shift[i] : shift[i] + 1 // 2) for i in 1:DIM]
     return UniformBZMesh(
-        br=br,
+        cell=cell,
         origin=-1 // 2,
         size=tuple(size...),
         shift=shift
