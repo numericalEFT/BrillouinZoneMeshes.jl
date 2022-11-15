@@ -5,6 +5,8 @@ using ..LinearAlgebra
 
 ## we need to define AbstractCoords and define Polar and Spherical <: AngularCoords
 using ..AbstractMeshes
+abstract type AngularCoords <: AbstractCoords end # Polar or Spherical, defined in coordinatesystems.jl
+export AngularCoords
 # copied from CoordinateTransformations.jl, modify some conventions for our usage
 
 # Core methods

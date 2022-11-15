@@ -3,9 +3,9 @@
 include("utilities/coordinatesystems.jl")
 using .Coordinates
 
-export PolarMesh, Angular, RescaledGrid, RescaledLogDensedGrid
+export PolarMesh, RescaledGrid, RescaledLogDensedGrid, AngularCoords
 
-const Angular = Union{Polar,Spherical}
+# const AngularCoords = Union{Polar,Spherical}
 
 # use coordinate systems copied from CoordinateTransformations
 # changed some convention thus different from their package
@@ -65,19 +65,19 @@ end
 function Base.getindex(mesh::PolarMesh, I::Int)
     return Base.getindex(mesh, _ind2inds(size(mesh), I)...)
 end
-# provide getindex which return angular results
-# call looks like mesh[Angular, i, j] -> Polar(r,θ)
-function Base.getindex(mesh::PolarMesh{T,2,MT}, ::Type{<:Angular}, i::Int, j::Int) where {T,MT}
+# provide getindex which return AngularCoords results
+# call looks like mesh[AngularCoords, i, j] -> Polar(r,θ)
+function Base.getindex(mesh::PolarMesh{T,2,MT}, ::Type{<:AngularCoords}, i::Int, j::Int) where {T,MT}
     return Polar(getindex(mesh.mesh, i, j)...)
 end
-function Base.getindex(mesh::PolarMesh{T,3,MT}, ::Type{<:Angular}, i::Int, j::Int, k::Int) where {T,MT}
+function Base.getindex(mesh::PolarMesh{T,3,MT}, ::Type{<:AngularCoords}, i::Int, j::Int, k::Int) where {T,MT}
     return Spherical(getindex(mesh.mesh, i, j, k)...)
 end
-function Base.getindex(mesh::PolarMesh, T::Type{<:Angular}, I::Int)
+function Base.getindex(mesh::PolarMesh, T::Type{<:AngularCoords}, I::Int)
     return Base.getindex(mesh, T, _ind2inds(size(mesh), I)...)
 end
 
-function AbstractMeshes.locate(mesh::PolarMesh, r::Angular)
+function AbstractMeshes.locate(mesh::PolarMesh, r::AngularCoords)
     return AbstractMeshes.locate(mesh.mesh, _extract(r))
 end
 function AbstractMeshes.locate(mesh::PolarMesh{T,2,MT}, x::AbstractVector) where {T,MT}

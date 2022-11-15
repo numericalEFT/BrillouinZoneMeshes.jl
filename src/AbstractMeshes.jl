@@ -26,7 +26,6 @@ struct OnUnitCell <: OnCell end # has mesh.cell and use lattice
 abstract type AbstractCoords end
 struct CartCoords <: AbstractCoords end # default cartesian, stored in SVector
 struct FracCoords <: AbstractCoords end # fractional, also in SVector. lattice * frac = cart
-abstract type AngularCoords <: AbstractCoords end # Polar or Spherical, defined in coordinatesystems.jl
 
 Base.IteratorSize(::Type{AbstractMesh{T,DIM}}) where {T,DIM} = Base.HasLength()
 Base.IteratorEltype(::Type{AbstractMesh{T,DIM}}) where {T,DIM} = Base.HasEltype()

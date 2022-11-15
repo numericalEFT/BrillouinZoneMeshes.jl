@@ -83,7 +83,7 @@
                 pm = PolarMesh(br, cm)
                 vol = 0.0
                 for (i, p) in enumerate(pm)
-                    @test p == BZMeshes._polar2cart(pm[Angular, i])
+                    @test p == BZMeshes._polar2cart(pm[AngularCoords, i])
                     @test AbstractMeshes.locate(pm, p) == i
                     vol += AbstractMeshes.volume(pm, i)
                 end
@@ -126,7 +126,7 @@
 
                 vol = 0.0
                 for (i, p) in enumerate(pm)
-                    @test p == BZMeshes._spherical2cart(pm[Angular, i])
+                    @test p == BZMeshes._spherical2cart(pm[AngularCoords, i])
                     @test AbstractMeshes.locate(pm, p) == i
                     vol += AbstractMeshes.volume(pm, i)
                 end
