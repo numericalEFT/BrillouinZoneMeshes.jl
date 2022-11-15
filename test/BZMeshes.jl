@@ -74,7 +74,7 @@
                 )
                 println(theta)
                 grids = [CompositeGrid.LogDensedGrid(:cheb, [0.0, 2.0], [sqrt(a * cos(θ)^2 + b * sin(θ)^2),], N, 0.1, M) for θ in theta]
-                cm = CompositeMesh(theta, grids)
+                cm = ProdMesh(theta, grids)
 
                 DIM = 2
                 lattice = Matrix([1.0 0; 0 1]')
@@ -111,9 +111,9 @@
                     M
                 )
                 rg = CompositeGrid.LogDensedGrid(:cheb, [0.0, 2.0], [1.0,], N, 0.1, M)
-                am = CompositeMesh(phi, [theta for i in 1:length(phi)])
+                am = ProdMesh(phi, [theta for i in 1:length(phi)])
                 println(typeof(size(am)))
-                cm = CompositeMesh(am, [rg for i in 1:length(am)])
+                cm = ProdMesh(am, [rg for i in 1:length(am)])
                 println(typeof(size(cm)))
                 println(typeof(size(cm.mesh)))
 
@@ -156,7 +156,7 @@
 
                 # grids = kF_densed_kgrids(dispersion=dispersion, anglemesh=theta,
                 #    bound=[0.0, 2.0])
-                # cm = CompositeMesh(theta, grids)
+                # cm = ProdMesh(theta, grids)
                 DIM = 2
                 lattice = Matrix([1.0 0; 0 1]')
                 br = BZMeshes.Cell(lattice=lattice)
@@ -177,7 +177,7 @@
                 bound = [-π / 2, π / 2]
                 theta = SimpleGrid.Uniform(bound, N; isperiodic=true)
 
-                am = CompositeMesh(phi, [theta for i in 1:length(phi)])
+                am = ProdMesh(phi, [theta for i in 1:length(phi)])
 
                 k_F_previous = 0.0
                 for ap in am
@@ -214,7 +214,7 @@
                     DIM = 2
                     lattice = Matrix([1.0 0; 0 1]')
                     br = BZMeshes.Cell(lattice=lattice)
-                    bzmesh = PolarMesh(br, CompositeMesh(theta, [rrg for i in 1:length(theta)]))
+                    bzmesh = PolarMesh(br, ProdMesh(theta, [rrg for i in 1:length(theta)]))
                     for (i, p) in enumerate(bzmesh)
                         println(p, AbstractMeshes.volume(bzmesh, i))
                     end

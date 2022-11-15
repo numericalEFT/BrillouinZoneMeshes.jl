@@ -19,7 +19,7 @@ const _cart2spherical = SphericalFromCartesian()
 _extract(r::Polar{T,A}) where {T,A} = SVector{2,T}(r.r, r.ϕ)
 _extract(r::Spherical{T,A}) where {T,A} = SVector{3,T}(r.r, r.θ, r.ϕ)
 
-struct PolarMesh{T,DIM,MT<:CompositeMesh} <: AbstractMesh{T,DIM}
+struct PolarMesh{T,DIM,MT<:ProdMesh} <: AbstractMesh{T,DIM}
     cell::Cell{T,DIM}
     mesh::MT # actual mesh. assume order as (r,θ,ϕ...)
     volume::T
@@ -87,7 +87,7 @@ function AbstractMeshes.locate(mesh::PolarMesh{T,3,MT}, x::AbstractVector) where
     return AbstractMeshes.locate(mesh, _cart2spherical(x))
 end
 
-# volume of PolarMesh is different from volume of CompositeMesh inside
+# volume of PolarMesh is different from volume of ProdMesh inside
 function AbstractMeshes.volume(mesh::PolarMesh)
     return mesh.volume
 end
@@ -216,7 +216,7 @@ function BZMeshes.PolarMesh(; dispersion, anglemesh, cell, kmax,
     bound = [0.0, kmax]
     println(typeof(dispersion))
     grids = kF_densed_kgrids(; dispersion=dispersion, anglemesh=anglemesh, bound=bound, DIM=DIM, kwargs...)
-    cm = CompositeMesh(anglemesh, grids)
+    cm = ProdMesh(anglemesh, grids)
     pm = PolarMesh(cell, cm)
     return pm
 end
