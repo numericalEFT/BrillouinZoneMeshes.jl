@@ -8,7 +8,7 @@ using ..CompositeGrids
 export AbstractCoords, CartCoords, FracCoords, AngularCoords
 export AbstractMesh, locate, volume#, fractional_coordinates
 export FracCoords, frac_to_cart, cart_to_frac
-export LatVecStyle, lattice_vector, inv_lattice_vector, cell_volume
+export MeshDomain, lattice_vector, inv_lattice_vector, cell_volume
 export interp, integrate
 
 # the default return value of AbstractMesh should be a SVector{T,DIM}
@@ -18,7 +18,6 @@ abstract type AbstractMesh{T,DIM} <: AbstractArray{SVector{T,DIM},DIM} end
 # TODO: this should replace LatVecStyle
 abstract type MeshDomain end
 struct UnknownLattice <: MeshDomain end # default unknown
-struct OnLattice <: MeshDomain end # has mesh.lattice and mesh.inv_lattice
 abstract type OnCell <: MeshDomain end # has mesh.cell::Cell
 struct OnBrillouin <: OnCell end # has mesh.cell and use recip lattice
 struct OnUnitCell <: OnCell end # has mesh.cell and use lattice
@@ -95,23 +94,23 @@ function interval(grid::AbstractGrid, i::Int)
 end
 
 # lattice vector information
-abstract type LatVecStyle end # dispatch type for lattice vector functions
-struct NoLat <: LatVecStyle end # no info by default
+# abstract type MeshDomain end # dispatch type for lattice vector functions
+# struct UnknownLattice <: MeshDomain end # no info by default
 
-LatVecStyle(::Type) = NoLat()
+MeshDomain(::Type) = UnknownLattice()
 
-lattice_vector(mesh::MT) where {MT} = lattice_vector(LatVecStyle(MT), mesh)
-lattice_vector(mesh::MT, i::Int) where {MT} = lattice_vector(LatVecStyle(MT), mesh, i)
-inv_lattice_vector(mesh::MT) where {MT} = inv_lattice_vector(LatVecStyle(MT), mesh)
-inv_lattice_vector(mesh::MT, i::Int) where {MT} = inv_lattice_vector(LatVecStyle(MT), mesh, i)
-cell_volume(mesh::MT) where {MT} = cell_volume(LatVecStyle(MT), mesh)
+lattice_vector(mesh::MT) where {MT} = lattice_vector(MeshDomain(MT), mesh)
+lattice_vector(mesh::MT, i::Int) where {MT} = lattice_vector(MeshDomain(MT), mesh, i)
+inv_lattice_vector(mesh::MT) where {MT} = inv_lattice_vector(MeshDomain(MT), mesh)
+inv_lattice_vector(mesh::MT, i::Int) where {MT} = inv_lattice_vector(MeshDomain(MT), mesh, i)
+cell_volume(mesh::MT) where {MT} = cell_volume(MeshDomain(MT), mesh)
 
 # by default return error
-lattice_vector(::NoLat, mesh) = error("no lattice information!")
-lattice_vector(::NoLat, mesh, i::Int) = error("no lattice information!")
-inv_lattice_vector(::NoLat, mesh) = error("no lattice information!")
-inv_lattice_vector(::NoLat, mesh, i::Int) = error("no lattice information!")
-cell_volume(::NoLat, mesh) = error("no lattice information!")
+lattice_vector(::UnknownLattice, mesh) = error("no lattice information!")
+lattice_vector(::UnknownLattice, mesh, i::Int) = error("no lattice information!")
+inv_lattice_vector(::UnknownLattice, mesh) = error("no lattice information!")
+inv_lattice_vector(::UnknownLattice, mesh, i::Int) = error("no lattice information!")
+cell_volume(::UnknownLattice, mesh) = error("no lattice information!")
 
 # conversion between fractional and cartesian 
 frac_to_cart(mesh::AbstractMesh, frac) = lattice_vector(mesh) * frac

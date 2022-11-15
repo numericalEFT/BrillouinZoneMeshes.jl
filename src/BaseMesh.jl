@@ -91,6 +91,13 @@ Here we assume periodic boundary condition so for all case it's the same.
 AbstractMeshes.volume(mesh::AbstractUniformMesh) = cell_volume(mesh)
 AbstractMeshes.volume(mesh::AbstractUniformMesh, i) = cell_volume(mesh) / length(mesh)
 
+struct OnLattice <: AbstractMeshes.MeshDomain end # has mesh.lattice and mesh.inv_lattice
+AbstractMeshes.lattice_vector(::OnLattice, mesh) = mesh.lattice
+AbstractMeshes.inv_lattice_vector(::OnLattice, mesh) = mesh.inv_lattice
+AbstractMeshes.lattice_vector(::OnLattice, mesh, i::Int) = get_latvec(mesh.lattice, i)
+AbstractMeshes.inv_lattice_vector(::OnLattice, mesh, i::Int) = get_latvec(mesh.inv_lattice, i)
+AbstractMeshes.cell_volume(::OnLattice, mesh) = mesh.cell_volume
+
 ############## general purposed uniform mesh #################
 struct UMesh{T,DIM} <: AbstractUniformMesh{T,DIM}
     lattice::Matrix{T}
@@ -128,14 +135,7 @@ UMesh(;
     SVector{DIM,Rational}(shift)
 )
 
-struct HasLatAndInv <: AbstractMeshes.LatVecStyle end
-AbstractMeshes.LatVecStyle(::Type{<:UMesh{T,DIM}}) where {T,DIM} = HasLatAndInv()
-
-AbstractMeshes.lattice_vector(::HasLatAndInv, mesh) = mesh.lattice
-AbstractMeshes.inv_lattice_vector(::HasLatAndInv, mesh) = mesh.inv_lattice
-AbstractMeshes.lattice_vector(::HasLatAndInv, mesh, i::Int) = get_latvec(mesh.lattice, i)
-AbstractMeshes.inv_lattice_vector(::HasLatAndInv, mesh, i::Int) = get_latvec(mesh.inv_lattice, i)
-AbstractMeshes.cell_volume(::HasLatAndInv, mesh) = mesh.cell_volume
+AbstractMeshes.MeshDomain(::Type{<:UMesh{T,DIM}}) where {T,DIM} = OnLattice()
 
 function Base.show(io::IO, mesh::UMesh)
     println("UMesh with $(length(mesh)) mesh points")

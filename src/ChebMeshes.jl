@@ -29,7 +29,7 @@ function ChebMesh(origin, lattice, cm::ChebMesh{T,DIM,N}) where {T,DIM,N}
 end
 
 # handle latvec with HasLatAndInv
-AbstractMeshes.LatVecStyle(::Type{<:ChebMesh}) = HasLatAndInv()
+AbstractMeshes.MeshDomain(::Type{<:ChebMesh}) = OnLattice()
 
 # Base.length(mesh::ChebMesh) = prod(mesh.size)
 # Base.size(mesh::ChebMesh) = mesh.size
