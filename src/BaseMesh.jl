@@ -18,9 +18,9 @@ export AbstractUniformMesh
 export inv_lattice_vector, lattice_vector, cell_volume
 export fractional_coordinates, cartesian_coordinates
 
-Base.length(mesh::AbstractUniformMesh) = prod(mesh.size)
-Base.size(mesh::AbstractUniformMesh) = mesh.size
-Base.size(mesh::AbstractUniformMesh, I) = mesh.size[I]
+# Base.length(mesh::AbstractUniformMesh) = prod(mesh.size)
+# Base.size(mesh::AbstractUniformMesh) = mesh.size
+# Base.size(mesh::AbstractUniformMesh, I) = mesh.size[I]
 
 # function AbstractMeshes.fractional_coordinates(mesh::AbstractUniformMesh{T,DIM}, I::Int) where {T,DIM}
 #     n = SVector{DIM,Int}(AbstractMeshes._ind2inds(mesh.size, I))
@@ -180,9 +180,9 @@ function ProdMesh(mesh::MT, grids::Vector{GT}) where {MT<:AbstractGrid,GT}
     return ProdMesh{eltype(MT),2,MT,GT}(mesh, grids, msize)
 end
 
-Base.length(mesh::ProdMesh) = prod(mesh.size)
-Base.size(mesh::ProdMesh) = mesh.size
-Base.size(mesh::ProdMesh, I::Int) = mesh.size[I]
+# Base.length(mesh::ProdMesh) = prod(mesh.size)
+# Base.size(mesh::ProdMesh) = mesh.size
+# Base.size(mesh::ProdMesh, I::Int) = mesh.size[I]
 
 function Base.getindex(mesh::ProdMesh{T,DIM,MT,GT}, inds...) where {T,DIM,MT,GT}
     # i1, I = inds[1], AbstractMeshes._inds2ind(mesh.size, 1, inds[2:end]...)

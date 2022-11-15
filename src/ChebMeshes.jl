@@ -31,9 +31,9 @@ end
 # handle latvec with HasLatAndInv
 AbstractMeshes.LatVecStyle(::Type{<:ChebMesh}) = HasLatAndInv()
 
-Base.length(mesh::ChebMesh) = prod(mesh.size)
-Base.size(mesh::ChebMesh) = mesh.size
-Base.size(mesh::ChebMesh, I) = mesh.size[I]
+# Base.length(mesh::ChebMesh) = prod(mesh.size)
+# Base.size(mesh::ChebMesh) = mesh.size
+# Base.size(mesh::ChebMesh, I) = mesh.size[I]
 
 function Base.getindex(mesh::ChebMesh{T,DIM,N}, inds...) where {T,DIM,N}
     a = SVector{DIM,Float64}(mesh.barycheb[n] for n in inds)

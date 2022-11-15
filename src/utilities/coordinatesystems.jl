@@ -2,6 +2,9 @@ module Coordinates
 
 using ..StaticArrays
 using ..LinearAlgebra
+
+## we need to define AbstractCoords and define Polar and Spherical <: AngularCoords
+using ..AbstractMeshes
 # copied from CoordinateTransformations.jl, modify some conventions for our usage
 
 # Core methods
@@ -154,7 +157,7 @@ end
 """
 `Polar{T,A}(r::T, ϕ::A)` - 2D polar coordinates
 """
-struct Polar{T,A}
+struct Polar{T,A} <: AngularCoords
     r::T
     ϕ::A
 
@@ -243,7 +246,7 @@ julia> r = sph.r; ϕ=sph.ϕ; θ=sph.θ;
 julia> v ≈ [r * cos(ϕ) * cos(θ), r * sin(ϕ) * cos(θ), r*sin(θ)]
 true
 """
-struct Spherical{T,A}
+struct Spherical{T,A} <: AngularCoords
     r::T
     θ::A
     ϕ::A

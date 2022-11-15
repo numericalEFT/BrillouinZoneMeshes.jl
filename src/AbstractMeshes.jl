@@ -5,14 +5,29 @@ module AbstractMeshes
 using ..StaticArrays
 using ..CompositeGrids
 
+export AbstractCoords, CartCoords, FracCoords, AngularCoords
 export AbstractMesh, locate, volume#, fractional_coordinates
 export FracCoords, frac_to_cart, cart_to_frac
 export LatVecStyle, lattice_vector, inv_lattice_vector, cell_volume
 export interp, integrate
 
-# the return value of AbstractMesh should be a SVector{T,DIM}
+# the default return value of AbstractMesh should be a SVector{T,DIM}
 abstract type AbstractMesh{T,DIM} <: AbstractArray{SVector{T,DIM},DIM} end
-struct FracCoords end
+
+# domain
+# TODO: this should replace LatVecStyle
+abstract type MeshDomain end
+struct UnknownLattice <: MeshDomain end # default unknown
+struct OnLattice <: MeshDomain end # has mesh.lattice and mesh.inv_lattice
+abstract type OnCell <: MeshDomain end # has mesh.cell::Cell
+struct OnBrillouin <: OnCell end # has mesh.cell and use recip lattice
+struct OnUnitCell <: OnCell end # has mesh.cell and use lattice
+
+# coordinate types
+abstract type AbstractCoords end
+struct CartCoords <: AbstractCoords end # default cartesian, stored in SVector
+struct FracCoords <: AbstractCoords end # fractional, also in SVector. lattice * frac = cart
+abstract type AngularCoords <: AbstractCoords end # Polar or Spherical, defined in coordinatesystems.jl
 
 Base.IteratorSize(::Type{AbstractMesh{T,DIM}}) where {T,DIM} = Base.HasLength()
 Base.IteratorEltype(::Type{AbstractMesh{T,DIM}}) where {T,DIM} = Base.HasEltype()
@@ -25,15 +40,18 @@ Base.lastindex(mesh::AbstractMesh) = length(mesh)
 Base.iterate(mesh::AbstractMesh) = (mesh[1], 1)
 Base.iterate(mesh::AbstractMesh, state) = (state >= length(mesh)) ? nothing : (mesh[state+1], state + 1)
 
-# below are interfaces that should be implemented by concrete types
-Base.length(mesh::AbstractMesh) = error("not implemented!")
-Base.size(mesh::AbstractMesh) = error("not implemented!")
-Base.size(mesh::AbstractMesh, I) = error("not implemented!")
+# assume mesh.size::NTuple{DIM,Int}, need implementation otherwise
+Base.length(mesh::AbstractMesh) = prod(mesh.size)
+Base.size(mesh::AbstractMesh) = mesh.size
+Base.size(mesh::AbstractMesh, I) = mesh.size[I]
 
+# below are interfaces that should be implemented by concrete types
 Base.show(io::IO, mesh::AbstractMesh) = error("not implemented!")
 
+# 
 Base.getindex(mesh::AbstractMesh, inds...) = error("not implemented!")
 Base.getindex(mesh::AbstractMesh, I) = error("not implemented!")
+
 Base.getindex(mesh::AbstractMesh, ::Type{<:FracCoords}, inds...) = error("not implemented")
 Base.getindex(mesh::AbstractMesh, ::Type{<:FracCoords}, I) = error("not implemented")
 
@@ -60,17 +78,6 @@ end
 end
 
 # optional functions
-# function fractional_coordinates(mesh::AbstractMesh, I::Int)
-#     # WARNINING: this default implementation could be type instable
-#     # for efficiency use specialized implementation
-#     if hasproperty(mesh, :cell)
-#         # if mesh has cell, then use lattice info from cell
-#         return mesh.cell.inv_recip_lattice * mesh[I]
-#     else
-#         # other cases require specialized implementation
-#         error("not implemented!")
-#     end
-# end
 
 # wrapper of external functions from CompositeGrids
 locate(grid::AbstractGrid, x) = CompositeGrids.Interp.locate(grid, x[1])
