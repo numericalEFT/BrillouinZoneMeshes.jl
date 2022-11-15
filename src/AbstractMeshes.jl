@@ -8,6 +8,7 @@ using ..CompositeGrids
 export AbstractMesh, locate, volume#, fractional_coordinates
 export FracCoords, frac_to_cart, cart_to_frac
 export LatVecStyle, lattice_vector, inv_lattice_vector, cell_volume
+export interp, integrate
 
 # the return value of AbstractMesh should be a SVector{T,DIM}
 abstract type AbstractMesh{T,DIM} <: AbstractArray{SVector{T,DIM},DIM} end
@@ -109,5 +110,8 @@ cell_volume(::NoLat, mesh) = error("no lattice information!")
 frac_to_cart(mesh::AbstractMesh, frac) = lattice_vector(mesh) * frac
 cart_to_frac(mesh::AbstractMesh, cart) = inv_lattice_vector(mesh) * cart
 
+# optional: interp and integrate
+integrate(data, mesh::AbstractMesh) = error("not implemented!")
+interp(data, mesh::AbstractMesh, x) = error("not implemented!")
 
 end

@@ -9,8 +9,8 @@ using ..AbstractMeshes
 using ..Cells
 using ..Cells: get_latvec
 
-
-export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, UMesh, CompositeMesh
+export UMesh, CompositeMesh, ChebMesh
+export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh
 
 ############## Abstract Uniform Mesh #################
 abstract type AbstractUniformMesh{T,DIM} <: AbstractMesh{T,DIM} end
@@ -209,6 +209,9 @@ function AbstractMeshes.volume(mesh::CompositeMesh, I::Int)
     i1, I2 = (I - 1) % size(mesh)[1] + 1, (I - 1) ÷ size(mesh)[1] + 1
     return AbstractMeshes.volume(mesh.mesh, I2) * AbstractMeshes.volume(mesh.grids[I2], i1)
 end
+
+
+include("ChebMeshes.jl")
 
 #####################################
 # LEGACY CODE BELOW
@@ -485,32 +488,6 @@ end
 function integrate(data, mesh::BaryChebMesh{DIM,N}) where {DIM,N}
     area = abs(det(mesh.latvec))
     return integrateND(data, mesh.barycheb, DIM) * area / 2^DIM
-end
-
-function locate1d(g::BaryCheb1D, x)
-    grid = g.x
-    if x <= grid[1]
-        return 1
-    elseif x >= grid[end]
-        if length(grid) != 1
-            return length(grid)
-        end
-    end
-
-    i2 = searchsortedfirst(grid, x)
-    i1 = i2 - 1
-    return abs(grid[i1] - x) < abs(grid[i2] - x) ? i1 : i2
-end
-
-function volume1d(g::BaryCheb1D, i)
-    grid = g.x
-    if i != 1 && i != length(grid)
-        return (grid[i+1] - grid[i-1]) / 2
-    elseif i == 1
-        return (grid[i+1] + grid[i]) / 2 - (-1)
-    else
-        return 1 - (grid[i] + grid[i-1]) / 2
-    end
 end
 
 function AbstractMeshes.locate(mesh::BaryChebMesh{DIM,N}, x) where {DIM,N}
