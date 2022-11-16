@@ -109,7 +109,8 @@ end
 # 2D
 # N, DIM = 4, 2
 # origin = [0.0 0.0]
-lattice = Matrix([2 0; 1 sqrt(3)]')
+lattice = Matrix([1 0; 0 1.0]')
+#lattice = Matrix([2 0; 1 sqrt(3)]')
 # br = BZMeshes.Brillouin(lattice=lattice)
 
 # lattice = [1 0; 0 1]'
@@ -149,7 +150,7 @@ dispersion(k) = -sum(cos.(k)) + 0.1
 #     return -1.0 * sum(cos.(k / 2)) + length(k) - 1.8
 # end
 
-N = 12
+N = 24
 bound = [-π, π]
 theta = SimpleGrid.Uniform(bound, N; isperiodic=true)
 bzmesh = BZMeshes.PolarMesh(dispersion=dispersion, anglemesh=theta, cell=br,
@@ -213,7 +214,8 @@ println(fullmesh)
 
 # remappedmesh = reducedmesh
 
-P = plot(clist, idx_center, ibz=c)
+# P = plot(clist, idx_center, ibz=c)
+P = plot(clist, idx_center)
 
 addtraces!(P, scatter(x=[r[1] for r in fullmesh], y=[r[2] for r in fullmesh], mode="markers", marker=attr(size=5)))
 # addtraces!(P, scatter(x=[r[1] for r in reducedmesh], y=[r[2] for r in reducedmesh], mode="markers", marker=attr(size=5)))

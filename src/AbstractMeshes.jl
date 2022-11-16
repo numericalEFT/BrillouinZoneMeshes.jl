@@ -5,13 +5,26 @@ module AbstractMeshes
 using ..StaticArrays
 using ..CompositeGrids
 
+export AbstractCoords, CartCoords, FracCoords, AngularCoords
 export AbstractMesh, locate, volume#, fractional_coordinates
 export FracCoords, frac_to_cart, cart_to_frac
-export LatVecStyle, lattice_vector, inv_lattice_vector, cell_volume
+export LatticeStyle, lattice_vector, inv_lattice_vector, cell_volume
+export interp, integrate
 
-# the return value of AbstractMesh should be a SVector{T,DIM}
+# the default return value of AbstractMesh should be a SVector{T,DIM}
 abstract type AbstractMesh{T,DIM} <: AbstractArray{SVector{T,DIM},DIM} end
-struct FracCoords end
+
+# domain
+abstract type LatticeStyle end
+struct UnknownLattice <: LatticeStyle end # default unknown
+abstract type HasCell <: LatticeStyle end # has mesh.cell::Cell
+struct BrillouinLattice <: HasCell end # has mesh.cell and use recip lattice
+struct BravaisLattice <: HasCell end # has mesh.cell and use lattice
+
+# coordinate types
+abstract type AbstractCoords end
+struct CartCoords <: AbstractCoords end # default cartesian, stored in SVector
+struct FracCoords <: AbstractCoords end # fractional, also in SVector. lattice * frac = cart
 
 Base.IteratorSize(::Type{AbstractMesh{T,DIM}}) where {T,DIM} = Base.HasLength()
 Base.IteratorEltype(::Type{AbstractMesh{T,DIM}}) where {T,DIM} = Base.HasEltype()
@@ -24,15 +37,18 @@ Base.lastindex(mesh::AbstractMesh) = length(mesh)
 Base.iterate(mesh::AbstractMesh) = (mesh[1], 1)
 Base.iterate(mesh::AbstractMesh, state) = (state >= length(mesh)) ? nothing : (mesh[state+1], state + 1)
 
-# below are interfaces that should be implemented by concrete types
-Base.length(mesh::AbstractMesh) = error("not implemented!")
-Base.size(mesh::AbstractMesh) = error("not implemented!")
-Base.size(mesh::AbstractMesh, I) = error("not implemented!")
+# assume mesh.size::NTuple{DIM,Int}, need implementation otherwise
+Base.length(mesh::AbstractMesh) = prod(mesh.size)
+Base.size(mesh::AbstractMesh) = mesh.size
+Base.size(mesh::AbstractMesh, I) = mesh.size[I]
 
+# below are interfaces that should be implemented by concrete types
 Base.show(io::IO, mesh::AbstractMesh) = error("not implemented!")
 
+# 
 Base.getindex(mesh::AbstractMesh, inds...) = error("not implemented!")
 Base.getindex(mesh::AbstractMesh, I) = error("not implemented!")
+
 Base.getindex(mesh::AbstractMesh, ::Type{<:FracCoords}, inds...) = error("not implemented")
 Base.getindex(mesh::AbstractMesh, ::Type{<:FracCoords}, I) = error("not implemented")
 
@@ -59,17 +75,6 @@ end
 end
 
 # optional functions
-# function fractional_coordinates(mesh::AbstractMesh, I::Int)
-#     # WARNINING: this default implementation could be type instable
-#     # for efficiency use specialized implementation
-#     if hasproperty(mesh, :cell)
-#         # if mesh has cell, then use lattice info from cell
-#         return mesh.cell.inv_recip_lattice * mesh[I]
-#     else
-#         # other cases require specialized implementation
-#         error("not implemented!")
-#     end
-# end
 
 # wrapper of external functions from CompositeGrids
 locate(grid::AbstractGrid, x) = CompositeGrids.Interp.locate(grid, x[1])
@@ -87,27 +92,30 @@ function interval(grid::AbstractGrid, i::Int)
 end
 
 # lattice vector information
-abstract type LatVecStyle end # dispatch type for lattice vector functions
-struct NoLat <: LatVecStyle end # no info by default
+# abstract type LatticeStyle end # dispatch type for lattice vector functions
+# struct UnknownLattice <: LatticeStyle end # no info by default
 
-LatVecStyle(::Type) = NoLat()
+LatticeStyle(::Type) = UnknownLattice()
 
-lattice_vector(mesh::MT) where {MT} = lattice_vector(LatVecStyle(MT), mesh)
-lattice_vector(mesh::MT, i::Int) where {MT} = lattice_vector(LatVecStyle(MT), mesh, i)
-inv_lattice_vector(mesh::MT) where {MT} = inv_lattice_vector(LatVecStyle(MT), mesh)
-inv_lattice_vector(mesh::MT, i::Int) where {MT} = inv_lattice_vector(LatVecStyle(MT), mesh, i)
-cell_volume(mesh::MT) where {MT} = cell_volume(LatVecStyle(MT), mesh)
+lattice_vector(mesh::MT) where {MT} = lattice_vector(LatticeStyle(MT), mesh)
+lattice_vector(mesh::MT, i::Int) where {MT} = lattice_vector(LatticeStyle(MT), mesh, i)
+inv_lattice_vector(mesh::MT) where {MT} = inv_lattice_vector(LatticeStyle(MT), mesh)
+inv_lattice_vector(mesh::MT, i::Int) where {MT} = inv_lattice_vector(LatticeStyle(MT), mesh, i)
+cell_volume(mesh::MT) where {MT} = cell_volume(LatticeStyle(MT), mesh)
 
 # by default return error
-lattice_vector(::NoLat, mesh) = error("no lattice information!")
-lattice_vector(::NoLat, mesh, i::Int) = error("no lattice information!")
-inv_lattice_vector(::NoLat, mesh) = error("no lattice information!")
-inv_lattice_vector(::NoLat, mesh, i::Int) = error("no lattice information!")
-cell_volume(::NoLat, mesh) = error("no lattice information!")
+lattice_vector(::UnknownLattice, mesh) = error("no lattice information!")
+lattice_vector(::UnknownLattice, mesh, i::Int) = error("no lattice information!")
+inv_lattice_vector(::UnknownLattice, mesh) = error("no lattice information!")
+inv_lattice_vector(::UnknownLattice, mesh, i::Int) = error("no lattice information!")
+cell_volume(::UnknownLattice, mesh) = error("no lattice information!")
 
 # conversion between fractional and cartesian 
 frac_to_cart(mesh::AbstractMesh, frac) = lattice_vector(mesh) * frac
 cart_to_frac(mesh::AbstractMesh, cart) = inv_lattice_vector(mesh) * cart
 
+# optional: interp and integrate
+integrate(data, mesh::AbstractMesh) = error("not implemented!")
+interp(data, mesh::AbstractMesh, x) = error("not implemented!")
 
 end
