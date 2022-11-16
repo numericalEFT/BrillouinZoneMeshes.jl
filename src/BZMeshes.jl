@@ -18,13 +18,13 @@ import ..SHOWINDENTION
 
 export UniformBZMesh, DFTK_Monkhorst_Pack, Monkhorst_Pack
 
-struct OnBrillouin <: MeshDomain end # has cell::Cell as 
+struct BrillouinLattice <: LatticeStyle end # has cell::Cell as 
 
-AbstractMeshes.lattice_vector(::OnBrillouin, mesh) = mesh.cell.recip_lattice
-AbstractMeshes.inv_lattice_vector(::OnBrillouin, mesh) = mesh.cell.inv_recip_lattice
-AbstractMeshes.lattice_vector(::OnBrillouin, mesh, i::Int) = Cells.get_latvec(mesh.cell.recip_lattice, i)
-AbstractMeshes.inv_lattice_vector(::OnBrillouin, mesh, i::Int) = Cells.get_latvec(mesh.cell.inv_recip_lattice, i)
-AbstractMeshes.cell_volume(::OnBrillouin, mesh) = mesh.cell.recip_cell_volume
+AbstractMeshes.lattice_vector(::BrillouinLattice, mesh) = mesh.cell.recip_lattice
+AbstractMeshes.inv_lattice_vector(::BrillouinLattice, mesh) = mesh.cell.inv_recip_lattice
+AbstractMeshes.lattice_vector(::BrillouinLattice, mesh, i::Int) = Cells.get_latvec(mesh.cell.recip_lattice, i)
+AbstractMeshes.inv_lattice_vector(::BrillouinLattice, mesh, i::Int) = Cells.get_latvec(mesh.cell.inv_recip_lattice, i)
+AbstractMeshes.cell_volume(::BrillouinLattice, mesh) = mesh.cell.recip_cell_volume
 
 """
     struct UniformBZMesh{T, DIM} <: AbstractUniformMesh{T, DIM}
@@ -117,7 +117,7 @@ function Monkhorst_Pack(;
     )
 end
 
-AbstractMeshes.MeshDomain(::Type{<:UniformBZMesh}) = OnBrillouin()
+AbstractMeshes.LatticeStyle(::Type{<:UniformBZMesh}) = BrillouinLattice()
 
 # function Base.show(io::IO, mesh::UniformBZMesh)
 #     println("UniformBZMesh with $(length(mesh)) mesh points")

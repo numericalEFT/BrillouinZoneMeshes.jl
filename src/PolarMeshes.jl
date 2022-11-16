@@ -104,7 +104,7 @@ function AbstractMeshes.volume(mesh::PolarMesh{T,3,MT}, I::Int) where {T,MT}
     return (r2^3 - r1^3) / 3 * (sin(θ2) - sin(θ1)) * volume(mesh.mesh.mesh.mesh, k)
 end
 
-AbstractMeshes.MeshDomain(::Type{<:PolarMesh}) = OnBrillouin()
+AbstractMeshes.LatticeStyle(::Type{<:PolarMesh}) = BrillouinLattice()
 
 ###
 # Generate PolarMesh with rescaled log densed grid
