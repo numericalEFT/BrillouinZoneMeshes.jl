@@ -45,12 +45,21 @@ Base.size(mesh::AbstractMesh, I) = mesh.size[I]
 # below are interfaces that should be implemented by concrete types
 Base.show(io::IO, mesh::AbstractMesh) = error("not implemented!")
 
-# 
+# getindex dispatch with respect to traits "Coords"
+# default should be implemented to return cartesian coords in SVector
+# FracCoords and AngularCoords can be given as flags to require corresponding coords
+# FracCoords are also in SVector
+# while AngularCoords return concrete type Polar<:AngularCoords and Spherical<:AngularCoords
+
+# default, return cartesian coords, should be implemented for all meshes
 Base.getindex(mesh::AbstractMesh, inds...) = error("not implemented!")
 Base.getindex(mesh::AbstractMesh, I) = error("not implemented!")
 
+# FracCoords, return fractional coordinates in SVector, only apply for meshes with lattice info
 Base.getindex(mesh::AbstractMesh, ::Type{<:FracCoords}, inds...) = error("not implemented")
 Base.getindex(mesh::AbstractMesh, ::Type{<:FracCoords}, I) = error("not implemented")
+
+# AngularCoords are implemented in PolarMeshes.jl
 
 locate(mesh::AbstractMesh, x) = error("not implemented!")
 volume(mesh::AbstractMesh) = error("not implemented!")
