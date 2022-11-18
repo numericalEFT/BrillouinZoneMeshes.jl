@@ -5,6 +5,7 @@ using Plots
 # using PlotlyJS
 using Printf
 using PyCall
+using Interpolations
 using BrillouinZoneMeshes
 
 include("interpolation.jl")
@@ -79,13 +80,46 @@ for kx in 1:kgrid[1]
     end
 end
 
-Kfine = 100
-band_interpolate = fourier_interpolate(bandarray, Kfine);
-Plots.plot()
-Plots.plot!((0:kgrid[1]-1) / kgrid[1], bandarray[:, 1, 1], label="band", markershape=:circle)
-Plots.plot!((0:Kfine-1) / Kfine, band_interpolate[:, 1, 1], label="band interpolation")
+kx = LinRange(-0.5, 0.5 - 1.0 / kgrid[1], kgrid[1])
+ky = LinRange(-0.5, 0.5 - 1.0 / kgrid[2], kgrid[2])
+kz = LinRange(-0.5, 0.5 - 1.0 / kgrid[3], kgrid[3])
+itp = interpolate(bandarray, BSpline(Cubic(Line(OnGrid()))));
+sitp = scale(itp, kx, ky, kz);
 
-band_interpolate = fourier_interpolate(bandarray[:, 8, 8], Kfine);
-Plots.plot()
-Plots.plot!((0:kgrid[1]-1) / kgrid[1], bandarray[:, 8, 8], label="band", markershape=:circle)
-Plots.plot!((0:Kfine-1) / Kfine, band_interpolate, label="band interpolation")
+Kfine = 100
+Kfinegrid = collect(LinRange(kx[1], kx[end], Kfine))
+# band_interpolate = zeros(Kfine, Kfine, Kfine);
+# for (i1, k1) in enumerate(Kfinegrid)
+#     for (i2, k2) in enumerate(Kfinegrid)
+#         for (i3, k3) in enumerate(Kfinegrid)
+#             band_interpolate[i1, i2, i3] = sitp(k1, k2, k3)
+#         end
+#     end
+# end
+
+# Plots.plot()
+# Plots.plot!(kx, bandarray[:, 1, 1], label="band", markershape=:circle)
+# Plots.plot!(Kfinegrid, band_interpolate[:, 1, 1], label="band interpolation")
+
+p = Plots.plot(ylims=(-0.15, 0.35))
+kyz = [(1, 1), (4, 4), (8, 8), (12, 12), (16, 16)]
+# kyi, kzi = Int(kgrid[2] / 2), Int(kgrid[3] / 2)
+for (kyi, kzi) in kyz
+    Plots.scatter!(p, kx, bandarray[:, kyi, kzi], label="band (ky=$kyi, kz = $kzi)", markershape=:circle)
+    band_interpolate = [sitp(k, ky[kyi], kz[kzi]) for k in Kfinegrid]
+    Plots.plot!(p, Kfinegrid, band_interpolate, label="interpolation")
+end
+display(p)
+
+
+# fourier interpolation is pretty bad
+# Kfine = 100
+# band_interpolate = fourier_interpolate(bandarray, Kfine);
+# Plots.plot()
+# Plots.plot!((0:kgrid[1]-1) / kgrid[1], bandarray[:, 1, 1], label="band", markershape=:circle)
+# Plots.plot!((0:Kfine-1) / Kfine, band_interpolate[:, 1, 1], label="band interpolation")
+
+# band_interpolate = fourier_interpolate(bandarray[:, 8, 8], Kfine);
+# Plots.plot()
+# Plots.plot!((0:kgrid[1]-1) / kgrid[1], bandarray[:, 8, 8], label="band", markershape=:circle)
+# Plots.plot!((0:Kfine-1) / Kfine, band_interpolate, label="band interpolation")
