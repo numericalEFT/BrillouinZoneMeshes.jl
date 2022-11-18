@@ -9,8 +9,8 @@ using ..AbstractMeshes
 using ..Cells
 using ..Cells: get_latvec
 
-
-export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, UMesh, CompositeMesh
+export UMesh, ProdMesh, ChebMesh
+export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh
 
 ############## Abstract Uniform Mesh #################
 abstract type AbstractUniformMesh{T,DIM} <: AbstractMesh{T,DIM} end
@@ -18,19 +18,19 @@ export AbstractUniformMesh
 export inv_lattice_vector, lattice_vector, cell_volume
 export fractional_coordinates, cartesian_coordinates
 
-Base.length(mesh::AbstractUniformMesh) = prod(mesh.size)
-Base.size(mesh::AbstractUniformMesh) = mesh.size
-Base.size(mesh::AbstractUniformMesh, I) = mesh.size[I]
+# Base.length(mesh::AbstractUniformMesh) = prod(mesh.size)
+# Base.size(mesh::AbstractUniformMesh) = mesh.size
+# Base.size(mesh::AbstractUniformMesh, I) = mesh.size[I]
 
-function AbstractMeshes.fractional_coordinates(mesh::AbstractUniformMesh{T,DIM}, I::Int) where {T,DIM}
-    n = SVector{DIM,Int}(AbstractMeshes._ind2inds(mesh.size, I))
-    return (n .- 1 .+ mesh.shift) ./ mesh.size
-end
+# function AbstractMeshes.fractional_coordinates(mesh::AbstractUniformMesh{T,DIM}, I::Int) where {T,DIM}
+#     n = SVector{DIM,Int}(AbstractMeshes._ind2inds(mesh.size, I))
+#     return inv_lattice_vector(mesh) * mesh.origin + (n .- 1 .+ mesh.shift) ./ mesh.size
+# end
 
-function AbstractMeshes.fractional_coordinates(mesh::AbstractUniformMesh{T,DIM}, x::AbstractVector) where {T,DIM}
-    displacement = SVector{DIM,T}(x)
-    return (inv_lattice_vector(mesh) * displacement)
-end
+# function AbstractMeshes.fractional_coordinates(mesh::AbstractUniformMesh{T,DIM}, x::AbstractVector) where {T,DIM}
+#     v = SVector{DIM,T}(x)
+#     return (inv_lattice_vector(mesh) * v)
+# end
 
 function Base.getindex(mesh::AbstractUniformMesh{T,DIM}, inds...) where {T,DIM}
     n = SVector{DIM,Int}(inds)
@@ -40,6 +40,14 @@ end
 function Base.getindex(mesh::AbstractUniformMesh, I::Int)
     return Base.getindex(mesh, AbstractMeshes._ind2inds(mesh.size, I)...)
 end
+
+function Base.getindex(mesh::AbstractUniformMesh{T,DIM}, ::Type{<:FracCoords}, I::Int) where {T,DIM}
+    n = SVector{DIM,Int}(AbstractMeshes._ind2inds(mesh.size, I))
+    return inv_lattice_vector(mesh) * mesh.origin + (n .- 1 .+ mesh.shift) ./ mesh.size
+end
+
+# AbstractMeshes.frac_to_cart(mesh::AbstractUniformMesh, fx) = lattice_vector(mesh) * fx
+# AbstractMeshes.cart_to_frac(mesh::AbstractUniformMesh, cx) = inv_lattice_vector(mesh) * cx
 
 """
     function AbstractMeshes.locate(mesh::AbstractUniformMesh{T,DIM}, x) where {T,DIM}
@@ -54,7 +62,7 @@ Could also be used for zeroth order interpolation.
 function AbstractMeshes.locate(mesh::AbstractUniformMesh{T,DIM}, x) where {T,DIM}
     # find index of nearest grid point to the point
     svx = SVector{DIM,T}(x)
-    inds = fractional_coordinates(mesh, svx - mesh.origin) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
+    inds = cart_to_frac(mesh, svx - mesh.origin) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
     indexall = 1
     # println((mesh.invlatvec * displacement))
     # println(inds)
@@ -82,6 +90,13 @@ Here we assume periodic boundary condition so for all case it's the same.
 """
 AbstractMeshes.volume(mesh::AbstractUniformMesh) = cell_volume(mesh)
 AbstractMeshes.volume(mesh::AbstractUniformMesh, i) = cell_volume(mesh) / length(mesh)
+
+struct HasLattice <: AbstractMeshes.LatticeStyle end # has mesh.lattice and mesh.inv_lattice
+AbstractMeshes.lattice_vector(::HasLattice, mesh) = mesh.lattice
+AbstractMeshes.inv_lattice_vector(::HasLattice, mesh) = mesh.inv_lattice
+AbstractMeshes.lattice_vector(::HasLattice, mesh, i::Int) = get_latvec(mesh.lattice, i)
+AbstractMeshes.inv_lattice_vector(::HasLattice, mesh, i::Int) = get_latvec(mesh.inv_lattice, i)
+AbstractMeshes.cell_volume(::HasLattice, mesh) = mesh.cell_volume
 
 ############## general purposed uniform mesh #################
 struct UMesh{T,DIM} <: AbstractUniformMesh{T,DIM}
@@ -120,11 +135,7 @@ UMesh(;
     SVector{DIM,Rational}(shift)
 )
 
-lattice_vector(mesh::UMesh) = mesh.lattice
-inv_lattice_vector(mesh::UMesh) = mesh.inv_lattice
-lattice_vector(mesh::UMesh, i::Int) = get_latvec(mesh.lattice, i)
-inv_lattice_vector(mesh::UMesh, i::Int) = get_latvec(mesh.inv_lattice, i)
-cell_volume(mesh::UMesh) = mesh.cell_volume
+AbstractMeshes.LatticeStyle(::Type{<:UMesh{T,DIM}}) where {T,DIM} = HasLattice()
 
 function Base.show(io::IO, mesh::UMesh)
     println("UMesh with $(length(mesh)) mesh points")
@@ -141,8 +152,8 @@ end
 
 
 # equal length first. 
-# CompositeMesh without equal length makes linear indexing difficult
-struct CompositeMesh{T,DIM,MT,GT<:AbstractGrid} <: AbstractMesh{T,DIM}
+# ProdMesh without equal length makes linear indexing difficult
+struct ProdMesh{T,DIM,MT,GT<:AbstractGrid} <: AbstractMesh{T,DIM}
     # composite mesh constructed upon a mesh and a set of grids
     # the dimension represented by the grids becomes the first dimension
     # while other dimensions are represented by mesh
@@ -152,28 +163,28 @@ struct CompositeMesh{T,DIM,MT,GT<:AbstractGrid} <: AbstractMesh{T,DIM}
     size::NTuple{DIM,Int}
 end
 
-function CompositeMesh(mesh::AbstractMesh{T,DIM}, grids::Vector{GT}) where {T,DIM,GT}
+function ProdMesh(mesh::AbstractMesh{T,DIM}, grids::Vector{GT}) where {T,DIM,GT}
     MT = typeof(mesh)
     # N of element in grids should match length of mesh
     @assert length(mesh) == length(grids)
     # length of all grids should be the same
     @assert length.(grids) == ones(length(grids)) .* length(grids[1])
     msize = (length(grids[1]), size(mesh)...)
-    return CompositeMesh{T,DIM + 1,MT,GT}(mesh, grids, msize)
+    return ProdMesh{T,DIM + 1,MT,GT}(mesh, grids, msize)
 end
 
-function CompositeMesh(mesh::MT, grids::Vector{GT}) where {MT<:AbstractGrid,GT}
+function ProdMesh(mesh::MT, grids::Vector{GT}) where {MT<:AbstractGrid,GT}
     @assert length(mesh) == length(grids)
     @assert length.(grids) == ones(length(grids)) .* length(grids[1])
     msize = (length(grids[1]), length(mesh))
-    return CompositeMesh{eltype(MT),2,MT,GT}(mesh, grids, msize)
+    return ProdMesh{eltype(MT),2,MT,GT}(mesh, grids, msize)
 end
 
-Base.length(mesh::CompositeMesh) = prod(mesh.size)
-Base.size(mesh::CompositeMesh) = mesh.size
-Base.size(mesh::CompositeMesh, I::Int) = mesh.size[I]
+# Base.length(mesh::ProdMesh) = prod(mesh.size)
+# Base.size(mesh::ProdMesh) = mesh.size
+# Base.size(mesh::ProdMesh, I::Int) = mesh.size[I]
 
-function Base.getindex(mesh::CompositeMesh{T,DIM,MT,GT}, inds...) where {T,DIM,MT,GT}
+function Base.getindex(mesh::ProdMesh{T,DIM,MT,GT}, inds...) where {T,DIM,MT,GT}
     # i1, I = inds[1], AbstractMeshes._inds2ind(mesh.size, 1, inds[2:end]...)
     # seems generated function doesn't work here 
     # as compiler doesn't know mesh.size
@@ -181,23 +192,26 @@ function Base.getindex(mesh::CompositeMesh{T,DIM,MT,GT}, inds...) where {T,DIM,M
     return SVector{DIM,T}([mesh.grids[I][i1], mesh.mesh[I]...])
 end
 
-function Base.getindex(mesh::CompositeMesh, I::Int)
+function Base.getindex(mesh::ProdMesh, I::Int)
     return Base.getindex(mesh, AbstractMeshes._ind2inds(mesh.size, I)...)
 end
 
-function AbstractMeshes.locate(mesh::CompositeMesh, x)
+function AbstractMeshes.locate(mesh::ProdMesh, x)
     I = AbstractMeshes.locate(mesh.mesh, x[2:end])
     i1 = AbstractMeshes.locate(mesh.grids[I], x[1])
     return i1 + (I - 1) * size(mesh)[1]
 end
 
-function AbstractMeshes.volume(mesh::CompositeMesh)
+function AbstractMeshes.volume(mesh::ProdMesh)
     return sum(AbstractMeshes.volume(mesh.mesh, I) * AbstractMeshes.volume(mesh.grids[I]) for I in 1:length(mesh.mesh))
 end
-function AbstractMeshes.volume(mesh::CompositeMesh, I::Int)
+function AbstractMeshes.volume(mesh::ProdMesh, I::Int)
     i1, I2 = (I - 1) % size(mesh)[1] + 1, (I - 1) ÷ size(mesh)[1] + 1
     return AbstractMeshes.volume(mesh.mesh, I2) * AbstractMeshes.volume(mesh.grids[I2], i1)
 end
+
+
+include("ChebMeshes.jl")
 
 #####################################
 # LEGACY CODE BELOW
@@ -474,32 +488,6 @@ end
 function integrate(data, mesh::BaryChebMesh{DIM,N}) where {DIM,N}
     area = abs(det(mesh.latvec))
     return integrateND(data, mesh.barycheb, DIM) * area / 2^DIM
-end
-
-function locate1d(g::BaryCheb1D, x)
-    grid = g.x
-    if x <= grid[1]
-        return 1
-    elseif x >= grid[end]
-        if length(grid) != 1
-            return length(grid)
-        end
-    end
-
-    i2 = searchsortedfirst(grid, x)
-    i1 = i2 - 1
-    return abs(grid[i1] - x) < abs(grid[i2] - x) ? i1 : i2
-end
-
-function volume1d(g::BaryCheb1D, i)
-    grid = g.x
-    if i != 1 && i != length(grid)
-        return (grid[i+1] - grid[i-1]) / 2
-    elseif i == 1
-        return (grid[i+1] + grid[i]) / 2 - (-1)
-    else
-        return 1 - (grid[i] + grid[i-1]) / 2
-    end
 end
 
 function AbstractMeshes.locate(mesh::BaryChebMesh{DIM,N}, x) where {DIM,N}

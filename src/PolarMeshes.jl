@@ -3,9 +3,9 @@
 include("utilities/coordinatesystems.jl")
 using .Coordinates
 
-export PolarMesh, Angular, RescaledGrid, RescaledLogDensedGrid
+export PolarMesh, RescaledGrid, RescaledLogDensedGrid, AngularCoords
 
-const Angular = Union{Polar,Spherical}
+# const AngularCoords = Union{Polar,Spherical}
 
 # use coordinate systems copied from CoordinateTransformations
 # changed some convention thus different from their package
@@ -19,7 +19,7 @@ const _cart2spherical = SphericalFromCartesian()
 _extract(r::Polar{T,A}) where {T,A} = SVector{2,T}(r.r, r.ϕ)
 _extract(r::Spherical{T,A}) where {T,A} = SVector{3,T}(r.r, r.θ, r.ϕ)
 
-struct PolarMesh{T,DIM,MT<:CompositeMesh} <: AbstractMesh{T,DIM}
+struct PolarMesh{T,DIM,MT<:ProdMesh} <: AbstractMesh{T,DIM}
     cell::Cell{T,DIM}
     mesh::MT # actual mesh. assume order as (r,θ,ϕ...)
     volume::T
@@ -65,19 +65,19 @@ end
 function Base.getindex(mesh::PolarMesh, I::Int)
     return Base.getindex(mesh, _ind2inds(size(mesh), I)...)
 end
-# provide getindex which return angular results
-# call looks like mesh[Angular, i, j] -> Polar(r,θ)
-function Base.getindex(mesh::PolarMesh{T,2,MT}, ::Type{<:Angular}, i::Int, j::Int) where {T,MT}
+# provide getindex which return AngularCoords results
+# call looks like mesh[AngularCoords, i, j] -> Polar(r,θ)
+function Base.getindex(mesh::PolarMesh{T,2,MT}, ::Type{<:AngularCoords}, i::Int, j::Int) where {T,MT}
     return Polar(getindex(mesh.mesh, i, j)...)
 end
-function Base.getindex(mesh::PolarMesh{T,3,MT}, ::Type{<:Angular}, i::Int, j::Int, k::Int) where {T,MT}
+function Base.getindex(mesh::PolarMesh{T,3,MT}, ::Type{<:AngularCoords}, i::Int, j::Int, k::Int) where {T,MT}
     return Spherical(getindex(mesh.mesh, i, j, k)...)
 end
-function Base.getindex(mesh::PolarMesh, T::Type{<:Angular}, I::Int)
+function Base.getindex(mesh::PolarMesh, T::Type{<:AngularCoords}, I::Int)
     return Base.getindex(mesh, T, _ind2inds(size(mesh), I)...)
 end
 
-function AbstractMeshes.locate(mesh::PolarMesh, r::Angular)
+function AbstractMeshes.locate(mesh::PolarMesh, r::AngularCoords)
     return AbstractMeshes.locate(mesh.mesh, _extract(r))
 end
 function AbstractMeshes.locate(mesh::PolarMesh{T,2,MT}, x::AbstractVector) where {T,MT}
@@ -87,7 +87,7 @@ function AbstractMeshes.locate(mesh::PolarMesh{T,3,MT}, x::AbstractVector) where
     return AbstractMeshes.locate(mesh, _cart2spherical(x))
 end
 
-# volume of PolarMesh is different from volume of CompositeMesh inside
+# volume of PolarMesh is different from volume of ProdMesh inside
 function AbstractMeshes.volume(mesh::PolarMesh)
     return mesh.volume
 end
@@ -104,11 +104,7 @@ function AbstractMeshes.volume(mesh::PolarMesh{T,3,MT}, I::Int) where {T,MT}
     return (r2^3 - r1^3) / 3 * (sin(θ2) - sin(θ1)) * volume(mesh.mesh.mesh.mesh, k)
 end
 
-BaseMesh.lattice_vector(mesh::PolarMesh) = mesh.cell.recip_lattice
-BaseMesh.inv_lattice_vector(mesh::PolarMesh) = mesh.cell.inv_recip_lattice
-BaseMesh.lattice_vector(mesh::PolarMesh, i::Int) = Cells.get_latvec(mesh.cell.recip_lattice, i)
-BaseMesh.inv_lattice_vector(mesh::PolarMesh, i::Int) = Cells.get_latvec(mesh.cell.inv_recip_lattice, i)
-BaseMesh.cell_volume(mesh::PolarMesh) = mesh.cell.recip_cell_volume
+AbstractMeshes.LatticeStyle(::Type{<:PolarMesh}) = BrillouinLattice()
 
 ###
 # Generate PolarMesh with rescaled log densed grid
@@ -216,7 +212,7 @@ function BZMeshes.PolarMesh(; dispersion, anglemesh, cell, kmax,
     bound = [0.0, kmax]
     println(typeof(dispersion))
     grids = kF_densed_kgrids(; dispersion=dispersion, anglemesh=anglemesh, bound=bound, DIM=DIM, kwargs...)
-    cm = CompositeMesh(anglemesh, grids)
+    cm = ProdMesh(anglemesh, grids)
     pm = PolarMesh(cell, cm)
     return pm
 end
