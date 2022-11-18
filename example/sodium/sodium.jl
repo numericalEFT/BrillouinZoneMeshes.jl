@@ -84,3 +84,8 @@ band_interpolate = fourier_interpolate(bandarray, Kfine);
 Plots.plot()
 Plots.plot!((0:kgrid[1]-1) / kgrid[1], bandarray[:, 1, 1], label="band", markershape=:circle)
 Plots.plot!((0:Kfine-1) / Kfine, band_interpolate[:, 1, 1], label="band interpolation")
+
+band_interpolate = fourier_interpolate(bandarray[:, 8, 8], Kfine);
+Plots.plot()
+Plots.plot!((0:kgrid[1]-1) / kgrid[1], bandarray[:, 8, 8], label="band", markershape=:circle)
+Plots.plot!((0:Kfine-1) / Kfine, band_interpolate, label="band interpolation")
