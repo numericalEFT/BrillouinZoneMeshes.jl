@@ -74,7 +74,7 @@
                 )
                 println(theta)
                 grids = [CompositeGrid.LogDensedGrid(:cheb, [0.0, 2.0], [sqrt(a * cos(θ)^2 + b * sin(θ)^2),], N, 0.1, M) for θ in theta]
-                cm = ProdMesh(theta, grids)
+                cm = ProdMesh(grids, theta)
 
                 DIM = 2
                 lattice = Matrix([1.0 0; 0 1]')
@@ -111,9 +111,9 @@
                     M
                 )
                 rg = CompositeGrid.LogDensedGrid(:cheb, [0.0, 2.0], [1.0,], N, 0.1, M)
-                am = ProdMesh(phi, [theta for i in 1:length(phi)])
+                am = ProdMesh([theta for i in 1:length(phi)], phi)
                 println(typeof(size(am)))
-                cm = ProdMesh(am, [rg for i in 1:length(am)])
+                cm = ProdMesh([rg for i in 1:length(am)], am)
                 println(typeof(size(cm)))
                 println(typeof(size(cm.mesh)))
 

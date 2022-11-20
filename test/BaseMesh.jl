@@ -156,7 +156,7 @@
             println(theta)
             grids = [CompositeGrid.LogDensedGrid(:cheb, [0.0, 2.0], [sqrt(a * cos(θ)^2 + b * sin(θ)^2),], N, 0.1, M) for θ in theta]
 
-            cm = ProdMesh(theta, grids)
+            cm = ProdMesh(grids, theta)
             println([cm.grids[i].panel[2] for i in 1:length(theta)])
             println(size(cm))
             for j in 1:length(cm.mesh)

@@ -42,14 +42,14 @@ struct DirectProdMesh{T,DIM,MT,GT<:AbstractGrid} <: AbstractProdMesh{T,DIM}
     size::NTuple{DIM,Int}
 end
 
-function DirectProdMesh(mesh::AbstractMesh{T,DIM}, grid::GT) where {T,DIM,GT}
+function DirectProdMesh(grid::GT, mesh::AbstractMesh{T,DIM}) where {T,DIM,GT}
     MT = typeof(mesh)
     # N of element in grids should match length of mesh
     msize = (length(grid), size(mesh)...)
     return DirectProdMesh{T,DIM + 1,MT,GT}(mesh, grid, msize)
 end
 
-function DirectProdMesh(mesh::MT, grid::GT) where {MT<:AbstractGrid,GT}
+function DirectProdMesh(grid::GT, mesh::MT) where {MT<:AbstractGrid,GT}
     msize = (length(grid), length(mesh))
     return DirectProdMesh{eltype(MT),2,MT,GT}(mesh, grid, msize)
 end
@@ -60,7 +60,7 @@ function DirectProdMesh(grids...)
     if length(grids) <= 2
         error("this method shouldn't be called for less than 2 grids!")
     else
-        return DirectProdMesh(DirectProdMesh(grids[2:end]...), grids[1])
+        return DirectProdMesh(grids[1], DirectProdMesh(grids[2:end]...))
     end
 end
 
@@ -80,7 +80,7 @@ struct ProdMesh{T,DIM,MT,GT<:AbstractGrid} <: AbstractProdMesh{T,DIM}
     size::NTuple{DIM,Int}
 end
 
-function ProdMesh(mesh::AbstractMesh{T,DIM}, grids::Vector{GT}) where {T,DIM,GT}
+function ProdMesh(grids::Vector{GT}, mesh::AbstractMesh{T,DIM}) where {T,DIM,GT}
     MT = typeof(mesh)
     # N of element in grids should match length of mesh
     @assert length(mesh) == length(grids)
@@ -90,7 +90,7 @@ function ProdMesh(mesh::AbstractMesh{T,DIM}, grids::Vector{GT}) where {T,DIM,GT}
     return ProdMesh{T,DIM + 1,MT,GT}(mesh, grids, msize)
 end
 
-function ProdMesh(mesh::MT, grids::Vector{GT}) where {MT<:AbstractGrid,GT}
+function ProdMesh(grids::Vector{GT}, mesh::MT) where {MT<:AbstractGrid,GT}
     @assert length(mesh) == length(grids)
     @assert length.(grids) == ones(length(grids)) .* length(grids[1])
     msize = (length(grids[1]), length(mesh))
