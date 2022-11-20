@@ -80,7 +80,7 @@ end
 
 function AbstractMeshes.locate(mesh::ChebMesh{T,DIM,N}, x) where {T,DIM,N}
     displacement = SVector{DIM,Float64}(x) - mesh.origin
-    xs = AbstractMeshes.cart_to_frac(displacement) .* 2.0 .- 1.0
+    xs = AbstractMeshes.cart_to_frac(mesh, displacement) .* 2.0 .- 1.0
     inds = NTuple{DIM,Int}(locate1d(mesh.barycheb, xs[i]) for i in 1:DIM)
     return AbstractMeshes._inds2ind(mesh.size, inds)
 end

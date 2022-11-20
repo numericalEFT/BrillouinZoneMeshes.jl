@@ -177,7 +177,7 @@
                 bound = [-π / 2, π / 2]
                 theta = SimpleGrid.Uniform(bound, N; isperiodic=true)
 
-                am = ProdMesh(phi, [theta for i in 1:length(phi)])
+                am = ProdMesh([theta for i in 1:length(phi)], phi)
 
                 k_F_previous = 0.0
                 for ap in am
@@ -214,7 +214,7 @@
                     DIM = 2
                     lattice = Matrix([1.0 0; 0 1]')
                     br = BZMeshes.Cell(lattice=lattice)
-                    bzmesh = PolarMesh(br, ProdMesh(theta, [rrg for i in 1:length(theta)]))
+                    bzmesh = PolarMesh(br, ProdMesh([rrg for i in 1:length(theta)], theta))
                     for (i, p) in enumerate(bzmesh)
                         println(p, AbstractMeshes.volume(bzmesh, i))
                     end

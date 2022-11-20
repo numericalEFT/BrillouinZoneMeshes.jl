@@ -133,7 +133,7 @@
             vol = 0.0
             for (pi, p) in enumerate(dpm)
                 i, j, k = AbstractMeshes._ind2inds(size(dpm), pi)
-                # @test p ≈ [r[i], theta[j], phi[k]]
+                @test p ≈ [r[i], theta[j], phi[k]]
                 @test pi == AbstractMeshes.locate(dpm, p)
                 vol += AbstractMeshes.volume(dpm, pi)
             end
