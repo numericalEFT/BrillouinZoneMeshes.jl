@@ -127,4 +127,7 @@ cart_to_frac(mesh::AbstractMesh, cart) = inv_lattice_vector(mesh) * cart
 integrate(data, mesh::AbstractMesh) = error("not implemented!")
 interp(data, mesh::AbstractMesh, x) = error("not implemented!")
 
+# optional: interval. useful for converting from cartesian to angular
+interval(mesh::AbstractMesh, I::Int) = error("not implemented!")
+
 end

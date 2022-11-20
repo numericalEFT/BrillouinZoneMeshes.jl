@@ -9,7 +9,7 @@ using ..AbstractMeshes
 using ..Cells
 using ..Cells: get_latvec
 
-export UMesh, ProdMesh, ChebMesh
+export UMesh, ChebMesh
 export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh
 
 ############## Abstract Uniform Mesh #################
@@ -150,66 +150,7 @@ function cycling_floor(I, N)
     end
 end
 
-
-# equal length first. 
-# ProdMesh without equal length makes linear indexing difficult
-struct ProdMesh{T,DIM,MT,GT<:AbstractGrid} <: AbstractMesh{T,DIM}
-    # composite mesh constructed upon a mesh and a set of grids
-    # the dimension represented by the grids becomes the first dimension
-    # while other dimensions are represented by mesh
-    # the mesh point at (i,j,k...) will be (mesh.grids[j,k...][i], mesh.mesh[j,k...]...)
-    mesh::MT
-    grids::Vector{GT}
-    size::NTuple{DIM,Int}
-end
-
-function ProdMesh(mesh::AbstractMesh{T,DIM}, grids::Vector{GT}) where {T,DIM,GT}
-    MT = typeof(mesh)
-    # N of element in grids should match length of mesh
-    @assert length(mesh) == length(grids)
-    # length of all grids should be the same
-    @assert length.(grids) == ones(length(grids)) .* length(grids[1])
-    msize = (length(grids[1]), size(mesh)...)
-    return ProdMesh{T,DIM + 1,MT,GT}(mesh, grids, msize)
-end
-
-function ProdMesh(mesh::MT, grids::Vector{GT}) where {MT<:AbstractGrid,GT}
-    @assert length(mesh) == length(grids)
-    @assert length.(grids) == ones(length(grids)) .* length(grids[1])
-    msize = (length(grids[1]), length(mesh))
-    return ProdMesh{eltype(MT),2,MT,GT}(mesh, grids, msize)
-end
-
-# Base.length(mesh::ProdMesh) = prod(mesh.size)
-# Base.size(mesh::ProdMesh) = mesh.size
-# Base.size(mesh::ProdMesh, I::Int) = mesh.size[I]
-
-function Base.getindex(mesh::ProdMesh{T,DIM,MT,GT}, inds...) where {T,DIM,MT,GT}
-    # i1, I = inds[1], AbstractMeshes._inds2ind(mesh.size, 1, inds[2:end]...)
-    # seems generated function doesn't work here 
-    # as compiler doesn't know mesh.size
-    i1, I = inds[1], Base._sub2ind(size(mesh.mesh), inds[2:end]...)
-    return SVector{DIM,T}([mesh.grids[I][i1], mesh.mesh[I]...])
-end
-
-function Base.getindex(mesh::ProdMesh, I::Int)
-    return Base.getindex(mesh, AbstractMeshes._ind2inds(mesh.size, I)...)
-end
-
-function AbstractMeshes.locate(mesh::ProdMesh, x)
-    I = AbstractMeshes.locate(mesh.mesh, x[2:end])
-    i1 = AbstractMeshes.locate(mesh.grids[I], x[1])
-    return i1 + (I - 1) * size(mesh)[1]
-end
-
-function AbstractMeshes.volume(mesh::ProdMesh)
-    return sum(AbstractMeshes.volume(mesh.mesh, I) * AbstractMeshes.volume(mesh.grids[I]) for I in 1:length(mesh.mesh))
-end
-function AbstractMeshes.volume(mesh::ProdMesh, I::Int)
-    i1, I2 = (I - 1) % size(mesh)[1] + 1, (I - 1) ÷ size(mesh)[1] + 1
-    return AbstractMeshes.volume(mesh.mesh, I2) * AbstractMeshes.volume(mesh.grids[I2], i1)
-end
-
+include("OrthogonalMeshes.jl")
 
 include("ChebMeshes.jl")
 

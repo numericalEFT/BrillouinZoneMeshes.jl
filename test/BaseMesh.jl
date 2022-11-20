@@ -112,10 +112,34 @@
     end
 
     @testset "ProdMesh" begin
+        using BrillouinZoneMeshes.CompositeGrids
+        using BrillouinZoneMeshes.BaseMesh
+        using BrillouinZoneMeshes.AbstractMeshes
+        @testset "DirectProdMesh" begin
+            N, M = 3, 2
+            r = CompositeGrid.LogDensedGrid(
+                :cheb,
+                [0, 2.0],
+                [1.0,],
+                N,
+                0.01,
+                M
+            )
+            phi = SimpleGrid.Uniform([-π, π], 6)
+            theta = SimpleGrid.Uniform([-π / 2, π / 2], 4)
+            dpm = DirectProdMesh(r, theta, phi)
+            println(size(dpm))
+
+            vol = 0.0
+            for (pi, p) in enumerate(dpm)
+                i, j, k = AbstractMeshes._ind2inds(size(dpm), pi)
+                # @test p ≈ [r[i], theta[j], phi[k]]
+                @test pi == AbstractMeshes.locate(dpm, p)
+                vol += AbstractMeshes.volume(dpm, pi)
+            end
+            @test vol ≈ AbstractMeshes.volume(dpm)
+        end
         @testset "Construct ProdMesh" begin
-            using BrillouinZoneMeshes.CompositeGrids
-            using BrillouinZoneMeshes.BaseMesh
-            using BrillouinZoneMeshes.AbstractMeshes
 
             a, b = 0.8, 1.2
 
