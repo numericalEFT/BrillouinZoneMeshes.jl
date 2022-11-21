@@ -16,15 +16,15 @@ const _spherical2cart = CartesianFromSpherical()
 const _cart2polar = PolarFromCartesian()
 const _cart2spherical = SphericalFromCartesian()
 
+_extract(r::Polar{T,A}) where {T,A} = SVector{2,T}(r.r, r.ϕ)
+_extract(r::Spherical{T,A}) where {T,A} = SVector{3,T}(r.r, r.θ, r.ϕ)
+
 # for general case, mesh[AngularCoords,I] return angular coords transformed from cartesian
 # this only works for 2D and 3D
 Base.getindex(mesh::AbstractMesh{T,2}, ::Type{<:AngularCoords}, inds...) where {T} = _cart2polar(mesh[inds...])
 Base.getindex(mesh::AbstractMesh{T,2}, ::Type{<:AngularCoords}, I) where {T} = _cart2polar(mesh[I])
 Base.getindex(mesh::AbstractMesh{T,3}, ::Type{<:AngularCoords}, inds...) where {T} = _cart2spherical(mesh[inds...])
 Base.getindex(mesh::AbstractMesh{T,3}, ::Type{<:AngularCoords}, I) where {T} = _cart2spherical(mesh[I])
-
-_extract(r::Polar{T,A}) where {T,A} = SVector{2,T}(r.r, r.ϕ)
-_extract(r::Spherical{T,A}) where {T,A} = SVector{3,T}(r.r, r.θ, r.ϕ)
 
 struct PolarMesh{T,DIM,MT<:AbstractProdMesh} <: AbstractMesh{T,DIM}
     cell::Cell{T,DIM}
@@ -34,11 +34,15 @@ end
 
 function PolarMesh(cell::Cell{T,2}, mesh::MT) where {T,MT}
     vol = 0.0
-    for j in 1:size(mesh)[2]
-        for i in 1:size(mesh)[1]
-            r1, r2 = AbstractMeshes.interval(mesh.grids[j], i)
-            vol += T(0.5) * (r2^2 - r1^2) * volume(mesh.mesh, j)
-        end
+    # for j in 1:size(mesh)[2]
+    #     for i in 1:size(mesh)[1]
+    #         r1, r2 = AbstractMeshes.interval(mesh.grids[j], i)
+    #         vol += T(0.5) * (r2^2 - r1^2) * volume(mesh.mesh, j)
+    #     end
+    # end
+    for (pi, p) in enumerate(mesh)
+        intrvl = AbstractMeshes.interval(mesh, pi)
+        vol += T(0.5) * (intrvl[1, 2]^2 - intrvl[1, 1]^2) * (intrvl[2, 2] - intrvl[2, 1])
     end
     return PolarMesh{T,2,MT}(cell, mesh, vol)
 end

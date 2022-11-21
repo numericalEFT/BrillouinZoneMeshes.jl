@@ -25,7 +25,7 @@ function CompositeMesh(panelmesh::PM, N) where {PM}
     for (i, p) in enumerate(panelmesh)
         intervals = AbstractMeshes.interval(panelmesh, i)
         origin = [intervals[j][1] for j in 1:DIM]
-        lattice = diagm(DIM, DIM, [intervals[j][2] - intervals[j][1] for j in 1:DIM])
+        lattice = diagm(DIM, DIM, [intervals[j, 2] - intervals[j, 1] for j in 1:DIM])
         #println(origin, lattice)
         cm = ChebMesh(origin, lattice, DIM, N)
         push!(submeshes, cm)

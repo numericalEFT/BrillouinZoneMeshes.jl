@@ -34,15 +34,19 @@ function AbstractMeshes.volume(mesh::AbstractProdMesh, I::Int)
     return AbstractMeshes.volume(mesh.mesh, I2) * AbstractMeshes.volume(_getgrid(mesh, I2), i1)
 end
 
-function AbstractMeshes.interval(mesh::AbstractProdMesh, I::Int)
+function AbstractMeshes.interval(mesh::AbstractProdMesh{T,DIM}, I::Int) where {T,DIM}
     inds = AbstractMeshes._ind2inds(size(mesh), I)
     J = Base._sub2ind(size(mesh)[2:end], inds[2:end]...)
     x1, x2 = AbstractMeshes.interval(_getgrid(mesh, J), inds[1])
-    if length(inds) > 2
-        return [(x1, x2), AbstractMeshes.interval(mesh.mesh, J)...]
+    result = MMatrix{DIM,2,T,DIM * 2}(zeros(DIM, 2))
+    if DIM == 2
+        result[1, :] .= [x1, x2]
+        result[2, :] .= AbstractMeshes.interval(mesh.mesh, J)
     else
-        return [(x1, x2), AbstractMeshes.interval(mesh.mesh, J)]
+        result[1, :] .= [x1, x2]
+        result[2:end, :] .= AbstractMeshes.interval(mesh.mesh, J)
     end
+    return SMatrix{DIM,2,T,DIM * 2}(result)
 end
 
 # DirectProdMesh is mesh from direct product grid×mesh
