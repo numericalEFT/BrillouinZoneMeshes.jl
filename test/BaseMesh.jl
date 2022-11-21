@@ -112,10 +112,34 @@
     end
 
     @testset "ProdMesh" begin
+        using BrillouinZoneMeshes.CompositeGrids
+        using BrillouinZoneMeshes.BaseMesh
+        using BrillouinZoneMeshes.AbstractMeshes
+        @testset "DirectProdMesh" begin
+            N, M = 3, 2
+            r = CompositeGrid.LogDensedGrid(
+                :cheb,
+                [0, 2.0],
+                [1.0,],
+                N,
+                0.01,
+                M
+            )
+            phi = SimpleGrid.Uniform([-π, π], 6)
+            theta = SimpleGrid.Uniform([-π / 2, π / 2], 4)
+            dpm = DirectProdMesh(r, theta, phi)
+            println(size(dpm))
+
+            vol = 0.0
+            for (pi, p) in enumerate(dpm)
+                i, j, k = AbstractMeshes._ind2inds(size(dpm), pi)
+                @test p ≈ [r[i], theta[j], phi[k]]
+                @test pi == AbstractMeshes.locate(dpm, p)
+                vol += AbstractMeshes.volume(dpm, pi)
+            end
+            @test vol ≈ AbstractMeshes.volume(dpm)
+        end
         @testset "Construct ProdMesh" begin
-            using BrillouinZoneMeshes.CompositeGrids
-            using BrillouinZoneMeshes.BaseMesh
-            using BrillouinZoneMeshes.AbstractMeshes
 
             a, b = 0.8, 1.2
 
@@ -132,7 +156,7 @@
             println(theta)
             grids = [CompositeGrid.LogDensedGrid(:cheb, [0.0, 2.0], [sqrt(a * cos(θ)^2 + b * sin(θ)^2),], N, 0.1, M) for θ in theta]
 
-            cm = ProdMesh(theta, grids)
+            cm = ProdMesh(grids, theta)
             println([cm.grids[i].panel[2] for i in 1:length(theta)])
             println(size(cm))
             for j in 1:length(cm.mesh)
