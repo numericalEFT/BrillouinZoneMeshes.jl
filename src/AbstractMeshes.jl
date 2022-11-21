@@ -42,7 +42,8 @@ Base.iterate(mesh::AbstractMesh, state) = (state >= length(mesh)) ? nothing : (m
 Base.length(mesh::AbstractMesh) = prod(mesh.size)
 Base.size(mesh::AbstractMesh) = mesh.size
 Base.size(mesh::AbstractMesh, I) = mesh.size[I]
-dimension(mesh::AbstractMesh{T,DIM}) where {T,DIM} = DIM
+# dimension(mesh::AbstractMesh{T,DIM}) where {T,DIM} = DIM
+Base.ndims(mesh::AbstractMesh{T,DIM}) where {T,DIM} = DIM
 
 # below are interfaces that should be implemented by concrete types
 Base.show(io::IO, mesh::AbstractMesh) = error("not implemented!")

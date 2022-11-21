@@ -20,7 +20,7 @@ end
 
 function CompositeMesh(panelmesh::PM, N) where {PM}
     T = eltype(panelmesh)
-    DIM = dimension(panelmesh)
+    DIM = ndims(panelmesh)
     submeshes = []
     for (i, p) in enumerate(panelmesh)
         intervals = AbstractMeshes.interval(panelmesh, i)
