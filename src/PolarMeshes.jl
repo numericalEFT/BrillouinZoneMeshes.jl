@@ -149,6 +149,23 @@ function AbstractMeshes.interp(data, mesh::PolarMesh, x)
     return interp(data, mesh.mesh, r)
 end
 
+function AbstractMeshes.integrate(data, mesh::PolarMesh{T,2,MT}) where {T,MT}
+    weighteddata = similar(data)
+    for pi in 1:length(mesh)
+        r, ϕ = _extract(mesh[AngularCoords, pi])
+        weighteddata[pi] = r * data[pi]
+    end
+    return integrate(weighteddata, mesh.mesh)
+end
+
+function AbstractMeshes.integrate(data, mesh::PolarMesh{T,3,MT}) where {T,MT}
+    weighteddata = similar(data)
+    for pi in 1:length(mesh)
+        r, θ, ϕ = _extract(mesh[AngularCoords, pi])
+        weighteddata[pi] = r^2 * sin(θ) * data[pi]
+    end
+    return integrate(weighteddata, mesh.mesh)
+end
 ###
 # Generate PolarMesh with rescaled log densed grid
 ###

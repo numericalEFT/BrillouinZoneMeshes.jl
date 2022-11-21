@@ -197,6 +197,7 @@
                     @test isapprox(AbstractMeshes.interp(data, pm, p), dispersion(x), rtol=1e-4)
                 end
 
+                @test isapprox(AbstractMeshes.integrate(data, pm), 4π, rtol=1e-4)
             end
 
             @testset "3D" begin
