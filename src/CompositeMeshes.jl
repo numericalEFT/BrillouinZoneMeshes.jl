@@ -12,7 +12,7 @@ export CompositeMesh
 
 # CompositeMesh is defined as a panel mesh and a set of submeshes
 
-struct CompositeMesh{T,PM,SM} <: AbstractMesh{T,2} # regarded as 2D
+struct CompositeMesh{T,DIM,PM,SM} <: AbstractMesh{T,DIM} # dimension follows panel
     panelmesh::PM
     submeshes::Vector{SM}
     size::NTuple{2,Int}
@@ -20,10 +20,10 @@ end
 
 function CompositeMesh(panelmesh::PM, N) where {PM}
     T = eltype(panelmesh)
+    DIM = dimension(panelmesh)
     submeshes = []
     for (i, p) in enumerate(panelmesh)
         intervals = AbstractMeshes.interval(panelmesh, i)
-        DIM = length(intervals)
         origin = [intervals[j][1] for j in 1:DIM]
         lattice = diagm(DIM, DIM, [intervals[j][2] - intervals[j][1] for j in 1:DIM])
         #println(origin, lattice)
@@ -33,7 +33,7 @@ function CompositeMesh(panelmesh::PM, N) where {PM}
 
     SM = typeof(submeshes[1])
     size = (length(submeshes[1]), length(panelmesh))
-    return CompositeMesh{T,PM,SM}(panelmesh, submeshes, size)
+    return CompositeMesh{T,DIM,PM,SM}(panelmesh, submeshes, size)
 end
 
 Base.getindex(mesh::CompositeMesh, j, i) = mesh.submeshes[i][j]

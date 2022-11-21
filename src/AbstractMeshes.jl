@@ -6,6 +6,7 @@ using ..StaticArrays
 using ..CompositeGrids
 
 export AbstractCoords, CartCoords, FracCoords, AngularCoords
+export dimension
 export AbstractMesh, locate, volume#, fractional_coordinates
 export FracCoords, frac_to_cart, cart_to_frac
 export LatticeStyle, lattice_vector, inv_lattice_vector, cell_volume
@@ -41,6 +42,7 @@ Base.iterate(mesh::AbstractMesh, state) = (state >= length(mesh)) ? nothing : (m
 Base.length(mesh::AbstractMesh) = prod(mesh.size)
 Base.size(mesh::AbstractMesh) = mesh.size
 Base.size(mesh::AbstractMesh, I) = mesh.size[I]
+dimension(mesh::AbstractMesh{T,DIM}) where {T,DIM} = DIM
 
 # below are interfaces that should be implemented by concrete types
 Base.show(io::IO, mesh::AbstractMesh) = error("not implemented!")
