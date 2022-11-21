@@ -7,7 +7,7 @@ using ..CompositeGrids
 
 export AbstractCoords, CartCoords, FracCoords, AngularCoords
 export dimension
-export AbstractMesh, locate, volume#, fractional_coordinates
+export AbstractMesh, locate, volume, interval#, fractional_coordinates
 export FracCoords, frac_to_cart, cart_to_frac
 export LatticeStyle, lattice_vector, inv_lattice_vector, cell_volume
 export interp, integrate

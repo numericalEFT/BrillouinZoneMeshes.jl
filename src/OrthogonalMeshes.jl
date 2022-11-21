@@ -40,10 +40,10 @@ function AbstractMeshes.interval(mesh::AbstractProdMesh{T,DIM}, I::Int) where {T
     x1, x2 = AbstractMeshes.interval(_getgrid(mesh, J), inds[1])
     result = MMatrix{DIM,2,T,DIM * 2}(zeros(DIM, 2))
     if DIM == 2
-        result[1, :] .= [x1, x2]
+        result[1, :] .= (x1, x2)
         result[2, :] .= AbstractMeshes.interval(mesh.mesh, J)
     else
-        result[1, :] .= [x1, x2]
+        result[1, :] .= (x1, x2)
         result[2:end, :] .= AbstractMeshes.interval(mesh.mesh, J)
     end
     return SMatrix{DIM,2,T,DIM * 2}(result)

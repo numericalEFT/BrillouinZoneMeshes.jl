@@ -166,6 +166,39 @@
 
             end
 
+            @testset "2D CompositePolarMesh" begin
+                # given dispersion function accept a k in cartesian
+                # goal is to find k_F at direction specified by angle
+                dispersion(k) = dot(k, k) - 1.0
+
+                # 2d
+                N = 10
+                bound = [-π, π]
+                theta = SimpleGrid.Uniform(bound, N; isperiodic=true)
+
+                DIM = 2
+                lattice = Matrix([1.0 0; 0 1]')
+                br = BZMeshes.Cell(lattice=lattice)
+
+                pm = CompositePolarMesh(dispersion=dispersion, anglemesh=theta, cell=br, kmax=2.0, N=3)
+                @test AbstractMeshes.volume(pm) ≈ 4π
+
+                data = zeros(size(pm))
+                for (pi, p) in enumerate(pm)
+                    data[pi] = dispersion(p)
+                end
+
+                testN = 10
+                for i in 1:testN
+                    r, θ = rand(rng) * 2.0, (rand(rng) * 2 - 1) * π
+                    p = Polar(r, θ)
+                    x = BZMeshes._cartesianize(p)
+                    @test isapprox(AbstractMeshes.interp(data, pm, x), dispersion(x), rtol=1e-4)
+                    @test isapprox(AbstractMeshes.interp(data, pm, p), dispersion(x), rtol=1e-4)
+                end
+
+            end
+
             @testset "3D" begin
                 dispersion(k) = dot(k, k) - 1.0
 
@@ -216,7 +249,7 @@
                     br = BZMeshes.Cell(lattice=lattice)
                     bzmesh = PolarMesh(br, ProdMesh([rrg for i in 1:length(theta)], theta))
                     for (i, p) in enumerate(bzmesh)
-                        println(p, AbstractMeshes.volume(bzmesh, i))
+                        # println(p, AbstractMeshes.volume(bzmesh, i))
                     end
                 end
 

@@ -78,6 +78,18 @@ function volume1d(g::BaryCheb1D, i)
     end
 end
 
+function interval1d(g::BaryCheb1D, i)
+    grid = g.x
+    if i != 1 && i != length(grid)
+        result = SVector{2,Float64}((grid[i-1] + grid[i]) / 2, (grid[i+1] + grid[i]) / 2)
+    elseif i == 1
+        result = SVector{2,Float64}(-1.0, (grid[i+1] + grid[i]) / 2)
+    else
+        result = SVector{2,Float64}((grid[i] + grid[i-1]) / 2, 1.0)
+    end
+    return result
+end
+
 function AbstractMeshes.locate(mesh::ChebMesh{T,DIM,N}, x) where {T,DIM,N}
     displacement = SVector{DIM,Float64}(x) - mesh.origin
     xs = AbstractMeshes.cart_to_frac(mesh, displacement) .* 2.0 .- 1.0
@@ -89,5 +101,19 @@ AbstractMeshes.volume(mesh::ChebMesh) = mesh.cell_volume
 function AbstractMeshes.volume(mesh::ChebMesh{T,DIM,N}, i) where {T,DIM,N}
     inds = AbstractMeshes._ind2inds(mesh.size, i)
     return reduce(*, volume1d(mesh.barycheb, inds[j]) for j in 1:DIM) * volume(mesh) / 2^DIM
+end
+
+function AbstractMeshes.interval(mesh::ChebMesh{T,DIM,N}, I::Int) where {T,DIM,N}
+    # only works for orthogonal case, need refactor later
+    # assume mesh.lattice is diagonal
+    @assert isdiag(mesh.lattice)
+    lengths = diag(mesh.lattice)
+    inds = AbstractMeshes._ind2inds(mesh.size, I)
+    result = MMatrix{DIM,2,T,DIM * 2}(zeros(DIM, 2))
+    for i in 1:DIM
+        bi = interval1d(mesh.barycheb, inds[i])
+        result[i, :] .= mesh.origin[i] .+ (bi .+ 1.0) ./ 2.0 .* lengths[i]
+    end
+    return SMatrix{DIM,2,T,DIM * 2}(result)
 end
 
