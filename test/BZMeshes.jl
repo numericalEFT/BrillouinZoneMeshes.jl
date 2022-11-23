@@ -231,6 +231,44 @@
 
             end
 
+            @testset "3D CompositePolarMesh" begin
+                dispersion(k) = dot(k, k) - 1.0
+
+                N = 6
+                bound = [-π, π]
+                phi = SimpleGrid.Uniform(bound, N)
+
+                N = 4
+                bound = [-π / 2, π / 2]
+                theta = SimpleGrid.Uniform(bound, N)
+
+                am = ProdMesh([theta for i in 1:length(phi)], phi)
+
+                DIM = 3
+                lattice = Matrix([1.0 1.0 0; 1 0 1; 0 1 1]')
+                br = BZMeshes.Cell(lattice=lattice)
+
+                pm = CompositePolarMesh(dispersion=dispersion, anglemesh=am, cell=br, kmax=2.0, N=4)
+                @test AbstractMeshes.volume(pm) ≈ 32π / 3
+
+                data = zeros(size(pm))
+                for (pi, p) in enumerate(pm)
+                    data[pi] = dispersion(p)
+                end
+
+                testN = 10
+                for i in 1:testN
+                    r, ϕ, θ = rand(rng) * 2.0, (rand(rng) * 2 - 1) * π, (rand(rng) * 2 - 1) * π / 2
+                    p = Spherical(r, θ, ϕ)
+                    x = BZMeshes._cartesianize(p)
+                    @test isapprox(AbstractMeshes.interp(data, pm, x), dispersion(x), rtol=1e-4)
+                    @test isapprox(AbstractMeshes.interp(data, pm, p), dispersion(x), rtol=1e-4)
+                end
+
+                @test isapprox(AbstractMeshes.integrate(data, pm), 4π * 56 / 15, rtol=1e-4)
+
+            end
+
             @testset "Radial rescale" begin
                 @testset "RescaledGrid" begin
                     rmax = 2.0

@@ -91,6 +91,16 @@ Here we assume periodic boundary condition so for all case it's the same.
 AbstractMeshes.volume(mesh::AbstractUniformMesh) = cell_volume(mesh)
 AbstractMeshes.volume(mesh::AbstractUniformMesh, i) = cell_volume(mesh) / length(mesh)
 
+AbstractMeshes.interp(data, mesh::AbstractUniformMesh, x) = data[locate(mesh, x)]
+
+function AbstractMeshes.integrate(data, mesh::AbstractUniformMesh)
+    result = 0.0
+    for i in 1:length(mesh)
+        result += data[i] * volume(mesh, i)
+    end
+    return result
+end
+
 struct HasLattice <: AbstractMeshes.LatticeStyle end # has mesh.lattice and mesh.inv_lattice
 AbstractMeshes.lattice_vector(::HasLattice, mesh) = mesh.lattice
 AbstractMeshes.inv_lattice_vector(::HasLattice, mesh) = mesh.inv_lattice
