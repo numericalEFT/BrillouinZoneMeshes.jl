@@ -162,7 +162,7 @@ function AbstractMeshes.integrate(data, mesh::PolarMesh{T,3,MT}) where {T,MT}
     weighteddata = similar(data)
     for pi in 1:length(mesh)
         r, θ, ϕ = _extract(mesh[AngularCoords, pi])
-        weighteddata[pi] = r^2 * sin(θ) * data[pi]
+        weighteddata[pi] = r^2 * cos(θ) * data[pi]
     end
     return integrate(weighteddata, mesh.mesh)
 end
@@ -270,7 +270,6 @@ function PolarMesh(; dispersion, anglemesh, cell, kmax,
 
     DIM = size(cell.lattice, 1)
     bound = [0.0, kmax]
-    println(typeof(dispersion))
     grids = kF_densed_kgrids(; dispersion=dispersion, anglemesh=anglemesh, bound=bound, DIM=DIM, kwargs...)
     cm = ProdMesh(grids, anglemesh)
     pm = PolarMesh(cell, cm)
@@ -282,7 +281,6 @@ function CompositePolarMesh(; dispersion, anglemesh, cell, kmax, N,
 
     DIM = size(cell.lattice, 1)
     bound = [0.0, kmax]
-    println(typeof(dispersion))
     grids = kF_densed_kgrids(; dispersion=dispersion, anglemesh=anglemesh, bound=bound, DIM=DIM, kwargs...)
     prm = ProdMesh(grids, anglemesh)
     cm = CompositeMesh(prm, N)
