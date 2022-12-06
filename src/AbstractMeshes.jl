@@ -128,8 +128,16 @@ frac_to_cart(mesh::AbstractMesh, frac) = lattice_vector(mesh) * frac
 cart_to_frac(mesh::AbstractMesh, cart) = inv_lattice_vector(mesh) * cart
 
 # optional: interp and integrate
-integrate(data, mesh::AbstractMesh) = error("not implemented!")
-interp(data, mesh::AbstractMesh, x) = error("not implemented!")
+# by default use locate and volume
+# function integrate(data, mesh::AbstractMesh)
+#     result = 0.0
+#     for (i, p) in enumerate(mesh)
+#         result += data[i] * volume(mesh, i)
+#     end
+#     return result
+# end
+integrate(data, mesh::AbstractMesh) = reduce(+, data[i] * volume(mesh, i) for i in 1:length(mesh))
+interp(data, mesh::AbstractMesh, x) = data[locate(mesh, x)]
 
 # optional: interval. useful for converting from cartesian to angular
 interval(mesh::AbstractMesh, I::Int) = error("not implemented!")

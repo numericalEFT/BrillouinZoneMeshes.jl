@@ -71,12 +71,14 @@ end
 @testset "BaryCheb integrate on arbitrary region" begin
     rng = MersenneTwister(1234)
 
+    radius = 1.0
+
     function region(x)
         # define region
         # return 1.0 if in region, 0.0 if out
 
         # a circle
-        if dot(x, x) < 1.0
+        if dot(x, x) < radius
             return 1.0
         else
             return 0.0
@@ -118,6 +120,7 @@ end
         result = sum(weight .* data)
         println("result=$(result), acc. = $((ℯ - 1) / ℯ * π)")
         @test isapprox(result, (ℯ - 1) / ℯ * π, rtol=1e-2)
+        @test isapprox(sum(weight), π, rtol=1e-2)
     end
 
 
