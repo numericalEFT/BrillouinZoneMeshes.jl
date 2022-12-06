@@ -1,6 +1,9 @@
+module FFTInterp
+
 # using Plots
 using FFTW
 
+export fourier_interpolate
 
 # assume f(x) where x = -N/2:N/2-1
 # return f(y) where y = -Ni/2:Ni/2-1
@@ -32,8 +35,13 @@ function fourier_interpolate(f::AbstractArray{T,D}, Ni::Int64) where {T,D}
     return f_interp
 end
 
+end
+
+
 if abspath(PROGRAM_FILE) == @__FILE__
 
+    using .FFTInterp
+    using .FFTInterp.FFTW
 
     Nx = 30
     Nxfine = 100
@@ -47,7 +55,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
     fine = exp.(sin.(2π * xfine))
 
     f_interp, xi = fourier_interpolate(f, Nxfine)
-    println("DIM = 1 test: ", maximum(abs.(f_interp - fine)))
+    println("DIM = 1 test: ", maximum(abs.(f_interp .- fine)))
 
     # plot(x, f, label="Original samples", markershape=:circle)
     # plot!(xi, f_interp, label="Interpolated values")
@@ -68,7 +76,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
     end
 
     f_interp, xi = fourier_interpolate(f, Nxfine)
-    println("DIM = 2 test: ", maximum(abs.(f_interp - fine)))
+    println("DIM = 2 test: ", maximum(abs.(f_interp .- fine)))
 
     # plot(x, f[1, :], label="Original samples", markershape=:circle)
     # plot!(xfine, f_interp[1, :], label="Interpolated values")
@@ -93,7 +101,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
     end
 
     f_interp, xi = fourier_interpolate(f, Nxfine)
-    println("DIM = 3 test: ", maximum(abs.(f_interp - fine)))
+    println("DIM = 3 test: ", maximum(abs.(f_interp .- fine)))
 
     # plot(x, f[1, 1, :], label="Original samples", markershape=:circle)
     # plot!(xfine, f_interp[1, 1, :], label="Interpolated values")
