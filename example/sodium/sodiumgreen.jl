@@ -13,7 +13,9 @@ include("interpolation.jl")
 using .FFTInterp
 
 export fourier_interpolate
-export calc_scf, greenfromscf
+export calc_scf, save_scfres, load_scfres
+export GVectors, locate
+export GreenInterpolator, green
 
 struct GVectors{DIM} <: AbstractMeshes.AbstractMesh{Int,DIM}
     gmin::SVector{DIM,Int}
@@ -89,17 +91,16 @@ function greenfromscf(scfres, m, n, kidx, τ, β)
     return result
 end
 
-struct GreenInterpolator{DI}
+struct GreenInterpolator{DI,MT}
     # store interpolators for green's function and provide interpolation
     # interpolators are for k-points, thus for each G-vector and band an interpolator is needed
     # store ψ and ε, green's function is computed
     beta::Float64
     n_bands::Int
     dispersions::Vector{DI}
-    ψ
-    kgrid
+    ψ::Array{ComplexF64,3}
     gvectors::GVectors{3}
-    rbzmesh
+    rbzmesh::MT
 end
 
 function GreenInterpolator(scfres)
@@ -165,8 +166,8 @@ function GreenInterpolator(scfres)
         push!(dispersions, sitp)
     end
 
-    return GreenInterpolator{typeof(dispersions[1])}(beta, n_bands, dispersions,
-        ψ, kgrid, gvectors, rbzmesh)
+    return GreenInterpolator{typeof(dispersions[1]),typeof(rbzmesh)}(beta, n_bands, dispersions,
+        ψ, gvectors, rbzmesh)
 end
 
 function green(gi::GreenInterpolator{DI}, gv1, gv2, k, τ) where {DI}
@@ -192,5 +193,8 @@ end
 
 
 if abspath(PROGRAM_FILE) == @__FILE__
+
+    using .DFTGreen
+
 
 end
