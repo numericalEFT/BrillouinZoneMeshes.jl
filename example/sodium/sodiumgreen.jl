@@ -181,7 +181,7 @@ function greenτ(gi::GreenInterpolator{DI}, gv1, gv2, k, τ) where {DI}
         ψ2 = AbstractMeshes.interp(data2, gi.rbzmesh, k)
         sitp = gi.dispersions[band]
         fk = inv_lattice_vector(gi.rbzmesh.mesh) * k
-        ε = sitp(fk...)
+        ε = sitp(fk[1], fk[2], fk[3])
         # println("ψ1=$ψ1, ψ2=$ψ2, ε=$ε")
         result += ψ1 * conj(ψ2) * exp(-ε * τ) / (1 + exp(-ε * gi.beta))
     end
