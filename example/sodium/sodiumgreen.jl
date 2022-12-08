@@ -118,9 +118,9 @@ function GreenInterpolator(scfres)
     meshmap = MeshMaps.MeshMap(bzmesh)
     rbzmesh = MeshMaps.ReducedBZMesh(bzmesh, meshmap)
 
-    kx = LinRange(-0.5, 0.5 - 1.0 / kgrid[1], kgrid[1])
-    ky = LinRange(-0.5, 0.5 - 1.0 / kgrid[2], kgrid[2])
-    kz = LinRange(-0.5, 0.5 - 1.0 / kgrid[3], kgrid[3])
+    kx = LinRange(-0.5, 0.5, kgrid[1] + 1)
+    ky = LinRange(-0.5, 0.5, kgrid[2] + 1)
+    kz = LinRange(-0.5, 0.5, kgrid[3] + 1)
 
 
     gvfromscf = collect_gvector(scfres)
@@ -139,7 +139,7 @@ function GreenInterpolator(scfres)
             for gi in 1:length(k.G_vectors)
                 g = k.G_vectors[gi]
                 gidx = locate(gvectors, g)
-                @assert gvectors[gidx] ≈ g
+                # @assert gvectors[gidx] ≈ g
                 ψ[gidx, bandidx, idx] = scfres.ψ[ki][gi, bandidx]
             end
         end
@@ -151,13 +151,13 @@ function GreenInterpolator(scfres)
 
     for bandidx in 1:scfres.n_bands_converge
         # dispersion
-        bandarray = zeros(kgrid...)
-        for kx in 1:kgrid[1]
-            for ky in 1:kgrid[2]
-                for kz in 1:kgrid[3]
+        bandarray = zeros((kgrid .+ 1)...)
+        for ikx in 1:kgrid[1]
+            for iky in 1:kgrid[2]
+                for ikz in 1:kgrid[3]
                     # idx = AbstractMeshes._inds2ind(tuple(kgrid...), [kx, ky, kz])
-                    idx = AbstractMeshes.locate(rbzmesh, rbzmesh[kx, ky, kz])
-                    bandarray[kx, ky, kz] = ϵ[bandidx, AbstractMeshes.locate(meshmap, idx)]
+                    idx = AbstractMeshes.locate(rbzmesh, [kx[ikx], ky[iky], kz[ikz]])
+                    bandarray[ikx, iky, ikz] = ϵ[bandidx, AbstractMeshes.locate(meshmap, idx)]
                 end
             end
         end
@@ -170,7 +170,7 @@ function GreenInterpolator(scfres)
         ψ, gvectors, rbzmesh)
 end
 
-function green(gi::GreenInterpolator{DI}, gv1, gv2, k, τ) where {DI}
+function greenτ(gi::GreenInterpolator{DI}, gv1, gv2, k, τ) where {DI}
     gi1, gi2 = locate(gi.gvectors, gv1), locate(gi.gvectors, gv2)
     result = ComplexF64(0.0)
 
@@ -180,13 +180,31 @@ function green(gi::GreenInterpolator{DI}, gv1, gv2, k, τ) where {DI}
         data2 = view(gi.ψ, gi2, band, :)
         ψ2 = AbstractMeshes.interp(data2, gi.rbzmesh, k)
         sitp = gi.dispersions[band]
-        ε = sitp(k...)
+        fk = inv_lattice_vector(gi.rbzmesh.mesh) * k
+        ε = sitp(fk...)
         # println("ψ1=$ψ1, ψ2=$ψ2, ε=$ε")
         result += ψ1 * conj(ψ2) * exp(-ε * τ) / (1 + exp(-ε * gi.beta))
     end
     return result
 end
 
+function greenω(gi::GreenInterpolator{DI}, gv1, gv2, k, ω; δ=1e-8) where {DI}
+    gi1, gi2 = locate(gi.gvectors, gv1), locate(gi.gvectors, gv2)
+    result = ComplexF64(0.0)
+
+    for band in 1:gi.n_bands
+        data1 = view(gi.ψ, gi1, band, :)
+        ψ1 = AbstractMeshes.interp(data1, gi.rbzmesh, k)
+        data2 = view(gi.ψ, gi2, band, :)
+        ψ2 = AbstractMeshes.interp(data2, gi.rbzmesh, k)
+        sitp = gi.dispersions[band]
+        fk = inv_lattice_vector(gi.rbzmesh.mesh) * k
+        ε = sitp(fk...)
+        # println("ψ1=$ψ1, ψ2=$ψ2, ε=$ε")
+        result += ψ1 * conj(ψ2) / (ω - ε + im * δ)
+    end
+    return result
+end
 
 end
 
@@ -195,6 +213,7 @@ end
 if abspath(PROGRAM_FILE) == @__FILE__
 
     using .DFTGreen
-
+    scfres = DFTGreen.calc_scf()
+    DFTGreen.save_scfres("./run/sodium.jld2", scfres)
 
 end
