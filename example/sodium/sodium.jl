@@ -102,7 +102,7 @@ Kfinegrid = collect(LinRange(kx[1], kx[end], Kfine))
 # Plots.plot!(Kfinegrid, band_interpolate[:, 1, 1], label="band interpolation")
 
 p = Plots.plot(ylims=(-0.15, 0.35))
-kyz = [(1, 1), (4, 4), (8, 8), (12, 12), (16, 16)]
+kyz = [(1, 1), (4, 4), (9, 9), (12, 12), (16, 16)]
 # kyi, kzi = Int(kgrid[2] / 2), Int(kgrid[3] / 2)
 for (kyi, kzi) in kyz
     Plots.scatter!(p, kx, bandarray[:, kyi, kzi], label="band (ky=$kyi, kz = $kzi)", markershape=:circle)

@@ -8,6 +8,7 @@ using BrillouinZoneMeshes
 using JLD2
 
 using BrillouinZoneMeshes.StaticArrays
+using BrillouinZoneMeshes.LinearAlgebra
 
 include("interpolation.jl")
 using .FFTInterp
@@ -106,7 +107,8 @@ end
 function GreenInterpolator(scfres)
     # extract parameters
     beta = scfres.εF / scfres.basis.model.temperature
-    n_bands = scfres.n_bands_converge
+    # n_bands = scfres.n_bands_converge
+    n_bands = scfres.n_iter
     kgrid = scfres.basis.kgrid
     lattice = scfres.basis.model.lattice
     atoms = ones(Int, length(scfres.basis.model.atoms))
@@ -129,9 +131,9 @@ function GreenInterpolator(scfres)
 
     # collect data
 
-    ψ = zeros(ComplexF64, (length(gvectors), scfres.n_bands_converge, length(rbzmesh)))
-    ϵ = zeros(Float64, (scfres.n_bands_converge, length(rbzmesh)))
-    for bandidx in 1:scfres.n_bands_converge
+    ψ = zeros(ComplexF64, (length(gvectors), n_bands, length(rbzmesh)))
+    ϵ = zeros(Float64, (n_bands, length(rbzmesh)))
+    for bandidx in 1:n_bands
         for ki in 1:length(scfres.basis.kpoints)
             k = scfres.basis.kpoints[ki]
             idx = AbstractMeshes.locate(rbzmesh, lattice_vector(rbzmesh.mesh) * k.coordinate)
@@ -149,19 +151,20 @@ function GreenInterpolator(scfres)
 
     dispersions = []
 
-    for bandidx in 1:scfres.n_bands_converge
+    for bandidx in 1:n_bands
         # dispersion
         bandarray = zeros((kgrid .+ 1)...)
         for ikx in 1:kgrid[1]
             for iky in 1:kgrid[2]
                 for ikz in 1:kgrid[3]
                     # idx = AbstractMeshes._inds2ind(tuple(kgrid...), [kx, ky, kz])
-                    idx = AbstractMeshes.locate(rbzmesh, [kx[ikx], ky[iky], kz[ikz]])
-                    bandarray[ikx, iky, ikz] = ϵ[bandidx, AbstractMeshes.locate(meshmap, idx)]
+                    idx = AbstractMeshes.locate(rbzmesh, lattice_vector(rbzmesh.mesh) * [kx[ikx], ky[iky], kz[ikz]])
+                    bandarray[ikx, iky, ikz] = ϵ[bandidx, idx]
                 end
             end
         end
-        itp = interpolate(bandarray, BSpline(Cubic(Line(OnGrid()))))
+        # itp = interpolate(bandarray, BSpline(Cubic(Line(OnGrid()))))
+        itp = interpolate(bandarray, BSpline(Linear()))
         sitp = scale(itp, kx, ky, kz)
         push!(dispersions, sitp)
     end
@@ -193,17 +196,35 @@ function greenω(gi::GreenInterpolator{DI}, gv1, gv2, k, ω; δ=1e-8) where {DI}
     result = ComplexF64(0.0)
 
     for band in 1:gi.n_bands
+        # for band in 5:5
         data1 = view(gi.ψ, gi1, band, :)
         ψ1 = AbstractMeshes.interp(data1, gi.rbzmesh, k)
-        data2 = view(gi.ψ, gi2, band, :)
-        ψ2 = AbstractMeshes.interp(data2, gi.rbzmesh, k)
+        if gi1 == gi2
+            ψ2 = ψ1
+        else
+            data2 = view(gi.ψ, gi2, band, :)
+            ψ2 = AbstractMeshes.interp(data2, gi.rbzmesh, k)
+        end
         sitp = gi.dispersions[band]
         fk = inv_lattice_vector(gi.rbzmesh.mesh) * k
-        ε = sitp(fk...)
+        ε = sitp(fk[1], fk[2], fk[3])
         # println("ψ1=$ψ1, ψ2=$ψ2, ε=$ε")
         result += ψ1 * conj(ψ2) / (ω - ε + im * δ)
     end
     return result
+end
+
+function greenfree(gi, gv1, gv2, k, ω; δ=1e-2)
+    gi1, gi2 = locate(gi.gvectors, gv1), locate(gi.gvectors, gv2)
+    if gi1 != gi2
+        return ComplexF64(0.0)
+    else
+        K = k .+ lattice_vector(gi.rbzmesh.mesh) * gv1
+        m = 1.0
+        EF = 0.017217600764962135
+        ε = dot(K, K) / 2 / m - EF
+        return 1 / (ω - ε + im * δ)
+    end
 end
 
 end

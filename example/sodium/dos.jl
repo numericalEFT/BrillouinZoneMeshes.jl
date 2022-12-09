@@ -10,28 +10,35 @@ using MCIntegration
 using Random, Printf, BenchmarkTools, InteractiveUtils, Parameters
 using Plots
 
-const Steps = 1e5
+const Steps = 8e6
 
 const scfres = DFTGreen.load_scfres("./run/sodium.jld2")
 const gi = DFTGreen.GreenInterpolator(scfres)
 
 const NGV = length(gi.gvectors)
 # const NGV = 100
-const δ = 1e-4
-
-const NExt = 20
-const ωmin, ωmax = -0.07, 0.15
+const δ = 1e-3
+const NExt = 160
+const ωmin, ωmax = -0.2, 0.6
 const ωlist = LinRange(ωmin, ωmax, NExt)
+const hatree2ev = 27.2114
+
 
 function integrand(var, config)
+    factor = cell_volume(gi.rbzmesh.mesh)
+
     Ext, K, GV = var[1], var[2], var[3]
     # @assert idx == 1 "$(idx) is not a valid integrand"
     ω = ωlist[Ext[1]]
     fk = SVector{3,Float64}(K[1], K[2], K[3])
     k = lattice_vector(gi.rbzmesh.mesh) * fk
-    n1, n2 = GV[1], GV[2]
-    gv1, gv2 = gi.gvectors[n1], gi.gvectors[n2]
-    result = DFTGreen.greenω(gi, gv1, gv2, k, ω; δ=δ)
+    # n1, n2 = GV[1], GV[2]
+    # gv1, gv2 = gi.gvectors[n1], gi.gvectors[n2]
+    n1 = GV[1]
+    gv1 = gi.gvectors[n1]
+    # gv1 = [0, 0, 0]
+    result = DFTGreen.greenω(gi, gv1, gv1, k, ω; δ=δ) * factor
+    # result = DFTGreen.greenfree(gi, gv1, gv1, k, ω; δ=δ) * factor
     # return (real(result), imag(result))
     return (result,)
     # return 1.0, 1.0
@@ -50,7 +57,7 @@ function run(steps)
     K = MCIntegration.Continuous(-0.5, 0.5; alpha=2.0, adapt=true)
     GV = MCIntegration.Discrete(1, NGV; adapt=true)
 
-    dof = [[1, 3, 2],] # degrees of freedom of the normalization diagram and the bubble
+    dof = [[1, 3, 1],] # degrees of freedom of the normalization diagram and the bubble
     # obs = [zeros(Float64, NExt), zeros(Float64, NExt)]
     obs = [zeros(ComplexF64, NExt),]
 
@@ -69,7 +76,7 @@ function run(steps)
         # println(sum(result.config.var[i].histogram))
         # println(result.config.var[i].accumulation)
         # println(result.config.var[i].distribution)
-        plt = plot(ωlist ./ scfres.εF, -imag(avg), yerror=imag(std), xlabel="ω", label="circle")#, xlims=[ωmin, ωmax])
+        plt = plot(ωlist .* hatree2ev, -imag(avg), yerror=imag(std), xlabel="ω/eV", label="circle")#, xlims=[ωmin, ωmax])
         display(plt)
         readline()
         savefig(plt, "run/dos.png")
