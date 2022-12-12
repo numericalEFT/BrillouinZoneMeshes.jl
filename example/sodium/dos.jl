@@ -10,7 +10,7 @@ using MCIntegration
 using Random, Printf, BenchmarkTools, InteractiveUtils, Parameters
 using Plots
 
-const Steps = 8e6
+const Steps = 4e6
 
 const scfres = DFTGreen.load_scfres("./run/sodium.jld2")
 const gi = DFTGreen.GreenInterpolator(scfres)
@@ -18,7 +18,7 @@ const gi = DFTGreen.GreenInterpolator(scfres)
 const NGV = length(gi.gvectors)
 # const NGV = 100
 const δ = 1e-3
-const NExt = 160
+const NExt = 40
 const ωmin, ωmax = -0.2, 0.6
 const ωlist = LinRange(ωmin, ωmax, NExt)
 const hatree2ev = 27.2114

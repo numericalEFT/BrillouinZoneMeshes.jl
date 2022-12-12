@@ -123,6 +123,22 @@ AbstractMeshes.LatticeStyle(::Type{<:UniformBZMesh}) = BrillouinLattice()
 #     println("UniformBZMesh with $(length(mesh)) mesh points")
 # end
 
+function AbstractMeshes.locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
+    svx = SVector{DIM,T}(x)
+    fracx = cart_to_frac(mesh, svx - mesh.origin)
+    # periodic boundary
+    inds = (fracx .- floor.(fracx)) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
+    indexall = 1
+    factor = 1
+    indexall += (BaseMesh.cycling_floor(inds[1], mesh.size[1]) - 1) * factor
+    for i in 2:DIM
+        factor *= mesh.size[i-1]
+        indexall += (BaseMesh.cycling_floor(inds[i], mesh.size[i]) - 1) * factor
+    end
+
+    return indexall
+end
+
 function Base.show(io::IO, mesh::UniformBZMesh)
     print(io, "Uniform BZ mesh (Cell = ", mesh.cell)
     print(io, ", origin = ", inv_lattice_vector(mesh) * mesh.origin)

@@ -100,8 +100,10 @@ Kfinegrid = collect(LinRange(kx[1], kx[end], Kfine))
 # Plots.plot()
 # Plots.plot!(kx, bandarray[:, 1, 1], label="band", markershape=:circle)
 # Plots.plot!(Kfinegrid, band_interpolate[:, 1, 1], label="band interpolation")
-
-p = Plots.plot(ylims=(-0.15, 0.35))
+sitp = gi.dispersions[5]
+bandarray .= sitp.itp.coefs#[1:16, 1:16, 1:16]
+# p = Plots.plot(ylims=(-0.15, 0.35))
+p = Plots.plot()
 kyz = [(1, 1), (4, 4), (9, 9), (12, 12), (16, 16)]
 # kyi, kzi = Int(kgrid[2] / 2), Int(kgrid[3] / 2)
 for (kyi, kzi) in kyz

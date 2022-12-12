@@ -45,7 +45,7 @@ function calc_scf(;
     temperature=0.02u"Ry",
     Ecut=80.0u"Ry",
     kgrid=[16, 16, 16],
-    tol=1e-8)
+    tol=1e-10)
 
     model = model_PBE(lattice, atoms, positions; temperature, smearing)
     basis = PlaneWaveBasis(model; Ecut, kgrid=kgrid)
@@ -104,11 +104,11 @@ struct GreenInterpolator{DI,MT}
     rbzmesh::MT
 end
 
-function GreenInterpolator(scfres)
+function GreenInterpolator(scfres; n_bands=10)
     # extract parameters
     beta = scfres.εF / scfres.basis.model.temperature
     # n_bands = scfres.n_bands_converge
-    n_bands = scfres.n_iter
+    n_bands = n_bands
     kgrid = scfres.basis.kgrid
     lattice = scfres.basis.model.lattice
     atoms = ones(Int, length(scfres.basis.model.atoms))
@@ -154,9 +154,9 @@ function GreenInterpolator(scfres)
     for bandidx in 1:n_bands
         # dispersion
         bandarray = zeros((kgrid .+ 1)...)
-        for ikx in 1:kgrid[1]
-            for iky in 1:kgrid[2]
-                for ikz in 1:kgrid[3]
+        for ikx in 1:kgrid[1]+1
+            for iky in 1:kgrid[2]+1
+                for ikz in 1:kgrid[3]+1
                     # idx = AbstractMeshes._inds2ind(tuple(kgrid...), [kx, ky, kz])
                     idx = AbstractMeshes.locate(rbzmesh, lattice_vector(rbzmesh.mesh) * [kx[ikx], ky[iky], kz[ikz]])
                     bandarray[ikx, iky, ikz] = ϵ[bandidx, idx]
@@ -210,6 +210,7 @@ function greenω(gi::GreenInterpolator{DI}, gv1, gv2, k, ω; δ=1e-8) where {DI}
         ε = sitp(fk[1], fk[2], fk[3])
         # println("ψ1=$ψ1, ψ2=$ψ2, ε=$ε")
         result += ψ1 * conj(ψ2) / (ω - ε + im * δ)
+        # result += 1 / (ω - ε + im * δ)
     end
     return result
 end
