@@ -33,6 +33,7 @@ end
 
 Base.getindex(gvs::GVectors, inds...) = gvs.gmin .+ inds .- 1
 Base.getindex(gvs::GVectors, I::Int) = gvs[AbstractMeshes._ind2inds(size(gvs), I)...]
+Base.show(io::IO, mesh::GVectors) = print(io, "GVectors of $(mesh.size)")
 
 locate(gvs::GVectors, gv) = AbstractMeshes._inds2ind(size(gvs), (gv .- gvs.gmin .+ 1))
 # compute scf, default sodium
@@ -210,7 +211,7 @@ function greenω(gi::GreenInterpolator{DI}, gv1, gv2, k, ω; δ=1e-8) where {DI}
         ε = sitp(fk[1], fk[2], fk[3])
         # println("ψ1=$ψ1, ψ2=$ψ2, ε=$ε")
         result += ψ1 * conj(ψ2) / (ω - ε + im * δ)
-        # result += 1 / (ω - ε + im * δ)
+        # result += 1 / (ω - ε + im * δ) / length(gi.gvectors)
     end
     return result
 end
@@ -235,7 +236,7 @@ end
 if abspath(PROGRAM_FILE) == @__FILE__
 
     using .DFTGreen
-    scfres = DFTGreen.calc_scf()
+    scfres = DFTGreen.calc_scf(kgrid=[16, 16, 16])
     DFTGreen.save_scfres("./run/sodium.jld2", scfres)
 
 end
