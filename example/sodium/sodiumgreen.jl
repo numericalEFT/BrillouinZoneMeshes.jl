@@ -174,15 +174,17 @@ function GreenInterpolator(scfres; n_bands=10)
         ψ, gvectors, rbzmesh)
 end
 
-function greenτ(gi::GreenInterpolator{DI}, gv1, gv2, k, τ) where {DI}
-    gi1, gi2 = locate(gi.gvectors, gv1), locate(gi.gvectors, gv2)
+function greenτ(gi::GreenInterpolator{DI}, gi1::Int, gi2::Int, k, τ) where {DI}
     result = ComplexF64(0.0)
-
     for band in 1:gi.n_bands
         data1 = view(gi.ψ, gi1, band, :)
         ψ1 = AbstractMeshes.interp(data1, gi.rbzmesh, k)
-        data2 = view(gi.ψ, gi2, band, :)
-        ψ2 = AbstractMeshes.interp(data2, gi.rbzmesh, k)
+        if gi1 == gi2
+            ψ2 = ψ1
+        else
+            data2 = view(gi.ψ, gi2, band, :)
+            ψ2 = AbstractMeshes.interp(data2, gi.rbzmesh, k)
+        end
         sitp = gi.dispersions[band]
         fk = inv_lattice_vector(gi.rbzmesh.mesh) * k
         ε = sitp(fk[1], fk[2], fk[3])
@@ -192,10 +194,17 @@ function greenτ(gi::GreenInterpolator{DI}, gv1, gv2, k, τ) where {DI}
     return result
 end
 
-function greenω(gi::GreenInterpolator{DI}, gv1, gv2, k, ω; δ=1e-8) where {DI}
+function greenτ(
+    gi::GreenInterpolator{DI},
+    gv1::AbstractVector{Int},
+    gv2::AbstractVector{Int},
+    k, τ) where {DI}
     gi1, gi2 = locate(gi.gvectors, gv1), locate(gi.gvectors, gv2)
-    result = ComplexF64(0.0)
+    return greenτ(gi, gi1, gi2, k, τ)
+end
 
+function greenω(gi::GreenInterpolator{DI}, gi1::Int, gi2::Int, k, ω; δ=1e-8) where {DI}
+    result = ComplexF64(0.0)
     for band in 1:gi.n_bands
         # for band in 5:5
         data1 = view(gi.ψ, gi1, band, :)
@@ -214,6 +223,15 @@ function greenω(gi::GreenInterpolator{DI}, gv1, gv2, k, ω; δ=1e-8) where {DI}
         # result += 1 / (ω - ε + im * δ) / length(gi.gvectors)
     end
     return result
+end
+
+function greenω(
+    gi::GreenInterpolator{DI},
+    gv1::AbstractVector{Int},
+    gv2::AbstractVector{Int},
+    k, ω; δ=1e-8) where {DI}
+    gi1, gi2 = locate(gi.gvectors, gv1), locate(gi.gvectors, gv2)
+    return greenω(gi, gi1, gi2, k, ω; δ)
 end
 
 function greenfree(gi, gv1, gv2, k, ω; δ=1e-2)
