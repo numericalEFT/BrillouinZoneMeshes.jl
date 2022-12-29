@@ -35,7 +35,17 @@ Base.getindex(gvs::GVectors, inds...) = gvs.gmin .+ inds .- 1
 Base.getindex(gvs::GVectors, I::Int) = gvs[AbstractMeshes._ind2inds(size(gvs), I)...]
 Base.show(io::IO, mesh::GVectors) = print(io, "GVectors of $(mesh.size)")
 
-locate(gvs::GVectors, gv) = AbstractMeshes._inds2ind(size(gvs), (gv .- gvs.gmin .+ 1))
+_locate(gvs::GVectors, gv) = AbstractMeshes._inds2ind(size(gvs), (gv .- gvs.gmin .+ 1))
+function locate(gvs::GVectors, gv)
+    # return 0 if not in gvs
+    # return index otherwise
+    I = _locate(gvs, gv)
+    if 0 < I <= length(gvs)
+        return I
+    else
+        return 0
+    end
+end
 # compute scf, default sodium
 function calc_scf(;
     lattice=(0.429u"nm") / 2 * [[1.0 -1.0 1.0]; [1.0 1.0 -1.0]; [-1.0 1.0 1.0]],
@@ -200,7 +210,11 @@ function greenτ(
     gv2::AbstractVector{Int},
     k, τ) where {DI}
     gi1, gi2 = locate(gi.gvectors, gv1), locate(gi.gvectors, gv2)
-    return greenτ(gi, gi1, gi2, k, τ)
+    if gi1 == 0 || gi2 == 0
+        return ComplexF64(0.0)
+    else
+        return greenτ(gi, gi1, gi2, k, τ)
+    end
 end
 
 function greenω(gi::GreenInterpolator{DI}, gi1::Int, gi2::Int, k, ω; δ=1e-8) where {DI}
@@ -231,7 +245,11 @@ function greenω(
     gv2::AbstractVector{Int},
     k, ω; δ=1e-8) where {DI}
     gi1, gi2 = locate(gi.gvectors, gv1), locate(gi.gvectors, gv2)
-    return greenω(gi, gi1, gi2, k, ω; δ)
+    if gi1 == 0 || gi2 == 0
+        return ComplexF64(0.0)
+    else
+        return greenω(gi, gi1, gi2, k, ω; δ)
+    end
 end
 
 function greenfree(gi, gv1, gv2, k, ω; δ=1e-2)

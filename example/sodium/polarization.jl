@@ -17,6 +17,7 @@ const gi = DFTGreen.GreenInterpolator(scfres)
 const NGV = length(gi.gvectors)
 # const NGV = 100
 const ω = 0.0
+const gn1, gn2 = [0, 0, 0], [0, 0, 0]
 const q = SVector{3,Float64}([0, 0, 0])
 
 function integrand(var, config)
@@ -24,10 +25,11 @@ function integrand(var, config)
     # @assert idx == 1 "$(idx) is not a valid integrand"
     τ = T[1]
     fk = SVector{3,Float64}(K[1], K[2], K[3])
-    k1 = lattice_vector(gi.rbzmesh.mesh) * fk
-    k2 = k1 .+ q
-    n1 = GV[1]
-    result = DFTGreen.greenτ(gi, n1, n1, k1, τ) * DFTGreen.greenτ(gi, n1, n1, k2, gi.beta - τ)
+    k2 = lattice_vector(gi.rbzmesh.mesh) * fk
+    k1 = k2 .+ q
+    gi1, gi2 = GV[1], GV[2]
+    gm1, gm2 = gi.gvectors[gi1], gi.gvectors[gi2]
+    result = DFTGreen.greenτ(gi, gn1 .+ gm1, gm1, k1, τ) * DFTGreen.greenτ(gi, gm1, gn2 .+ gm2, k2, gi.beta - τ)
     return result * exp(-im * ω * τ)
     # return 1.0, 1.0
 end
@@ -42,13 +44,13 @@ function run(steps)
     K = MCIntegration.Continuous(-0.5, 0.5; alpha=2.0, adapt=true)
     Ext = MCIntegration.Discrete(1, NGV; adapt=true) # external variable is specified
 
-    dof = [[1, 3, 1],] # degrees of freedom of the normalization diagram and the bubble
+    dof = [[1, 3, 2],] # degrees of freedom of the normalization diagram and the bubble
     obs = zeros(ComplexF64, 1)
 
     # config = MCIntegration.Configuration(var=(T, K, Ext), dof=dof, obs=obs, para=para)
     result = MCIntegration.integrate(integrand; measure=measure,
         var=(T, K, Ext), dof=dof, obs=obs, solver=:vegas,
-        neval=steps, print=0, block=16)
+        neval=steps, print=0, block=16, parallel=:thread, type=ComplexF64)
 
     if isnothing(result) == false
         avg, std = result.mean, result.stdev
