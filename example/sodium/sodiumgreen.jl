@@ -252,7 +252,7 @@ function greenω(
     end
 end
 
-function greenfree(gi, gv1, gv2, k, ω; δ=1e-2)
+function greenfreeω(gi, gv1, gv2, k, ω; δ=1e-2)
     gi1, gi2 = locate(gi.gvectors, gv1), locate(gi.gvectors, gv2)
     if gi1 != gi2
         return ComplexF64(0.0)
@@ -262,6 +262,20 @@ function greenfree(gi, gv1, gv2, k, ω; δ=1e-2)
         EF = 0.017217600764962135
         ε = dot(K, K) / 2 / m - EF
         return 1 / (ω - ε + im * δ)
+    end
+end
+
+function greenfreeτ(gi, gv1, gv2, k, τ; beta=gi.beta)
+    gi1, gi2 = locate(gi.gvectors, gv1), locate(gi.gvectors, gv2)
+    if gi1 != gi2
+        return ComplexF64(0.0)
+    else
+        K = k .+ lattice_vector(gi.rbzmesh.mesh) * gv1
+        m = 0.5
+        # EF = 0.017217600764962135
+        EF = 1.0
+        ε = dot(K, K) / 2 / m - EF
+        return exp(-ε * τ) / (1 + exp(-ε * beta))
     end
 end
 

@@ -9,16 +9,23 @@ using .BrillouinZoneMeshes.StaticArrays
 using MCIntegration
 using Random, Printf, BenchmarkTools, InteractiveUtils, Parameters
 
-const Steps = 1e6
+const Steps = 2e7
 
 const scfres = DFTGreen.load_scfres("./run/sodium.jld2")
 const gi = DFTGreen.GreenInterpolator(scfres)
+
+const beta = 5.0
+# const beta = gi.beta
 
 const NGV = length(gi.gvectors)
 # const NGV = 100
 const ω = 0.0
 const gn1, gn2 = [0, 0, 0], [0, 0, 0]
 const q = SVector{3,Float64}([0, 0, 0])
+
+println("beta=$(beta)")
+println("NGV=$(NGV)")
+println("lattice = $(lattice_vector(gi.rbzmesh.mesh))")
 
 function integrand(var, config)
     T, K, GV = var[1], var[2], var[3]
@@ -29,7 +36,9 @@ function integrand(var, config)
     k1 = k2 .+ q
     gi1, gi2 = GV[1], GV[2]
     gm1, gm2 = gi.gvectors[gi1], gi.gvectors[gi2]
-    result = DFTGreen.greenτ(gi, gn1 .+ gm1, gm1, k1, τ) * DFTGreen.greenτ(gi, gm1, gn2 .+ gm2, k2, gi.beta - τ)
+    # result = DFTGreen.greenτ(gi, gn1 .+ gm1, gm1, k1, τ) * DFTGreen.greenτ(gi, gm1, gn2 .+ gm2, k2, gi.beta - τ)
+
+    result = -DFTGreen.greenfreeτ(gi, gn1 .+ gm1, gm2, k1, τ; beta=beta) * DFTGreen.greenfreeτ(gi, gn2 .+ gm2, gm1, k2, beta - τ; beta=beta)
     return result * exp(-im * ω * τ)
     # return 1.0, 1.0
 end
@@ -40,7 +49,7 @@ end
 
 function run(steps)
 
-    T = MCIntegration.Continuous(0.0, gi.beta; alpha=2.0, adapt=true)
+    T = MCIntegration.Continuous(0.0, beta; alpha=2.0, adapt=true)
     K = MCIntegration.Continuous(-0.5, 0.5; alpha=2.0, adapt=true)
     Ext = MCIntegration.Discrete(1, NGV; adapt=true) # external variable is specified
 
