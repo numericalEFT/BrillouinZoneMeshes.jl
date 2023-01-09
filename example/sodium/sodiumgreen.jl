@@ -184,8 +184,10 @@ function GreenInterpolator(scfres; n_bands=10)
         ψ, gvectors, rbzmesh)
 end
 
-function greenτ(gi::GreenInterpolator{DI}, gi1::Int, gi2::Int, k, τ) where {DI}
+function greenτ(gi::GreenInterpolator{DI}, gi1::Int, gi2::Int, k, τ;
+    beta=gi.beta) where {DI}
     result = ComplexF64(0.0)
+    # for band in 1:gi.n_bands
     for band in 1:gi.n_bands
         data1 = view(gi.ψ, gi1, band, :)
         ψ1 = AbstractMeshes.interp(data1, gi.rbzmesh, k)
@@ -199,7 +201,7 @@ function greenτ(gi::GreenInterpolator{DI}, gi1::Int, gi2::Int, k, τ) where {DI
         fk = inv_lattice_vector(gi.rbzmesh.mesh) * k
         ε = sitp(fk[1], fk[2], fk[3])
         # println("ψ1=$ψ1, ψ2=$ψ2, ε=$ε")
-        result += ψ1 * conj(ψ2) * exp(-ε * τ) / (1 + exp(-ε * gi.beta))
+        result += ψ1 * conj(ψ2) * exp(-ε * τ) / (1 + exp(-ε * beta))
     end
     return result
 end
@@ -208,7 +210,8 @@ function greenτ(
     gi::GreenInterpolator{DI},
     gv1::AbstractVector{Int},
     gv2::AbstractVector{Int},
-    k, τ) where {DI}
+    k, τ;
+    beta=gi.beta) where {DI}
     gi1, gi2 = locate(gi.gvectors, gv1), locate(gi.gvectors, gv2)
     if gi1 == 0 || gi2 == 0
         return ComplexF64(0.0)
@@ -271,11 +274,11 @@ function greenfreeτ(gi, gi1::Int, gi2::Int, k, τ; beta=gi.beta)
     else
         K = k .+ lattice_vector(gi.rbzmesh.mesh) * gi.gvectors[gi1]
         m = 0.5
-        # EF = 0.017217600764962135
+        EF = 0.017217600764962135
         # EF = 0.0575495 # rs=8
         # EF = 0.230198 # rs=4
         # EF = 0.920792 # rs=2
-        EF = 3.68316855 # rs=1
+        # EF = 3.68316855 # rs=1
         ε = dot(K, K) / 2 / m - EF
         return exp(-ε * τ) / (1 + exp(-ε * beta))
     end
