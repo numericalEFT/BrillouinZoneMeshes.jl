@@ -9,13 +9,18 @@ using .BrillouinZoneMeshes.StaticArrays
 using MCIntegration
 using Random, Printf, BenchmarkTools, InteractiveUtils, Parameters
 
-const Steps = 1e5
+const Steps = 1e6
 
 const scfres = DFTGreen.load_scfres("./run/sodium.jld2")
 const gi = DFTGreen.GreenInterpolator(scfres)
 
+### extract parameters
 # const beta = 10.0
+const DIM = 3
 const beta = gi.beta
+const EF = scfres.εF
+const kF = 0.4795 # an approx val, used for sampling
+const kmax = norm(DFTGreen.lattice_vector(gi.rbzmesh.mesh) * [1, 1, 1]) * 1.1 # ∀k ∈ 1st BZ, |kmax|>|k|
 
 const NGV = length(gi.gvectors)
 # const NGX = maximum(size(gi.gvectors))
@@ -31,14 +36,27 @@ println("beta=$(beta)")
 println("NGV=$(NGV)")
 println("lattice = $(lattice_vector(gi.rbzmesh.mesh))")
 
+function is_in_bz(bzmesh, k)
+    fk = DFTGreen.inv_lattice_vector(bzmesh) * k
+    return all((-0.5 <= fki <= 0.5) for fki in fk)
+end
+
 function integrand(var, config)
-    factor = cell_volume(gi.rbzmesh.mesh)
+    # factor = cell_volume(gi.rbzmesh.mesh)
+    factor = 1.0
     T, K, GV = var[1], var[2], var[3]
     # @assert idx == 1 "$(idx) is not a valid integrand"
     τ = T[1]
-    fk = SVector{3,Float64}(K[1], K[2], K[3])
-    k2 = lattice_vector(gi.rbzmesh.mesh) * fk
+
+    # fk = SVector{3,Float64}(K[1], K[2], K[3])
+    # k2 = lattice_vector(gi.rbzmesh.mesh) * fk
+    # k1 = k2 .+ q
+    k2 = K[1]
+    if !is_in_bz(gi.rbzmesh.mesh, k2)
+        return ComplexF64(0.0)
+    end
     k1 = k2 .+ q
+
     gm1 = SVector{3,Int}(GV[1] - NMIN, GV[2] - NMIN, GV[3] - NMIN)
     gm2 = SVector{3,Int}(GV[4] - NMIN, GV[5] - NMIN, GV[6] - NMIN)
     # gi1, gi2 = GV[1], GV[2]
@@ -73,11 +91,12 @@ end
 function run(steps)
 
     T = MCIntegration.Continuous(0.0, beta; alpha=2.0, adapt=true)
-    K = MCIntegration.Continuous(-0.5, 0.5; alpha=2.0, adapt=true)
+    # K = MCIntegration.Continuous(-0.5, 0.5; alpha=2.0, adapt=true)
+    K = MCIntegration.FermiK(3, kF, 0.2kF, kmax)
     # Ext = MCIntegration.Discrete(1, NGV; adapt=true) # external variable is specified
     Ext = MCIntegration.Discrete(1, NGX; adapt=true)
 
-    dof = [[1, 3, 6],] # degrees of freedom of the normalization diagram and the bubble
+    dof = [[1, 1, 6],] # degrees of freedom of the normalization diagram and the bubble
     # dof = [[1, 3, 2],] # degrees of freedom of the normalization diagram and the bubble
     obs = zeros(ComplexF64, 1)
 
