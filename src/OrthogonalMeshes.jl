@@ -112,33 +112,3 @@ function ProdMesh(grids::Vector{GT}, mesh::MT) where {MT<:AbstractGrid,GT}
 end
 
 _getgrid(mesh::ProdMesh, I) = mesh.grids[I]
-# Base.length(mesh::ProdMesh) = prod(mesh.size)
-# Base.size(mesh::ProdMesh) = mesh.size
-# Base.size(mesh::ProdMesh, I::Int) = mesh.size[I]
-
-# function Base.getindex(mesh::ProdMesh{T,DIM,MT,GT}, inds...) where {T,DIM,MT,GT}
-#     # i1, I = inds[1], AbstractMeshes._inds2ind(mesh.size, 1, inds[2:end]...)
-#     # seems generated function doesn't work here 
-#     # as compiler doesn't know mesh.size
-#     i1, I = inds[1], Base._sub2ind(size(mesh.mesh), inds[2:end]...)
-#     return SVector{DIM,T}([mesh.grids[I][i1], mesh.mesh[I]...])
-# end
-
-# function Base.getindex(mesh::ProdMesh, I::Int)
-#     return Base.getindex(mesh, AbstractMeshes._ind2inds(mesh.size, I)...)
-# end
-
-# function AbstractMeshes.locate(mesh::ProdMesh, x)
-#     I = AbstractMeshes.locate(mesh.mesh, x[2:end])
-#     i1 = AbstractMeshes.locate(mesh.grids[I], x[1])
-#     return i1 + (I - 1) * size(mesh)[1]
-# end
-
-# function AbstractMeshes.volume(mesh::ProdMesh)
-#     return sum(AbstractMeshes.volume(mesh.mesh, I) * AbstractMeshes.volume(mesh.grids[I]) for I in 1:length(mesh.mesh))
-# end
-# function AbstractMeshes.volume(mesh::ProdMesh, I::Int)
-#     i1, I2 = (I - 1) % size(mesh)[1] + 1, (I - 1) ÷ size(mesh)[1] + 1
-#     return AbstractMeshes.volume(mesh.mesh, I2) * AbstractMeshes.volume(mesh.grids[I2], i1)
-# end
-
