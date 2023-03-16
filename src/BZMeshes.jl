@@ -123,6 +123,22 @@ AbstractMeshes.LatticeStyle(::Type{<:UniformBZMesh}) = BrillouinLattice()
 #     println("UniformBZMesh with $(length(mesh)) mesh points")
 # end
 
+function AbstractMeshes.locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
+    svx = SVector{DIM,T}(x)
+    fracx = cart_to_frac(mesh, svx - mesh.origin)
+    # periodic boundary
+    inds = (fracx .- floor.(fracx)) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
+    indexall = 1
+    factor = 1
+    indexall += (BaseMesh.cycling_floor(inds[1], mesh.size[1]) - 1) * factor
+    for i in 2:DIM
+        factor *= mesh.size[i-1]
+        indexall += (BaseMesh.cycling_floor(inds[i], mesh.size[i]) - 1) * factor
+    end
+
+    return indexall
+end
+
 function Base.show(io::IO, mesh::UniformBZMesh)
     print(io, "Uniform BZ mesh (Cell = ", mesh.cell)
     print(io, ", origin = ", inv_lattice_vector(mesh) * mesh.origin)
@@ -280,63 +296,6 @@ function MeshMaps.MeshMap(mesh::UniformBZMesh{T,DIM},
     # return kirreds, mapping, k_all_reducible
     return MeshMaps.MeshMap(new_map)
 end
-
-
-# function _kcoords2ind(kcoord, kgrid_size, kshift)
-#     # kidx = [Int(kvec * kgrid_size[d] - kshift[d]) + kgrid_size[d] - 1 for (d, kvec) in enumerate(kcoord)]
-#     # inexact convert is not allowed with Int(), use floor(Int,) instead
-#     kidx = [floor(Int, (kvec + 1 / 2) * kgrid_size[d] - kshift[d]) for (d, kvec) in enumerate(kcoord)]
-#     kidx = [(kidx[d] + kgrid_size[d]) % kgrid_size[d] + 1 for d in 1:length(kidx)]
-#     klinearidx = AbstractMeshes._inds2ind(tuple(kgrid_size...), tuple(kidx...))
-#     return klinearidx
-# end
-
-# # WARNINING: Do not support Gamma_centered: origin=0  !!!
-# # Monkhorst-Pack: origin=-1/2, consistent with VASP
-# # to be consistent with DFTK: 
-# #  - N is even, VASP is the same as DFTK: shift=0 will include Gamma point, shift=1/2 will not
-# #  - N is odd, VASP is different as DFTK: shift=0 will not include Gamma point, shift=1/2 will
-# function _reduced_uniform_meshmap(model::Cells.Cell{T,DIM}, symmetry::Bool=true;
-#     kgrid_size::Vector{Int}, kshift::Bool=false,
-#     tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE
-# ) where {T,DIM}
-#     # Determine symmetry operations to use
-#     if symmetry
-#         symmetries = default_symmetries(model, tol_symmetry=tol_symmetry)
-#     else
-#         symmetries = [one(PointSymmetry.SymOp)]
-#     end
-#     @assert !isempty(symmetries)  # Identity has to be always present.
-#     _kgrid_size = ones(Int, 3)
-#     _kgrid_size[1:DIM] = kgrid_size[1:DIM]
-#     _kshift = kshift ? [1 // 2, 1 // 2, 1 // 2] : [0, 0, 0]
-
-#     kcoords, kweights, symmetries = PointSymmetry.bzmesh_ir_wedge(_kgrid_size, symmetries; kshift=_kshift)
-#     all_kcoords = PointSymmetry.unfold_kcoords(kcoords, symmetries)
-#     Nk = reduce(*, kgrid_size)
-#     @assert length(all_kcoords) == Nk
-#     kindices = []
-#     kmap = zeros(Int, Nk)
-#     inv_kmap = Dict{Int,Vector{Int}}()
-#     count = 0
-#     for kpoint in kcoords
-#         all_kpoint = PointSymmetry.unfold_kcoords([kpoint,], symmetries)
-#         k0ind = _kcoords2ind(kpoint, kgrid_size, _kshift)
-#         push!(kindices, k0ind)
-#         inv_kmap[k0ind] = []
-#         count += length(all_kpoint)
-#         for k in all_kpoint
-#             kind = _kcoords2ind(k, kgrid_size, _kshift)
-#             kmap[kind] = k0ind
-#             push!(inv_kmap[k0ind], kind)
-#         end
-#     end
-
-#     @assert count == Nk
-
-#     return MeshMaps.MeshMap(kindices, kmap, inv_kmap)
-# end
-
 
 include("PolarMeshes.jl")
 

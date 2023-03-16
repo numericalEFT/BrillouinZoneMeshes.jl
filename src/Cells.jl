@@ -247,8 +247,6 @@ end
 # inverse lattice transpose: q_cart = 2π lattice' \ q_red = recip_lattice * q_red.
 # =#
 
-# TODO: define following funcs for cells
-
 vector_frac_to_cart(cell::Cell, rfrac) = cell.lattice * rfrac
 vector_cart_to_frac(cell::Cell, rcart) = cell.inv_lattice * rcart
 covector_frac_to_cart(cell::Cell, ffrac) = cell.inv_lattice' * ffrac

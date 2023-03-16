@@ -100,17 +100,34 @@ Kfinegrid = collect(LinRange(kx[1], kx[end], Kfine))
 # Plots.plot()
 # Plots.plot!(kx, bandarray[:, 1, 1], label="band", markershape=:circle)
 # Plots.plot!(Kfinegrid, band_interpolate[:, 1, 1], label="band interpolation")
+hatree2ev = 27.2114
 
-p = Plots.plot(ylims=(-0.15, 0.35))
-kyz = [(1, 1), (4, 4), (8, 8), (12, 12), (16, 16)]
+kgrid = [16, 16, 16]
+bandarray = zeros((kgrid .+ 1)...);
+# kx = LinRange(-0.5, 0.5 - 1.0 / kgrid[1], kgrid[1])
+# ky = LinRange(-0.5, 0.5 - 1.0 / kgrid[2], kgrid[2])
+# kz = LinRange(-0.5, 0.5 - 1.0 / kgrid[3], kgrid[3])
+kx = LinRange(-0.5, 0.5, kgrid[1] + 1)
+ky = LinRange(-0.5, 0.5, kgrid[2] + 1)
+kz = LinRange(-0.5, 0.5, kgrid[3] + 1)
+Kfine = 100
+Kfinegrid = collect(LinRange(kx[1], kx[end], Kfine))
+
+band = 5
+sitp = gi.dispersions[band]
+bandarray .= sitp .* hatree2ev#[1:16, 1:16, 1:16]
+# p = Plots.plot(ylims=(-0.15, 0.35))
+p = Plots.plot()
+kyz = [(1, 1), (4, 4), (9, 9), (12, 12), (16, 16)]
 # kyi, kzi = Int(kgrid[2] / 2), Int(kgrid[3] / 2)
 for (kyi, kzi) in kyz
-    Plots.scatter!(p, kx, bandarray[:, kyi, kzi], label="band (ky=$kyi, kz = $kzi)", markershape=:circle)
-    band_interpolate = [sitp(k, ky[kyi], kz[kzi]) for k in Kfinegrid]
-    Plots.plot!(p, Kfinegrid, band_interpolate, label="interpolation")
+    Plots.scatter!(p, kx, bandarray[:, kyi, kzi], label="band ($kyi, $kzi)", markershape=:circle)
+    band_interpolate = [sitp(k, ky[kyi], kz[kzi]) for k in Kfinegrid] .* hatree2ev
+    Plots.plot!(p, Kfinegrid, band_interpolate, label=nothing)
 end
+plot!(legend=:outerbottom, legendcolumns=5)
 display(p)
-
+savefig(p, "./run/band$band.png")
 
 # fourier interpolation is pretty bad
 # Kfine = 100
