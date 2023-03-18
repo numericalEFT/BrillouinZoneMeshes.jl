@@ -15,6 +15,12 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Reference" => [
+            "AbstractMeshes" => "lib/AbstractMeshes.md",
+            "BaseMesh" => "lib/BaseMesh.md",
+            "MeshMaps" => "lib/MeshMaps.md",
+            "BZMeshes" => "lib/BZMeshes.md",
+        ]
     ]
 )
 
