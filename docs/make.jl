@@ -15,8 +15,10 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "Reference" => [
+        "API Reference" => "api_reference.md",
+        "SubModules" => [
             "AbstractMeshes" => "lib/AbstractMeshes.md",
+            "Cells" => "lib/Cells.md",
             "BaseMesh" => "lib/BaseMesh.md",
             "MeshMaps" => "lib/MeshMaps.md",
             "BZMeshes" => "lib/BZMeshes.md",
