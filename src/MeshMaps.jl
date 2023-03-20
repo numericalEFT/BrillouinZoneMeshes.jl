@@ -5,6 +5,7 @@ using ..AbstractMeshes
 using ..Cells
 # using ..TreeMeshes
 using ..BaseMesh
+import ..showfieldln
 # using ..BZMeshes
 
 export MeshMap, ReducedBZMesh
@@ -90,6 +91,14 @@ function Base.show(io::IO, mesh::ReducedBZMesh)
     print(io, ", derived from ", typeof(mesh.mesh))
     print(io, ", reduction = ", length(mesh), "/", length(mesh.mesh))
     print(io, ")")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", mesh::ReducedBZMesh)
+    println(io, "Reduced BZ Mesh")
+    showfieldln(io, "original mesh = ", mesh.mesh)
+    showfieldln(io, "map = ", mesh.meshmap)
+
+    println(io)
 end
 
 end
