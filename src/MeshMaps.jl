@@ -85,4 +85,11 @@ AbstractMeshes.locate(mesh::ReducedBZMesh, x) = locate(mesh.meshmap, locate(mesh
 AbstractMeshes.volume(mesh::ReducedBZMesh) = volume(mesh.mesh)
 AbstractMeshes.volume(mesh::ReducedBZMesh, I::Int) = volume(mesh.mesh, mesh.meshmap.irreducible_indices[I]) * _foldnumber(mesh.meshmap, mesh.meshmap.irreducible_indices[I])
 
+function Base.show(io::IO, mesh::ReducedBZMesh)
+    print(io, "Reduced BZ Mesh")
+    print(io, ", derived from ", typeof(mesh.mesh))
+    print(io, ", reduction = ", length(mesh), "/", length(mesh.mesh))
+    print(io, ")")
+end
+
 end
