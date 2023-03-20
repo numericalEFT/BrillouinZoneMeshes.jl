@@ -23,7 +23,7 @@
         DIM = 2
         lattice = Matrix([1.0 0; 0 1]')
         br = BZMeshes.Cell(lattice=lattice)
-        umesh = BZMeshes.UniformBZMesh(br=br, size=(4, 4))
+        umesh = BZMeshes.UniformBZMesh(cell=br, size=(4, 4))
 
         # hand-made map
         map = [1, 2, 2, 1, 2, 6, 6, 2, 2, 6, 6, 2, 1, 2, 2, 1]

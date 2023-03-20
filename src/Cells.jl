@@ -34,7 +34,7 @@ function get_latvec(lattice::AbstractMatrix{T}, I::Int) where {T}
 end
 
 """
-    struct Brillouin{T, DIM}
+    struct Cell{T, DIM}
 
 Container storing information of Brillouin zone. Including lattice vector, reciprocal lattice vector and their inverse;
 volume of unit cell and reciprocal unit cell; G vectors for extended Brillouin zone.
@@ -60,6 +60,7 @@ where ``𝐚``, ``𝐛``, and ``𝐜`` are given as __columns__.
 - `atom_groups``:  atoms[i] == atoms[j] for all i, j in atom_group[α]
 
 - `G_vector`: a list of G vectors in extended Brillouin zone
+- `symmetry`: symmetry of the Brillouin zone
 """
 struct Cell{T,DIM}
     # Lattice and reciprocal lattice vectors in columns

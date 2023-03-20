@@ -1,3 +1,13 @@
+"""
+    module AbstractMeshes
+
+This sub-module defines abstract type "AbstractMesh", 
+from which all concrete types of meshes in this package derive. 
+All functions expected by a sub-type of "AbstractMesh" are defined in this file, 
+including AbstractArray interface requirements and functions like "locate" and "volume".
+If the implementation of a function is type-specific, 
+the function defined in this file will return error.
+"""
 module AbstractMeshes
 
 # define interface of AbstractMesh
@@ -12,7 +22,20 @@ export FracCoords, frac_to_cart, cart_to_frac
 export LatticeStyle, lattice_vector, inv_lattice_vector, cell_volume
 export interp, integrate
 
-# the default return value of AbstractMesh should be a SVector{T,DIM}
+"""
+    abstract type AbstractMesh{T,DIM} <: AbstractArray{SVector{T,DIM},DIM}
+
+Parent type of all meshes in this package.
+
+The default return value of AbstractMesh should be a SVector{T,DIM}, 
+which is assumed to be the cartesian coordinates of the mesh points, 
+even if the mesh it self is polar. 
+Other representations of mesh points such as polar coordinates 
+and fractional coordinates could be provided via getindex with traits.
+
+# Required Fields:
+- `size`: the size of the mesh as a tuple of integers
+"""
 abstract type AbstractMesh{T,DIM} <: AbstractArray{SVector{T,DIM},DIM} end
 
 # domain
@@ -55,6 +78,19 @@ Base.show(io::IO, mesh::AbstractMesh) = error("not implemented!")
 # while AngularCoords return concrete type Polar<:AngularCoords and Spherical<:AngularCoords
 
 # default, return cartesian coords, should be implemented for all meshes
+"""
+    function Base.getindex(mesh::AbstractMesh, ...)
+
+Return mesh point at given index of the mesh. 
+Index could be given as linear index or cartesian index.
+By default return cartesian coordinates of the point,
+other representations could be obtained by traits:"mesh[FracCoords, i]".
+
+# Parameters:
+- `mesh`: mesh
+- `Coords`: traits of coordinate type, omitted by default
+- `i/inds...`: index of mesh point in linear or cartesian index
+"""
 Base.getindex(mesh::AbstractMesh, inds...) = error("not implemented!")
 Base.getindex(mesh::AbstractMesh, I) = error("not implemented!")
 
@@ -64,7 +100,29 @@ Base.getindex(mesh::AbstractMesh, ::Type{<:FracCoords}, I) = error("not implemen
 
 # AngularCoords are implemented in PolarMeshes.jl
 
+"""
+    function AbstractMeshes.locate(mesh, x)
+
+locate mesh point in mesh that is nearest to x. Useful for Monte-Carlo algorithm.
+Could also be used for zeroth order interpolation. 
+Mesh specific implementation required.
+
+# Parameters
+- `mesh`: aimed mesh
+- `x`: cartesian pos to locate
+"""
 locate(mesh::AbstractMesh, x) = error("not implemented!")
+
+"""
+    function AbstractMeshes.volume(mesh, i)
+
+volume represented by mesh point i. When i is omitted return volume of the whole mesh. 
+Mesh specific implementation required.
+
+# Parameters:
+- `mesh`: mesh
+- `i`: index of mesh point, if ommited return volume of whole mesh
+"""
 volume(mesh::AbstractMesh) = error("not implemented!")
 volume(mesh::AbstractMesh, I) = error("not implemented!")
 

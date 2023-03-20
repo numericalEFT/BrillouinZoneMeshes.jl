@@ -5,6 +5,7 @@ using ..AbstractMeshes
 using ..Cells
 # using ..TreeMeshes
 using ..BaseMesh
+import ..showfieldln
 # using ..BZMeshes
 
 export MeshMap, ReducedBZMesh
@@ -84,5 +85,20 @@ Base.getindex(mesh::ReducedBZMesh, inds...) = Base.getindex(mesh.mesh, inds...)
 AbstractMeshes.locate(mesh::ReducedBZMesh, x) = locate(mesh.meshmap, locate(mesh.mesh, x))
 AbstractMeshes.volume(mesh::ReducedBZMesh) = volume(mesh.mesh)
 AbstractMeshes.volume(mesh::ReducedBZMesh, I::Int) = volume(mesh.mesh, mesh.meshmap.irreducible_indices[I]) * _foldnumber(mesh.meshmap, mesh.meshmap.irreducible_indices[I])
+
+function Base.show(io::IO, mesh::ReducedBZMesh)
+    print(io, "Reduced BZ Mesh")
+    print(io, ", derived from ", typeof(mesh.mesh))
+    print(io, ", reduction = ", length(mesh), "/", length(mesh.mesh))
+    print(io, ")")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", mesh::ReducedBZMesh)
+    println(io, "Reduced BZ Mesh")
+    showfieldln(io, "original mesh = ", mesh.mesh)
+    showfieldln(io, "map = ", mesh.meshmap)
+
+    println(io)
+end
 
 end

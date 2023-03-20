@@ -85,6 +85,17 @@ function UniformBZMesh(;
     )
 end
 
+"""
+    function DFTK_Monkhorst_Pack(; cell, size, shift, kshift)
+
+customized constructor for UniformBZMesh. 
+Reproduce the M-P mesh from DFTK convention.    
+
+# Parameters:
+- `cell`: Cell info
+- `size`: size of the mesh
+- `shift`: 3D Bool Vector indicating if k-points are shifted by 1/2 in cartesian coordinates in DFTK convention
+"""
 function DFTK_Monkhorst_Pack(;
     cell::Cell{T,DIM},
     size,
@@ -98,6 +109,22 @@ function DFTK_Monkhorst_Pack(;
     )
 end
 
+"""
+    function Monkhorst_Pack(; cell, size, shift, kshift)
+
+customized constructor for UniformBZMesh. 
+Reproduce the M-P mesh from VASP convention.
+
+Monkhorst-Pack: origin=-1/2, consistent with VASP
+to be consistent with DFTK: 
+ - N is even, VASP is the same as DFTK: shift=0 will include Gamma point, shift=1/2 will not
+ - N is odd, VASP is different as DFTK: shift=0 will not include Gamma point, shift=1/2 will
+
+# Parameters:
+- `cell`: Cell info
+- `size`: size of the mesh
+- `shift`: 3D Bool Vector indicating if k-points are shifted by 1/2 in cartesian coordinates in DFTK convention
+"""
 function Monkhorst_Pack(;
     # Gamma_centered: origin=0, 
     # Monkhorst-Pack: origin=-1/2, consistent with VASP
@@ -178,6 +205,11 @@ function spglib_grid_address_to_index(mesh::AbstractUniformMesh{T,DIM}, ga) wher
     return locate(mesh, x)
 end
 
+"""
+    function MeshMaps.MeshMap(mesh::UniformBZMesh{T,DIM}, is_time_reversal::Bool=true, tol_symmetry=PointSymmetry.SYMMETRY_TOLERANCE)   
+
+create a MeshMap for the given UniformBZMesh based on the symmetry of the Brillouin zone.
+"""
 function MeshMaps.MeshMap(mesh::UniformBZMesh{T,DIM},
     # symmetry::Bool=true;
     is_time_reversal::Bool=true,
