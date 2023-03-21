@@ -34,9 +34,9 @@ export UniformMesh, BaryChebMesh, CenteredMesh, EdgedMesh, AbstractMesh# , locat
 export inv_lattice_vector, lattice_vector, cell_volume
 export AbstractUniformMesh
 
-include("CompositeMeshes.jl")
-using .CompositeMeshes
-export CompositeMeshes
+# include("CompositeMeshes.jl")
+# using .CompositeMeshes
+# export CompositeMeshes
 
 # include("TreeMeshes.jl")
 # using .TreeMeshes
