@@ -15,16 +15,17 @@ include("testcase.jl")
 @testset "BrillouinZoneMeshes.jl" begin
 
     if isempty(ARGS)
+        include("AbstractMeshes.jl")
         # include("barycheb.jl")
+        include("Cells.jl")
         include("BaseMesh.jl")
         include("CompositeMeshes.jl")
+        include("MeshMap.jl")
+        include("BZMeshes.jl")
         # include("TreeMeshes.jl")
         # include("mc.jl")
         include("PointSymmetry.jl")
         include("UniformMeshMap.jl")
-        include("PolarMeshes.jl")
-        include("MeshMap.jl")
-        include("Cells.jl")
     else
         include(ARGS[1])
     end
