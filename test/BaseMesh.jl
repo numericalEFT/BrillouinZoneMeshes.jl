@@ -1,6 +1,15 @@
 @testset "Base Mesh" begin
     rng = MersenneTwister(1234)
 
+    function test_func_not_implemented(func, obj)
+        # if a func required is not implemented for obj
+        # an error occur
+        try
+            func(obj)
+        catch e
+            @test e isa ErrorException
+        end
+    end
 
     @testset "UMesh" begin
         DIM = 2
@@ -16,17 +25,28 @@
         vol = 0.0
         for (i, x) in enumerate(mesh)
             fracx = mesh[AbstractMeshes.FracCoords, i]
+            @test mesh[i] ≈ x
             @test fracx ≈ AbstractMeshes.cart_to_frac(mesh, x)
             @test AbstractMeshes.locate(mesh, x) == i
             vol += AbstractMeshes.volume(mesh, i)
         end
         @test AbstractMeshes.volume(mesh) ≈ vol
+        data = ones(Float64, size(mesh))
+        @test AbstractMeshes.interp(data, mesh, [0.0, 0.0]) ≈ 1.0
+        @test AbstractMeshes.integrate(data, mesh) ≈ vol
+        @test AbstractMeshes.lattice_vector(mesh, 1) ≈ [2 * N1, 0]
+        @test AbstractMeshes.inv_lattice_vector(mesh, 1) ≈ [1 / 2 / N1, 0]
     end
 
     @testset "ProdMesh" begin
         using BrillouinZoneMeshes.CompositeGrids
         using BrillouinZoneMeshes.BaseMesh
         using BrillouinZoneMeshes.AbstractMeshes
+
+        # basics
+        struct NotAPM{T,DIM} <: BaseMesh.AbstractProdMesh{T,DIM} end
+        test_func_not_implemented(x -> BaseMesh._getgrid(x, 1), NotAPM{Int,3}())
+
         @testset "DirectProdMesh" begin
             N, M = 3, 2
             r = CompositeGrid.LogDensedGrid(
@@ -45,7 +65,7 @@
             vol = 0.0
             for (pi, p) in enumerate(dpm)
                 i, j, k = AbstractMeshes._ind2inds(size(dpm), pi)
-                @test p ≈ [r[i], theta[j], phi[k]]
+                @test dpm[pi] ≈ [r[i], theta[j], phi[k]]
                 @test pi == AbstractMeshes.locate(dpm, p)
                 vol += AbstractMeshes.volume(dpm, pi)
             end
@@ -95,6 +115,15 @@
         latvec = [π 0; 0 π]'
         cm = ChebMesh(origin, latvec, DIM, N)
 
+        cm2 = ChebMesh(origin, latvec, cm)
+
+        vol = 0.0
+        for (i, x) in enumerate(cm2)
+            @test cm2[i] ≈ x
+            @test AbstractMeshes.locate(cm2, x) == i
+            vol += AbstractMeshes.volume(cm2, i)
+        end
+        @test AbstractMeshes.volume(cm2) ≈ vol
         # f(x) = x[1] + 2 * x[2] + x[1] * x[2]
         f(x) = sin(x[1]) + cos(x[2])
 
