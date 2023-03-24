@@ -1,7 +1,22 @@
 @testset "MeshMaps" begin
 
+    function test_func_not_implemented(func, obj)
+        # if a func required is not implemented for obj
+        # an error occur
+        try
+            func(obj)
+        catch e
+            @test e isa ErrorException
+        end
+    end
+
     locate, volume = MeshMaps.locate, MeshMaps.volume
+
     @testset "MeshMap" begin
+
+        struct NotAMesh{T,DIM} <: AbstractMesh{T,DIM} end
+        notamesh = NotAMesh{Float64,3}()
+        test_func_not_implemented(MeshMap, notamesh)
 
         # test MeshMap constructor
         map = [1, 2, 2, 1, 2, 6, 6, 2, 2, 6, 6, 2, 1, 2, 2, 1]
@@ -30,6 +45,11 @@
         mm = MeshMap(map)
 
         rmesh = ReducedBZMesh(umesh, mm)
+        @test size(rmesh) == size(mm)
+        @test rmesh[1, 2] ≈ umesh[1, 2]
+
+        println(rmesh)
+
         vol = 0.0
         for (i, p) in enumerate(rmesh)
             vol += AbstractMeshes.volume(rmesh, i)
