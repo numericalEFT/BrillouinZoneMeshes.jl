@@ -16,7 +16,6 @@ include("testcase.jl")
 
     if isempty(ARGS)
         include("AbstractMeshes.jl")
-        # include("barycheb.jl")
         include("Cells.jl")
         include("BaseMesh.jl")
         include("CompositeMeshes.jl")
