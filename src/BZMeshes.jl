@@ -330,6 +330,6 @@ function MeshMaps.MeshMap(mesh::UniformBZMesh{T,DIM},
 end
 
 # temporarily hide wip codes
-# include("PolarMeshes.jl")
+include("PolarMeshes.jl")
 
 end

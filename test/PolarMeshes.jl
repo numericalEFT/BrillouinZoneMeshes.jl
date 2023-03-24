@@ -1,6 +1,11 @@
 @testset "PolarMeshes" begin
-    @testset "CoordinateTransformations" begin
+    using BrillouinZoneMeshes.CompositeGrids
+    using BrillouinZoneMeshes.BZMeshes
+    using BrillouinZoneMeshes.BZMeshes.Coordinates
+    using BrillouinZoneMeshes.BZMeshes: radial_rescale, find_kFermi, find_zero
+    rng = MersenneTwister(1234)
 
+    @testset "CoordinateTransformations" begin
         # special cases
         r = Polar(1, 0)
         @test BZMeshes._polar2cart(r) ≈ [1.0, 0]

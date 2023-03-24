@@ -3,8 +3,8 @@ module _Test_BrillouinZoneMeshes
 using BrillouinZoneMeshes
 using BrillouinZoneMeshes.AbstractTrees
 # using BrillouinZoneMeshes.TreeMeshes
-# using BrillouinZoneMeshes.BaseMesh
-# using BrillouinZoneMeshes.BaryCheb
+using BrillouinZoneMeshes.BaseMesh
+using BrillouinZoneMeshes.BaryCheb
 # using BrillouinZoneMeshes.SymMaps
 
 using LinearAlgebra, Random
@@ -19,10 +19,10 @@ include("testcase.jl")
         # include("barycheb.jl")
         include("Cells.jl")
         include("BaseMesh.jl")
-        # include("CompositeMeshes.jl")
+        include("CompositeMeshes.jl")
         include("MeshMap.jl")
         include("BZMeshes.jl")
-        # include("PolarMeshes.jl")
+        include("PolarMeshes.jl")
         # include("TreeMeshes.jl")
         # include("mc.jl")
         include("PointSymmetry.jl")
