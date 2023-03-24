@@ -329,6 +329,7 @@ function MeshMaps.MeshMap(mesh::UniformBZMesh{T,DIM},
     return MeshMaps.MeshMap(new_map)
 end
 
+# temporarily hide wip codes
 include("PolarMeshes.jl")
 
 end

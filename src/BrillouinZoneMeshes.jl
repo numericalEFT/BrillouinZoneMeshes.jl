@@ -36,7 +36,7 @@ export AbstractUniformMesh
 
 include("CompositeMeshes.jl")
 using .CompositeMeshes
-export CompositeMeshes
+# export CompositeMeshes
 
 # include("TreeMeshes.jl")
 # using .TreeMeshes
