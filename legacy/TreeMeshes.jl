@@ -1,5 +1,6 @@
-module GridTree
+module TreeMeshes
 
+using ..AbstractMeshes
 using ..AbstractTrees
 using ..StaticArrays
 using ..BaseMesh
@@ -7,7 +8,7 @@ using ..Statistics
 using ..LinearAlgebra
 using ..BaryCheb
 
-export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency, SymMap, interp, integrate, MappedData
+export GridNode, TreeGrid, uniformtreegrid, treegridfromdensity, efficiency, interp, integrate
 
 struct GridNode{DIM}
     index::Vector{Int} # index in treegrid.subgrids, 0 if has children
@@ -20,7 +21,7 @@ function GridNode{DIM}(
     isfine;
     depth=0, pos=SVector{DIM,Int64}(zeros(Int64, DIM)), maxdepth=10, mindepth=0) where {DIM}
     if (isfine(depth, pos) && depth >= mindepth) || depth >= maxdepth
-        return GridNode{DIM}([0, ], depth, pos, Vector{GridNode{DIM}}([]))
+        return GridNode{DIM}([0,], depth, pos, Vector{GridNode{DIM}}([]))
     else
         children = Vector{GridNode{DIM}}([])
         for i in 0:2^DIM-1
@@ -29,7 +30,7 @@ function GridNode{DIM}(
             childpos = pos .* 2 .+ bin
             push!(children, GridNode{DIM}(isfine; depth=childdepth, pos=childpos, maxdepth=maxdepth, mindepth=mindepth))
         end
-        return GridNode{DIM}([0, ], depth, pos, children)
+        return GridNode{DIM}([0,], depth, pos, children)
     end
 end
 
@@ -45,7 +46,7 @@ function Base.floor(node::GridNode{DIM}, x) where {DIM}
         index = 1
         for i in 1:DIM
             if x[i] > midpos[i]
-                index = index + 2^(DIM-i)
+                index = index + 2^(DIM - i)
             end
         end
 
@@ -66,18 +67,18 @@ function efficiency(root::GridNode{DIM}) where {DIM}
     return np / 2^(depth * DIM)
 end
 
-struct TreeGrid{DIM,SG} <:AbstractMesh{DIM}
+struct TreeGrid{DIM,SG} <: AbstractMesh{Float64,DIM}
     origin::SVector{DIM,Float64}
     root::GridNode{DIM}
     latvec::SMatrix{DIM,DIM,Float64}
-    invlatvec::SMatrix{DIM, DIM, Float64}
+    invlatvec::SMatrix{DIM,DIM,Float64}
     subgrids::Vector{SG}
 end
 
 efficiency(tg::TreeGrid) = efficiency(tg.root)
 
-function Base.floor(tg::TreeGrid{DIM, SG}, x) where {DIM, SG}
-    dimlessx = tg.invlatvec * SVector{DIM, Float64}(x) .+ 0.5
+function Base.floor(tg::TreeGrid{DIM,SG}, x) where {DIM,SG}
+    dimlessx = tg.invlatvec * SVector{DIM,Float64}(x) .+ 0.5
 
     tgi = floor(tg.root, dimlessx)
     mesh = tg.subgrids[tgi]
@@ -111,8 +112,8 @@ function BaseMesh.volume(tg::TreeGrid{DIM,SG}, i) where {DIM,SG}
     return volume(tg.subgrids[tgi], sgi)
 end
 
-function interp(data, tg::TreeGrid{DIM, SG}, x) where {DIM, SG}
-    dimlessx = tg.invlatvec * SVector{DIM, Float64}(x) .+ 0.5
+function interp(data, tg::TreeGrid{DIM,SG}, x) where {DIM,SG}
+    dimlessx = tg.invlatvec * SVector{DIM,Float64}(x) .+ 0.5
     sgsize = length(tg.subgrids[1])
 
     tgi = floor(tg.root, dimlessx)
@@ -123,7 +124,7 @@ function interp(data, tg::TreeGrid{DIM, SG}, x) where {DIM, SG}
     return BaseMesh.interp(data_slice, mesh, x)
 end
 
-function integrate(data, tg::TreeGrid{DIM, SG}) where {DIM, SG}
+function integrate(data, tg::TreeGrid{DIM,SG}) where {DIM,SG}
     sgsize = length(tg.subgrids[1])
     result = 0.0
 
@@ -188,7 +189,7 @@ function uniformtreegrid(isfine, latvec; maxdepth=10, mindepth=0, DIM=2, N=2)
             mesh = UniformMesh{DIM,N}(origin, latvec ./ 2^depth)
             push!(subgrids, mesh)
             node.index[1] = i
-            i = i+1
+            i = i + 1
         end
     end
     origin = _calc_origin(root, latvec)
@@ -253,11 +254,11 @@ function densityisfine(density, latvec, depth, pos, atol, DIM; N=3)
 end
 
 function barychebdensityisfine(density, latvec, depth, pos, atol, DIM; N=4)
-    area = _calc_area(latvec) / 2^(depth*DIM)
+    area = _calc_area(latvec) / 2^(depth * DIM)
 
     origin = _calc_point(depth, pos, latvec)
     mesh1 = BaryChebMesh(origin, latvec ./ 2^depth, DIM, N)
-    mesh2 = BaryChebMesh(origin, latvec ./ 2^depth, DIM, N+2)
+    mesh2 = BaryChebMesh(origin, latvec ./ 2^depth, DIM, N + 2)
 
     data1 = [density(p) for p in mesh1]
     # data2 = [density(p) for p in mesh2]
@@ -278,71 +279,6 @@ function treegridfromdensity(density, latvec; atol=1e-4, maxdepth=10, mindepth=0
         error("not implemented!")
     end
 end
-
-function _find_in(x, arr::AbstractArray; atol=1e-6, rtol=1e-6)
-    # return index if in, return 0 otherwise
-    for yi in 1:length(arr)
-        y = arr[yi]
-        if isapprox(x, y, atol=atol, rtol=rtol)
-            return yi
-        end
-    end
-
-    return 0
-end
-
-struct SymMap{T, N}
-    map::Vector{Int}
-    reduced_length::Int
-    _vals::Vector{T}
-    inv_map::Vector{Vector{Int}}
-
-    function SymMap{T}(tg::TreeGrid, density; atol=1e-6, rtol=1e-6) where {T}
-        map = zeros(Int, length(tg))
-        reduced_vals = []
-        inv_map = []
-        for pi in 1:length(tg)
-            # println(pi, " ", p)
-            p = tg[pi]
-            val = density(p)
-            # println(val)
-            pos = _find_in(val, reduced_vals; atol=atol, rtol=rtol)
-            if pos == 0
-                push!(reduced_vals, val)
-                push!(inv_map, [pi,])
-                map[pi] = length(reduced_vals)
-            else
-                push!(inv_map[pos], pi)
-                map[pi] = pos
-            end
-        end
-
-        return new{T, length(tg)}(map, length(reduced_vals), reduced_vals, inv_map)
-    end
-end
-
-struct MappedData{T, N} <: AbstractArray{T, N}
-    smap::SymMap{T, N}
-    data::Vector{T}
-
-    function MappedData(smap::SymMap{T, N}) where {T, N}
-        data = zeros(T, smap.reduced_length)
-        return new{T, N}(smap, data)
-    end
-end
-
-Base.length(md::MappedData) = length(md.smap.map)
-Base.size(md::MappedData) = (length(md),)
-# index and iterator
-Base.getindex(md::MappedData, i) = md.data[md.smap.map[i]]
-function Base.setindex!(md::MappedData, x, i)
-    md.data[md.smap.map[i]] = x
-end
-Base.firstindex(md::MappedData) = 1
-Base.lastindex(md::MappedData) = length(tg)
-
-Base.iterate(md::MappedData) = (md[1], 1)
-Base.iterate(md::MappedData, state) = (state >= length(md)) ? nothing : (md[state+1], state + 1)
 
 end
 

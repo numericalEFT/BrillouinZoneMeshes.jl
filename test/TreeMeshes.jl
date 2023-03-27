@@ -1,4 +1,7 @@
 @testset "Tree Grid" begin
+
+    interp, integrate = TreeMeshes.interp, TreeMeshes.integrate
+
     rng = MersenneTwister(1234)
 
     function dispersion(k)
@@ -27,7 +30,7 @@
         # test node.index
         for node in PostOrderDFS(tg.root)
             if node.index[1] != 0
-                origin1 = GridTree._calc_origin(node, tg.latvec)
+                origin1 = TreeMeshes._calc_origin(node, tg.latvec)
                 origin2 = tg.subgrids[node.index[1]].origin
                 @test origin1 == origin2
             end
