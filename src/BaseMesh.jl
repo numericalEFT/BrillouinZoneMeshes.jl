@@ -41,12 +41,8 @@ export fractional_coordinates, cartesian_coordinates
 
 function Base.getindex(mesh::AbstractUniformMesh{T,DIM}, inds...) where {T,DIM}
     n = SVector{DIM,Int}(inds)
-    # fracx = SVector{DIM,Float64}((n .- 1 .+ mesh.shift) ./ mesh.size)
-    fracx = SVector{DIM,Float64}((n[i] - 1 + mesh.shift[i]) / mesh.size[i] for i in 1:DIM)
-    # displace = lattice_vector(mesh) * fracx
-    latvec = lattice_vector(mesh)
-    displace = SVector{DIM,Float64}(sum(latvec[i, j] * fracx[j] for j in 1:DIM) for i in 1:DIM)
-    return mesh.origin + displace
+    mshift = SVector{DIM,Float64}(mesh.shift)
+    return mesh.origin + lattice_vector(mesh) * ((n .- 1 .+ mshift) ./ mesh.size)
 end
 
 function Base.getindex(mesh::AbstractUniformMesh, I::Int)
@@ -55,7 +51,8 @@ end
 
 function Base.getindex(mesh::AbstractUniformMesh{T,DIM}, ::Type{<:FracCoords}, I::Int) where {T,DIM}
     n = SVector{DIM,Int}(AbstractMeshes._ind2inds(mesh.size, I))
-    return inv_lattice_vector(mesh) * mesh.origin + (n .- 1 .+ mesh.shift) ./ mesh.size
+    mshift = SVector{DIM,Float64}(mesh.shift)
+    return inv_lattice_vector(mesh) * mesh.origin + (n .- 1 .+ mshift) ./ mesh.size
 end
 
 """

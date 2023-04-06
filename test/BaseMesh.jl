@@ -19,6 +19,10 @@
         cell = BZMeshes.Cell(lattice=lattice)
         mesh = BaseMesh.UMesh(br=cell, origin=ones(DIM) ./ 2, size=(N1, N2), shift=zeros(DIM))
 
+        @inferred mesh[1]
+        @inferred mesh[1, 1]
+        @inferred mesh[AbstractMeshes.FracCoords, 1]
+
         @test length(mesh) == N1 * N2
         @test size(mesh) == (N1, N2)
 
@@ -62,6 +66,8 @@
             dpm = DirectProdMesh(r, theta, phi)
             println(size(dpm))
 
+            @inferred dpm[1]
+
             vol = 0.0
             for (pi, p) in enumerate(dpm)
                 i, j, k = AbstractMeshes._ind2inds(size(dpm), pi)
@@ -91,6 +97,9 @@
             cm = ProdMesh(grids, theta)
             println([cm.grids[i].panel[2] for i in 1:length(theta)])
             println(size(cm))
+
+            @inferred cm[1]
+
             for j in 1:length(cm.mesh)
                 for i in 1:length(cm.grids[j])
                     p = cm[i, j]
@@ -116,6 +125,8 @@
         cm = ChebMesh(origin, latvec, DIM, N)
 
         cm2 = ChebMesh(origin, latvec, cm)
+
+        @inferred cm[1]
 
         vol = 0.0
         for (i, x) in enumerate(cm2)
