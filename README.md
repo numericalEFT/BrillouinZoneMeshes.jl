@@ -33,7 +33,7 @@ Setup with:
 
 and here are some examples of usage:
 
-```jldoctest
+```julia
 julia> using BrillouinZoneMeshes; DIM = 2; lattice = Matrix([1.0 0; 0 1]'); br = BZMeshes.Cell(lattice=lattice); umesh = BZMeshes.UniformBZMesh(cell=br, size=(4, 4)); mm = MeshMaps.MeshMap(umesh); rmesh = ReducedBZMesh(umesh, mm);
 
 julia> length(umesh), length(rmesh)
