@@ -28,6 +28,10 @@
             println(bzmesh)
             display(bzmesh)
 
+            @inferred bzmesh[1]
+            @inferred bzmesh[1, 1]
+            @inferred bzmesh[AbstractMeshes.FracCoords, 1]
+
             for (pi, p) in enumerate(bzmesh)
                 @test bzmesh[pi] ≈ p # linear index
                 inds = AbstractMeshes._ind2inds(size(bzmesh), pi)

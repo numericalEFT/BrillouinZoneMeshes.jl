@@ -1,16 +1,6 @@
 @testset "Base Mesh" begin
     rng = MersenneTwister(1234)
 
-    function test_func_not_implemented(func, obj)
-        # if a func required is not implemented for obj
-        # an error occur
-        try
-            func(obj)
-        catch e
-            @test e isa ErrorException
-        end
-    end
-
     @testset "UMesh" begin
         DIM = 2
         N1, N2 = 3, 5
@@ -18,6 +8,10 @@
         # so that bzmesh[i,j] = (2i-1,2j-1)
         cell = BZMeshes.Cell(lattice=lattice)
         mesh = BaseMesh.UMesh(br=cell, origin=ones(DIM) ./ 2, size=(N1, N2), shift=zeros(DIM))
+
+        @inferred mesh[1]
+        @inferred mesh[1, 1]
+        @inferred mesh[AbstractMeshes.FracCoords, 1]
 
         @test length(mesh) == N1 * N2
         @test size(mesh) == (N1, N2)
@@ -45,7 +39,7 @@
 
         # basics
         struct NotAPM{T,DIM} <: BaseMesh.AbstractProdMesh{T,DIM} end
-        test_func_not_implemented(x -> BaseMesh._getgrid(x, 1), NotAPM{Int,3}())
+        @test_throws ErrorException BaseMesh._getgrid(NotAPM{Int,3}(), 1)
 
         @testset "DirectProdMesh" begin
             N, M = 3, 2
@@ -61,6 +55,8 @@
             theta = SimpleGrid.Uniform([-π / 2, π / 2], 4)
             dpm = DirectProdMesh(r, theta, phi)
             println(size(dpm))
+
+            @inferred dpm[1]
 
             vol = 0.0
             for (pi, p) in enumerate(dpm)
@@ -91,6 +87,9 @@
             cm = ProdMesh(grids, theta)
             println([cm.grids[i].panel[2] for i in 1:length(theta)])
             println(size(cm))
+
+            @inferred cm[1]
+
             for j in 1:length(cm.mesh)
                 for i in 1:length(cm.grids[j])
                     p = cm[i, j]
@@ -116,6 +115,8 @@
         cm = ChebMesh(origin, latvec, DIM, N)
 
         cm2 = ChebMesh(origin, latvec, cm)
+
+        @inferred cm[1]
 
         vol = 0.0
         for (i, x) in enumerate(cm2)
