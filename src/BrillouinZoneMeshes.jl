@@ -55,6 +55,7 @@ export UniformBZMesh
 
 include("Visualization.jl")
 using .Visualization
-
+export Visualization
+export PlotBZ
 
 end
