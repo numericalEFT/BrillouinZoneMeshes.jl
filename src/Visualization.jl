@@ -17,7 +17,7 @@ using Brillouin:
     basis
 using StaticArrays
 #using BrillouinZoneMeshes
-using PyCall
+using Brillouin.WignerSeitz.PyCall
 const PySpatial = PyNULL()
 using BrillouinZoneMeshes.LinearAlgebra
 using SymmetryReduceBZ.Symmetry: calc_ibz, inhull, calc_pointgroup, complete_orbit
@@ -87,6 +87,23 @@ function wignerseitz_ext(basis::AVec{<:SVector{D,<:Real}};
     return clist, idx_center_final
 end
 
+function wignerseitz_ext(basis::AVec{<:AVec{<:Real}}; kwargs...)
+    D = length(first(basis))
+    all(V -> length(V) == D, @view basis[2:end]) || error(DomainError(basis, "provided `basis` must have identical dimensions"))
+
+    return wignerseitz_ext(SVector{D,Float64}.(basis); kwargs...)
+end
+
+function wignerseitz_ext(basis::Matrix; kwargs...)
+    latvec = mapslices(x -> [x], basis, dims=1)[:] #Convert matrix into arrays of lattice vectors
+    return wignerseitz_ext(latvec; kwargs...)
+end
+
+function reduce_to_wignerseitz_ext(v, latvec, bzmesh)
+    return cartesianize(reduce_to_wignerseitz(inv_lattice_vector(bzmesh) * v, latvec), latvec)
+end
+
+
 function convert_to_cell(hull::QHull.Chull{Float64}, basis::AVec{<:SVector{D,<:Real}}) where {D}
     # The QHull julia package is used by SymmetryReduceBZ, whereas Brillouin package use Qhull from
     # SciPy instead. Therefore we have to reload this function for julia QHull object.
@@ -99,17 +116,11 @@ function convert_to_cell(hull::QHull.Chull{Float64}, basis::AVec{<:SVector{D,<:R
     return Cell(vs, fs, SVector{D,SVector{D,Float64}}(basis), Ref(CARTESIAN))
 end
 
-
-function wignerseitz_ext(basis::AVec{<:AVec{<:Real}}; kwargs...)
-    D = length(first(basis))
-    all(V -> length(V) == D, @view basis[2:end]) || error(DomainError(basis, "provided `basis` must have identical dimensions"))
-
-    return wignerseitz_ext(SVector{D,Float64}.(basis); kwargs...)
+function convert_to_cell(hull::QHull.Chull{Float64}, basis::Matrix)  
+    latvec = mapslices(x -> [x], basis, dims=1)[:] #Convert matrix into arrays of lattice vectors
+    return convert_to_cell(hull,  SVector{length(latvec[1]),Float64}.(latvec))
 end
 
-function reduce_to_wignerseitz_ext(v, latvec, bzmesh)
-    return cartesianize(reduce_to_wignerseitz(inv_lattice_vector(bzmesh) * v, latvec), latvec)
-end
 
 function _add_traces!(P,mesh,DIM)
     # P is the plot object
@@ -128,8 +139,7 @@ function plotBZ(bzmesh::AbstractUniformMesh{T,DIM}; ex_radius = 1, show_reduce=f
     # Shows all extended Brillouin Zone within the ex_radius.
     meshmap = MeshMap(bzmesh)
     recip_lattice = lattice_vector(bzmesh)
-    latvec = mapslices(x -> [x], recip_lattice, dims=1)[:]
-    clist, idx_center = wignerseitz_ext(latvec, cut=ex_radius)
+    clist, idx_center = wignerseitz_ext(recip_lattice, cut=ex_radius)
 
     fullmesh = []
     for i in 1:length(bzmesh)
@@ -155,7 +165,8 @@ function plotBZ(bzmesh::AbstractUniformMesh{T,DIM}; ex_radius = 1, show_reduce=f
         ibz = calc_ibz(lattice ./ 2 / π, atoms, atom_pos, coordinates, ibzformat,
                        makeprim, convention)
         #The 1/2π here is due to the convention difference between packages. SymmetryReduceBZ has a \dot a_recip = 1 instead of 2π
-        c = convert_to_cell(ibz, SVector{length(latvec[1]),Float64}.(latvec))
+        #c = convert_to_cell(ibz, SVector{length(latvec[1]),Float64}.(latvec))
+        c = convert_to_cell(ibz,recip_lattice)
         c = WignerSeitz.reorient_normals!(c)
         latticize!(c) # Do not merge coplanar triangles for reduced mesh. This must be done within plot.
         reducedmesh = []
