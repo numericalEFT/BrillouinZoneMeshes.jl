@@ -1,16 +1,6 @@
 @testset "Base Mesh" begin
     rng = MersenneTwister(1234)
 
-    function test_func_not_implemented(func, obj)
-        # if a func required is not implemented for obj
-        # an error occur
-        try
-            func(obj)
-        catch e
-            @test e isa ErrorException
-        end
-    end
-
     @testset "UMesh" begin
         DIM = 2
         N1, N2 = 3, 5
@@ -49,7 +39,7 @@
 
         # basics
         struct NotAPM{T,DIM} <: BaseMesh.AbstractProdMesh{T,DIM} end
-        test_func_not_implemented(x -> BaseMesh._getgrid(x, 1), NotAPM{Int,3}())
+        @test_throws ErrorException BaseMesh._getgrid(NotAPM{Int,3}(), 1)
 
         @testset "DirectProdMesh" begin
             N, M = 3, 2
