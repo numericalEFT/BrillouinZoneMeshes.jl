@@ -153,8 +153,9 @@ AbstractMeshes.LatticeStyle(::Type{<:UniformBZMesh}) = BrillouinLattice()
 function AbstractMeshes.locate(mesh::UniformBZMesh{T,DIM}, x) where {T,DIM}
     svx = SVector{DIM,T}(x)
     fracx = cart_to_frac(mesh, svx - mesh.origin)
+    mshift = SVector{DIM,T}(mesh.shift)
     # periodic boundary
-    inds = (fracx .- floor.(fracx)) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
+    inds = (fracx .- floor.(fracx)) .* mesh.size .+ 1.5 .- mshift .+ 2 .* eps.(T.(mesh.size))
     indexall = 1
     factor = 1
     indexall += (BaseMesh.cycling_floor(inds[1], mesh.size[1]) - 1) * factor

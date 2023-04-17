@@ -12,6 +12,9 @@
         @inferred mesh[1]
         @inferred mesh[1, 1]
         @inferred mesh[AbstractMeshes.FracCoords, 1]
+        @inferred AbstractMeshes.locate(mesh, [0.0, 0.0])
+        @inferred AbstractMeshes.volume(mesh, 1)
+        @inferred AbstractMeshes.volume(mesh)
 
         @test length(mesh) == N1 * N2
         @test size(mesh) == (N1, N2)

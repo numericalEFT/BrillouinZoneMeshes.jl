@@ -31,6 +31,9 @@
             @inferred bzmesh[1]
             @inferred bzmesh[1, 1]
             @inferred bzmesh[AbstractMeshes.FracCoords, 1]
+            @inferred AbstractMeshes.locate(bzmesh, [0.0, 0.0])
+            @inferred AbstractMeshes.volume(bzmesh, 1)
+            @inferred AbstractMeshes.volume(bzmesh)
 
             for (pi, p) in enumerate(bzmesh)
                 @test bzmesh[pi] ≈ p # linear index
