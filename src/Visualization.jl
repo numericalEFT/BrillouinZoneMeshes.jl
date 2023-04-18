@@ -17,7 +17,8 @@ using Brillouin:
     basis
 using StaticArrays
 #using BrillouinZoneMeshes
-using Brillouin.WignerSeitz.PyCall
+#using Brillouin.WignerSeitz.PyCall
+using PyCall
 const PySpatial = PyNULL()
 using BrillouinZoneMeshes.LinearAlgebra
 using SymmetryReduceBZ.Symmetry: calc_ibz, inhull, calc_pointgroup, complete_orbit
