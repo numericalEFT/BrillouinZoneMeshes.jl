@@ -27,14 +27,14 @@ jobs:
           - x86
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
+      - uses: python-actions/setup-python@v4
         with:
-          python-version:'3.9'
-          cache:'pip'
+         python-version: '3.9'
+         cache: 'pip'
       - name: Install scipy
-          run: pip install scipy
+        run: pip install scipy
       - name: Check scipy
-          run: python3 -c "import scipy.version; print(scipy.version.version)"
+        run: python3 -c "import scipy.version; print(scipy.version.version)"
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
