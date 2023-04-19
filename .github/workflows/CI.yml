@@ -27,14 +27,6 @@ jobs:
           - x86
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
-        with:
-         python-version: '3.9'
-         cache: 'pip'
-      - name: Install scipy
-        run: pip install scipy
-      - name: Check scipy
-        run: python3 -c "import scipy.version; print(scipy.version.version)"
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
@@ -64,6 +56,10 @@ jobs:
         with:
           version: "1"
       - uses: julia-actions/julia-buildpkg@v1
+      - name: Install scipy
+        run: sudo apt-get update && sudo apt-get install -y python3-scipy
+      - name: Check scipy
+        run: python3 -c "import scipy.version; print(scipy.version.version)"
       - uses: julia-actions/julia-docdeploy@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
