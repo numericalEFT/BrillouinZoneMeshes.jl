@@ -59,7 +59,7 @@ jobs:
       - name: Install scipy
         run: sudo apt-get update && sudo apt-get install -y python3-scipy
       - name: Check scipy
-        run: python3 -c "import scipy.version; print(scipy.version.version)"
+        run: python3 -c "import scipy.version; print(scipy.version.version); print(scipy.__file__)"
       - uses: julia-actions/julia-docdeploy@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
