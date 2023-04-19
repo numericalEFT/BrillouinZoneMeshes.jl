@@ -45,7 +45,7 @@ jobs:
             ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@v1
       - name: Install scipy
-        run: python3 -m pip3 install scipy
+        run: pip3 install scipy
       - name: Check scipy
         run: python3 -c "import scipy.version; print(scipy.version.version); print(scipy.__file__)"
       - uses: julia-actions/julia-runtest@v1
