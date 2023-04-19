@@ -26,10 +26,8 @@ jobs:
           - x64
           - x86
     steps:
-      - name: set python path
-        run: echo "PYTHONPATH = "/user/lib/python3"" >> $GITHUB_ENV
-      - name: check python
-        run: which python3
+      - name: check pip
+        run: which pip3
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
@@ -47,7 +45,7 @@ jobs:
             ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@v1
       - name: Install scipy
-        run: sudo apt-get update && sudo apt-get install -y python3-scipy
+        run: python3 -m pip3 install scipy
       - name: Check scipy
         run: python3 -c "import scipy.version; print(scipy.version.version); print(scipy.__file__)"
       - uses: julia-actions/julia-runtest@v1
