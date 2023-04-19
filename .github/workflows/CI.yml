@@ -26,8 +26,8 @@ jobs:
           - x64
           - x86
     steps:
-      #- name: set python path
-       # run: echo "$/.local/bin" >> $GITHUB_PATH
+      - name: set python path
+        run: echo "PYTHONPATH = "/user/bin/python3"" >> $GITHUB_ENV
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
