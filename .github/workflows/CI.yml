@@ -67,6 +67,14 @@ jobs:
       - uses: julia-actions/setup-julia@v1
         with:
           version: "1"
+      - name: Install scipy
+        run: python3 -m pip install scipy
+      - name: Check scipy
+        run: python3 -c "import scipy.version; print(scipy.version.version); print(scipy.__file__)"
+      - name: Install matplotlib
+        run: python3 -m pip install matplotlib
+      - name: Check matplotlib
+        run: python3 -c "import matplotlib; print(matplotlib.__file__)"
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-docdeploy@v1
         env:
