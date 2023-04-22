@@ -53,9 +53,9 @@ using .BZMeshes
 export BZMeshes
 export UniformBZMesh
 
-include("Visualization.jl")
-using .Visualization
-export Visualization
-export PlotBZ
+# include("Visualization.jl")
+# using .Visualization
+# export Visualization
+# export PlotBZ
 
 end
