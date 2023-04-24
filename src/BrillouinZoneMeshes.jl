@@ -53,20 +53,14 @@ using .BZMeshes
 export BZMeshes
 export UniformBZMesh
 
+#if isdefined(Main, :PlotlyJS)
+#    if isdefined(Main, :SymmetryReduceBZ)
+include("Visualization.jl")
+using .Visualization
+export Visualization
+export plotBZ
+#    end
+#end
 
-using Requires
-
-
-
-function __init__()
-    @require PlotlyJS="f0f68f2c-4968-5e81-91da-67840de0976a" begin
-        @require SymmetryReduceBZ="49a35663-c880-4242-bebb-1ec8c0fa8046" begin
-            include("Visualization.jl")
-            using .Visualization
-            export Visualization
-            export plotBZ
-        end
-    end
-end
 
 end

@@ -25,6 +25,13 @@ using SymmetryReduceBZ.Symmetry: calc_ibz, inhull, calc_pointgroup, complete_orb
 #import QHull
 import SymmetryReduceBZ.Utilities: get_uniquefacets
 import Brillouin.WignerSeitz.DirectQhull
+if isdefined(Main,:PlotlyJS)
+    error("The Visualization module requires PlotlyJS package.")
+end
+if isdefined(Main,:SymmetryReduceBZ)
+    error("The Visualization module requires SymmetryReduceBZ package.")
+end
+
 include("default_colors.jl")
 include("plotlyjs_wignerseitz.jl")
 include("cluster.jl")
