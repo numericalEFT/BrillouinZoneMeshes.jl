@@ -18,12 +18,13 @@ using Brillouin:
 using StaticArrays
 #using BrillouinZoneMeshes
 #using Brillouin.WignerSeitz.PyCall
-using PyCall
-const PySpatial = PyNULL()
+#using PyCall
+#const PySpatial = PyNULL()
 using BrillouinZoneMeshes.LinearAlgebra
-using SymmetryReduceBZ.Symmetry: calc_ibz, inhull, calc_pointgroup, complete_orbit
+using SymmetryReduceBZ.Symmetry: calc_ibz, inhull, calc_pointgroup, complete_orbit, Chull
+#import QHull
 import SymmetryReduceBZ.Utilities: get_uniquefacets
-import QHull
+import Brillouin.WignerSeitz.DirectQhull
 include("default_colors.jl")
 include("plotlyjs_wignerseitz.jl")
 include("cluster.jl")
@@ -34,13 +35,13 @@ function wignerseitz_ext(basis::AVec{<:SVector{D,<:Real}};
     merge::Bool=false,
     Nmax::Integer=3, cut=Nmax / 2) where {D}
     # bringing in SciPy's Spatial module (for `Voronoi` and `ConvexHull`)
-    if PyCall.conda
-        copy!(PySpatial, pyimport_conda("scipy.spatial", "scipy"))
-    else
-        copy!(PySpatial, pyimport_e("scipy.spatial"))
-    end
-    ispynull(PySpatial) && @warn("scipy python package not found. " *
-                                 "WignerSeitz.wignerseitz is nonfunctional.")
+    # if PyCall.conda
+    #     copy!(PySpatial, pyimport_conda("scipy.spatial", "scipy"))
+    # else
+    #     copy!(PySpatial, pyimport_e("scipy.spatial"))
+    # end
+    # ispynull(PySpatial) && @warn("scipy python package not found. " *
+    #                              "WignerSeitz.wignerseitz is nonfunctional.")
 
     # "supercell" lattice of G-vectors
     Ns = -Nmax:Nmax
@@ -55,8 +56,11 @@ function wignerseitz_ext(basis::AVec{<:SVector{D,<:Real}};
         lattice[idx] = V
         iszero(I) && (idx_center = idx)
     end
-    ispynull(PySpatial) && error("You need to install scipy for wignerseitz to work.")
-    vor = PySpatial.Voronoi(lattice) # voronoi tesselation of lattice
+    #ispynull(PySpatial) && error("You need to install scipy for wignerseitz to work.")
+    #vor = PySpatial.Voronoi(lattice) # voronoi tesselation of lattice
+    vor = DirectQhull.Voronoi(reduce(hcat,lattice)) # voronoi tesselation of lattice
+    #vor = DirectQhull.Voronoi(lattice) # voronoi tesselation of lattice
+
     clist = Cell{D}[]
     idx_center_final = 0
 
@@ -65,10 +69,11 @@ function wignerseitz_ext(basis::AVec{<:SVector{D,<:Real}};
     for idx_cntr in 1:length(vor.point_region)
         if sqrt(sum((idx_cartesian[idx_cntr][i] - idx_cartesian[idx_center][i])^2 for i in 1:D)) < cut
             verts_cntr =  # NB: offsets by 1 due to Julia 1-based vs. Python 0-based indexing
-                [vor.vertices[idx+1, :] for idx in vor.regions[vor.point_region[idx_cntr]+1] if !isnothing(idx) && idx > 0]
+                vor.vertices[:, vor.regions[vor.point_region[idx_cntr]+1] .+ 1]
+                #[vor.vertices[:, idx+1] for idx in vor.regions[vor.point_region[idx_cntr]+1] if !isnothing(idx) && idx > 0]
             # get convex hull of central vertices
             if length(verts_cntr) > D + 1
-                hull = PySpatial.ConvexHull(verts_cntr)
+                hull = DirectQhull.ConvexHull(verts_cntr)
                 c = WignerSeitz.convert_to_cell(hull, basis)
                 c = WignerSeitz.reorient_normals!(c)
 
@@ -105,7 +110,7 @@ function reduce_to_wignerseitz_ext(v, latvec, bzmesh)
 end
 
 
-function convert_to_cell(hull::QHull.Chull{Float64}, basis::AVec{<:SVector{D,<:Real}}) where {D}
+function convert_to_cell(hull::Chull{Float64}, basis::AVec{<:SVector{D,<:Real}}) where {D}
     # The QHull julia package is used by SymmetryReduceBZ, whereas Brillouin package use Qhull from
     # SciPy instead. Therefore we have to reload this function for julia QHull object.
     vs′ = hull.points         # vertices
@@ -117,7 +122,7 @@ function convert_to_cell(hull::QHull.Chull{Float64}, basis::AVec{<:SVector{D,<:R
     return Cell(vs, fs, SVector{D,SVector{D,Float64}}(basis), Ref(CARTESIAN))
 end
 
-function convert_to_cell(hull::QHull.Chull{Float64}, basis::Matrix)  
+function convert_to_cell(hull::Chull{Float64}, basis::Matrix)  
     latvec = mapslices(x -> [x], basis, dims=1)[:] #Convert matrix into arrays of lattice vectors
     return convert_to_cell(hull,  SVector{length(latvec[1]),Float64}.(latvec))
 end
