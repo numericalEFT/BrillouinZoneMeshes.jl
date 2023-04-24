@@ -45,7 +45,7 @@ jobs:
             ${{ runner.os }}-test-${{ env.cache-name }}-
             ${{ runner.os }}-test-
             ${{ runner.os }}-
-       - name: Install scipy
+      - name: Install scipy
         run: python3 -m pip install scipy
       - name: Check scipy
         run: python3 -c "import scipy.version; print(scipy.version.version); print(scipy.__file__)"
