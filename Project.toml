@@ -1,7 +1,7 @@
 name = "BrillouinZoneMeshes"
 uuid = "9f696214-9961-49f3-89a2-cb1ea204eb6e"
 authors = ["Xiansheng Cai", "Tao Wang", "Kun Chen"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
