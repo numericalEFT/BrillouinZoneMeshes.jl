@@ -1,6 +1,7 @@
-using PlotlyJS
-using SymmetryReduceBZ
+# using PlotlyJS
+# using SymmetryReduceBZ
 using BrillouinZoneMeshes
+include("Visualization.jl")
 # Wigner-Seitz cells visualization
 # 2D
 #N, DIM = 4, 2

@@ -53,14 +53,5 @@ using .BZMeshes
 export BZMeshes
 export UniformBZMesh
 
-#if isdefined(Main, :PlotlyJS)
-#    if isdefined(Main, :SymmetryReduceBZ)
-include("Visualization.jl")
-using .Visualization
-export Visualization
-export plotBZ
-#    end
-#end
-
 
 end
