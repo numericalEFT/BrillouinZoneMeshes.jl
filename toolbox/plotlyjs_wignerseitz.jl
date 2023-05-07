@@ -1,5 +1,5 @@
-using .PlotlyJS
-import .PlotlyJS: plot
+#using .PlotlyJS
+#import .PlotlyJS: plot
 using LinearAlgebra: norm, dot
 using StaticArrays
 using .WignerSeitz: face_normal, merge_coplanar!
