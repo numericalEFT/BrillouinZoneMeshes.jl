@@ -1,25 +1,25 @@
-using Brillouin, PlotlyJS
+using Brillouin.WignerSeitz
+using Brillouin.KPaths
+using PlotlyJS
 using Brillouin:
     AVec,
     CARTESIAN,
     cartesianize,
-    reduce_to_wignerseitz
-
-import Brillouin:
+    reduce_to_wignerseitz,
+    setting,
     basis
-using Brillouin.KPaths: Bravais
 using StaticArrays
 using BrillouinZoneMeshes
 using PyCall
 const PySpatial = PyNULL()
 using BrillouinZoneMeshes.LinearAlgebra
-using SymmetryReduceBZ
 using SymmetryReduceBZ.Symmetry: calc_ibz, inhull, calc_pointgroup, complete_orbit
 import SymmetryReduceBZ.Utilities: get_uniquefacets
 import QHull
 include("default_colors.jl")
 include("plotlyjs_wignerseitz.jl")
 include("cluster.jl")
+
 function wignerseitz_ext(basis::AVec{<:SVector{D,<:Real}};
     merge::Bool=false,
     Nmax::Integer=3, cut=Nmax / 2) where {D}
@@ -102,26 +102,30 @@ function reduce_to_wignerseitz_ext(v, latvec, bzmesh)
     return cartesianize(reduce_to_wignerseitz(inv_lattice_vector(bzmesh) * v, latvec), latvec)
 end
 
-
+function PlotBZ(bzmesh)
+    meshmap = MeshMap(bzmesh)
+    recip_lattice = lattice_vector(bzmesh)
+    latvec = mapslices(x -> [x], recip_lattice, dims=1)[:]
+end
 
 # Wigner-Seitz cells visualization
 # 2D
 #N, DIM = 4, 2
 #origin = [0.0 0.0]
-lattice = Matrix([2 0; 1 sqrt(3)]')
+#lattice = Matrix([2 0; 1 sqrt(3)]')
 #br = BZMeshes.Brillouin(lattice = lattice)
 
 # latvec = [1 0; 0 1]'
 # 3D
 
-#lattice = [[0 0.5 0.5]; [0.5 0 0.5]; [0.5 0.5 0.0]]
+lattice = [[0 0.5 0.5]; [0.5 0 0.5]; [0.5 0.5 0.0]]
 #atoms = [1,1]
 #positions = [ones(3) / 8, -ones(3) / 8]
 
 #lattice = [[1.0 0.0 0.0]; [0.0 1.0 0.0]; [0.0 0.0 1.0]]
 atoms = [1]
-#positions = [zeros(3)]
-positions = [zeros(2)]
+positions = [zeros(3)]
+#positions = [zeros(2)]
 
 atom_pos = hvcat(size(positions, 1), positions...)
 ibzformat = "convex hull"
@@ -132,11 +136,11 @@ convention = "ordinary"
 br = BZMeshes.Cell(lattice=lattice, atoms=atoms, positions=positions)
 #br = BZMeshes.Brillouin(lattice=lattice)
 
-msize = (3, 3)
-bzmesh = UniformBZMesh(cell=br, size=msize, shift=[false, false])
+#msize = (3, 3)
+#bzmesh = UniformBZMesh(cell=br, size=msize, shift=[false, false])
 
-#msize = (4, 4, 4)
-#bzmesh = UniformBZMesh(cell=br, size=msize, shift=[true, true, true])
+msize = (4, 4, 4)
+bzmesh = UniformBZMesh(cell=br, size=msize, shift=[true, true, true])
 meshmap = MeshMap(bzmesh)
 
 recip_lattice = lattice_vector(bzmesh)
@@ -162,7 +166,7 @@ for i in 1:length(bzmesh)
     end
     push!(fullmesh, vv)
 end
-println(fullmesh)
+#println(fullmesh)
 
 # fullmesh = [reduce_to_wignerseitz_ext(bzmesh[i], latvec, bzmesh) for i in 1:length(bzmesh)]
 
@@ -185,11 +189,11 @@ end
 
 P = plot(clist, idx_center, ibz=c)
 
-addtraces!(P, scatter(x=[r[1] for r in fullmesh], y=[r[2] for r in fullmesh], mode="markers", marker=attr(size=5)))
-addtraces!(P, scatter(x=[r[1] for r in reducedmesh], y=[r[2] for r in reducedmesh], mode="markers", marker=attr(size=5)))
+#addtraces!(P, scatter(x=[r[1] for r in fullmesh], y=[r[2] for r in fullmesh], mode="markers", marker=attr(size=5)))
+#addtraces!(P, scatter(x=[r[1] for r in reducedmesh], y=[r[2] for r in reducedmesh], mode="markers", marker=attr(size=5)))
 
-#addtraces!(P, scatter3d(x=[r[1] for r in fullmesh], y=[r[2] for r in fullmesh], z=[r[3] for r in fullmesh], mode="markers", marker=attr(size=3)))
-#addtraces!(P, scatter3d(x=[r[1] for r in reducedmesh], y=[r[2] for r in reducedmesh], z=[r[3] for r in reducedmesh], mode="markers", marker=attr(size=3)))
+addtraces!(P, scatter3d(x=[r[1] for r in fullmesh], y=[r[2] for r in fullmesh], z=[r[3] for r in fullmesh], mode="markers", marker=attr(size=3)))
+addtraces!(P, scatter3d(x=[r[1] for r in reducedmesh], y=[r[2] for r in reducedmesh], z=[r[3] for r in reducedmesh], mode="markers", marker=attr(size=3)))
 
 n = length(P.plot.data) # number of traces, the last two are the full and reduced meshes
 allinvis, vis1, vis2 = [true for i in 1:n], [true for i in 1:n], [true for i in 1:n]

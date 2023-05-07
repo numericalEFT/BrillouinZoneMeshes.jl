@@ -53,8 +53,5 @@ using .BZMeshes
 export BZMeshes
 export UniformBZMesh
 
-include("Visualization.jl")
-using .Visualization
-
 
 end

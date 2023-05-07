@@ -193,7 +193,7 @@ for i in 1:length(bzmesh)
     # end
     push!(fullmesh, v)
 end
-println(fullmesh)
+#println(fullmesh)
 
 # fullmesh = [reduce_to_wignerseitz_ext(bzmesh[i], latvec, bzmesh) for i in 1:length(bzmesh)]
 
