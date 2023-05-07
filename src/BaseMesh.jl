@@ -68,7 +68,8 @@ Could also be used for zeroth order interpolation.
 function AbstractMeshes.locate(mesh::AbstractUniformMesh{T,DIM}, x) where {T,DIM}
     # find index of nearest grid point to the point
     svx = SVector{DIM,T}(x)
-    inds = cart_to_frac(mesh, svx - mesh.origin) .* mesh.size .+ 1.5 .- mesh.shift .+ 2 .* eps.(T.(mesh.size))
+    mshift = SVector{DIM,T}(mesh.shift)
+    inds = cart_to_frac(mesh, svx - mesh.origin) .* mesh.size .+ 1.5 .- mshift .+ 2 .* eps.(T.(mesh.size))
     indexall = 1
     factor = 1
     indexall += (cycling_floor(inds[1], mesh.size[1]) - 1) * factor
