@@ -20,7 +20,10 @@ println(BZ.units)
 latvec = pyconvert(Array, BZ.units)[1:2, 1:2]
 println(latvec)
 
-umesh = BrillouinZoneMeshes.BaseMesh.UniformMesh{2,nk,BrillouinZoneMeshes.BaseMesh.EdgedMesh}([0.0, 0.0], latvec)
+
+# umesh = BrillouinZoneMeshes.BaseMesh.UniformBZMesh{2,nk,BrillouinZoneMeshes.BaseMesh.EdgedMesh}([0.0, 0.0], latvec)
+cell = BrillouinZoneMeshes.BZMeshes.Cell(lattice=latvec)
+umesh = BrillouinZoneMeshes.BZMeshes.UniformBZMesh(cell=cell, size=(nk, nk), origin=0)
 
 for (ip, p) in enumerate(mk)
     println(p, umesh[ip])
