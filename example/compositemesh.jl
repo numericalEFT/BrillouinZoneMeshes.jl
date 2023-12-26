@@ -46,13 +46,13 @@ theta = SimpleGrid.Uniform(bound, N; isperiodic=true)
 #     kmax=π, Nloggrid=5, Nbasegrid=4, minterval=0.001)
 pm = BZMeshes.CompositePolarMesh(dispersion=dispersion,
     anglemesh=theta, cell=br, basegridtype=:uniform,
-    kmax=π * sqrt(2.4), Nloggrid=8, Nbasegrid=3, minterval=0.1T, N=4)
+    kmax=π * sqrt(2.4), Nloggrid=6, Nbasegrid=6, minterval=0.05T, N=6)
 
 pm2 = BZMeshes.CompositePolarMesh(dispersion=dispersion,
     anglemesh=theta, cell=br, basegridtype=:uniform,
-    kmax=π * sqrt(2.4), Nloggrid=10, Nbasegrid=6, minterval=0.01T, N=6)
+    kmax=π * sqrt(2.4), Nloggrid=12, Nbasegrid=8, minterval=0.05T, N=12)
 
-
+println("Val=55126.8")
 println("N=$(length(pm)), ", int_mesh(pm))
 println("N=$(length(pm2)), ", int_mesh(pm2))
 
